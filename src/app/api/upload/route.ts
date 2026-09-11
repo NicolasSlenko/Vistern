@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     console.log("User authenticated:", userId)
 
-    const missingKeys = [];
+    const missingKeys: string[] = [];
     if (!process.env.AWS_BUCKET_NAME) missingKeys.push("AWS_BUCKET_NAME");
     if (!process.env.AWS_BUCKET_REGION) missingKeys.push("AWS_BUCKET_REGION");
     if (!process.env.IAM_AWS_ACCESS_KEY) missingKeys.push("IAM_AWS_ACCESS_KEY");
