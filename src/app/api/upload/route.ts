@@ -31,12 +31,16 @@ export async function POST(request: NextRequest) {
 
     console.log("User authenticated:", userId)
 
-    // Check AWS config early
-    if (!process.env.AWS_BUCKET_NAME || !process.env.AWS_BUCKET_REGION ||
-      !process.env.IAM_AWS_ACCESS_KEY || !process.env.IAM_AWS_SECRET_ACCESS_KEY) {
-      console.error("AWS configuration missing")
+    const missingKeys = [];
+    if (!process.env.AWS_BUCKET_NAME) missingKeys.push("AWS_BUCKET_NAME");
+    if (!process.env.AWS_BUCKET_REGION) missingKeys.push("AWS_BUCKET_REGION");
+    if (!process.env.IAM_AWS_ACCESS_KEY) missingKeys.push("IAM_AWS_ACCESS_KEY");
+    if (!process.env.IAM_AWS_SECRET_ACCESS_KEY) missingKeys.push("IAM_AWS_SECRET_ACCESS_KEY");
+
+    if (missingKeys.length > 0) {
+      console.error("AWS configuration missing:", missingKeys)
       return NextResponse.json(
-        { error: "Server configuration error: AWS credentials not configured" },
+        { error: `Server configuration error: AWS credentials not configured. Missing: ${missingKeys.join(", ")}` },
         { status: 500 }
       )
     }
