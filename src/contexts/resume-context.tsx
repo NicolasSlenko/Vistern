@@ -103,7 +103,7 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
     })
   }
 
-  // Load resume data from JSON file on mount
+  // Load the current structured resume for the signed-in user.
   const loadResumeData = async () => {
     setIsLoading(true)
     try {
@@ -111,6 +111,12 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
       if (response.status === 401) {
         setResumeData(null)
         return
+      }
+      if (!response.ok) {
+        throw new Error(`Could not load resume data (HTTP ${response.status}).`)
+      }
+      if (!response.headers.get("content-type")?.includes("application/json")) {
+        throw new Error("The resume API returned an unexpected response.")
       }
       const result = await response.json()
 

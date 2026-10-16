@@ -1,59 +1,79 @@
-import { getJsonFromS3, putJsonToS3 } from "@/lib/aws/s3"
+import { getJsonFromS3 } from "@/lib/aws/s3";
+import { createClerkSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  hasImportedLegacyDataset,
+  markLegacyDatasetImported,
+} from "@/lib/supabase/legacy-import";
 
-export type LimitKey = "analyzeMatch" | "tailorResume"
+export type LimitKey = "analyzeMatch" | "tailorResume";
 
 interface DailyCount {
-  date: string
-  count: number
+  date: string;
+  count: number;
 }
 
 interface UsageData {
-  analyzeMatch: DailyCount
-  tailorResume: DailyCount
+  analyzeMatch: DailyCount;
+  tailorResume: DailyCount;
 }
 
 const LIMITS: Record<LimitKey, number> = {
   analyzeMatch: 10,
   tailorResume: 10,
-}
+};
 
 function isOwner(userId: string): boolean {
-  const ownerId = process.env.OWNER_CLERK_USER_ID
-  return !!ownerId && userId === ownerId
+  const ownerId = process.env.OWNER_CLERK_USER_ID;
+  return !!ownerId && userId === ownerId;
 }
 
 function todayStr(): string {
-  return new Date().toISOString().split("T")[0]
+  return new Date().toISOString().split("T")[0];
 }
 
-async function readUsage(userId: string): Promise<UsageData> {
-  const today = todayStr()
-  const stored = await getJsonFromS3<UsageData>(`uploads/${userId}/usage-limits.json`)
-  return {
-    analyzeMatch: stored?.analyzeMatch?.date === today ? stored.analyzeMatch : { date: today, count: 0 },
-    tailorResume: stored?.tailorResume?.date === today ? stored.tailorResume : { date: today, count: 0 },
+async function ensureLegacyUsageImported(userId: string) {
+  const supabase = await createClerkSupabaseServerClient();
+  if (await hasImportedLegacyDataset(supabase, userId, "usage")) return supabase;
+
+  const today = todayStr();
+  const stored = await getJsonFromS3<UsageData>(`uploads/${userId}/usage-limits.json`);
+  const rows = (Object.keys(LIMITS) as LimitKey[])
+    .filter((feature) => stored?.[feature]?.date === today)
+    .map((feature) => ({
+      clerk_user_id: userId,
+      usage_date: today,
+      feature,
+      count: Math.max(0, Math.floor(stored?.[feature]?.count ?? 0)),
+    }));
+
+  if (rows.length) {
+    const { error } = await supabase.from("daily_usage").upsert(rows, {
+      onConflict: "clerk_user_id,usage_date,feature",
+    });
+    if (error) throw error;
   }
+
+  await markLegacyDatasetImported(supabase, userId, "usage", rows.length);
+  return supabase;
 }
 
-/** Returns { allowed, remaining } and increments counter if allowed. Owner always allowed. */
+/** Returns { allowed, remaining } and atomically increments the daily counter. */
 export async function checkAndIncrementLimit(
   userId: string,
-  key: LimitKey
+  key: LimitKey,
 ): Promise<{ allowed: boolean; remaining: number }> {
-  if (isOwner(userId)) return { allowed: true, remaining: 999 }
+  if (isOwner(userId)) return { allowed: true, remaining: 999 };
 
-  const usage = await readUsage(userId)
-  const limit = LIMITS[key]
-  const current = usage[key]
+  const supabase = await ensureLegacyUsageImported(userId);
+  const { data, error } = await supabase.rpc("consume_daily_usage", {
+    p_feature: key,
+    p_daily_limit: LIMITS[key],
+  });
+  if (error) throw error;
 
-  if (current.count >= limit) {
-    return { allowed: false, remaining: 0 }
-  }
-
-  usage[key] = { date: todayStr(), count: current.count + 1 }
-  await putJsonToS3(`uploads/${userId}/usage-limits.json`, usage)
-
-  return { allowed: true, remaining: limit - usage[key].count }
+  const usage = data?.[0];
+  if (!usage) throw new Error("Supabase did not return a usage result.");
+  return { allowed: usage.allowed, remaining: usage.remaining };
 }
 
 export async function getUsageSummary(userId: string) {
@@ -62,21 +82,32 @@ export async function getUsageSummary(userId: string) {
       analyzeMatch: { used: 0, limit: 999, remaining: 999 },
       tailorResume: { used: 0, limit: 999, remaining: 999 },
       isOwner: true,
-    }
+    };
   }
 
-  const usage = await readUsage(userId)
+  const supabase = await ensureLegacyUsageImported(userId);
+  const { data, error } = await supabase
+    .from("daily_usage")
+    .select("feature,count")
+    .eq("clerk_user_id", userId)
+    .eq("usage_date", todayStr());
+  if (error) throw error;
+
+  const usedByFeature = Object.fromEntries(
+    (data ?? []).map((row) => [row.feature, row.count]),
+  ) as Partial<Record<LimitKey, number>>;
+
   return {
     analyzeMatch: {
-      used: usage.analyzeMatch.count,
+      used: usedByFeature.analyzeMatch ?? 0,
       limit: LIMITS.analyzeMatch,
-      remaining: Math.max(0, LIMITS.analyzeMatch - usage.analyzeMatch.count),
+      remaining: Math.max(0, LIMITS.analyzeMatch - (usedByFeature.analyzeMatch ?? 0)),
     },
     tailorResume: {
-      used: usage.tailorResume.count,
+      used: usedByFeature.tailorResume ?? 0,
       limit: LIMITS.tailorResume,
-      remaining: Math.max(0, LIMITS.tailorResume - usage.tailorResume.count),
+      remaining: Math.max(0, LIMITS.tailorResume - (usedByFeature.tailorResume ?? 0)),
     },
     isOwner: false,
-  }
+  };
 }

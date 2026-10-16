@@ -3,7 +3,7 @@ import { z } from "zod"
 import { zodTextFormat } from "openai/helpers/zod.mjs"
 import { type NextResponse as NR, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
-import { getJsonFromS3, putJsonToS3 } from "@/lib/aws/s3"
+import { getCurrentResumeData, getUserPreferences } from "@/lib/supabase/user-data"
 import { generateEmbedding } from "@/lib/embeddings"
 import { searchSimilarDocuments } from "@/lib/vectorSearch"
 import { checkAndIncrementLimit } from "@/lib/usageLimits"
@@ -11,6 +11,7 @@ import type { Resume } from "@/app/api/parse/resumeSchema"
 
 const MODEL = "gpt-4.1-mini"
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000
+const liveJobsCache = new Map<string, CachedLiveJobs>()
 
 interface AdzunaJob {
   id: string
@@ -309,7 +310,7 @@ export async function GET(): Promise<NR> {
   try {
     const { userId } = await auth()
     if (!userId) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
-    const cached = await getJsonFromS3<CachedLiveJobs>(`uploads/${userId}/live-job-matches.json`)
+    const cached = liveJobsCache.get(userId)
     if (cached && Date.now() - cached.cachedAt < CACHE_TTL_MS) {
       return NextResponse.json({ success: true, data: cached })
     }
@@ -332,12 +333,12 @@ export async function POST(): Promise<NR> {
       )
     }
 
-    const resume = await getJsonFromS3<Resume>(`uploads/${userId}/resume-data.json`)
+    const resume = await getCurrentResumeData(userId)
     if (!resume) {
       return NextResponse.json({ success: false, error: "No resume found. Upload a resume first." }, { status: 400 })
     }
 
-    const prefs = await getJsonFromS3<Record<string, string[]>>(`uploads/${userId}/preferences.json`)
+    const prefs = await getUserPreferences(userId)
     if (!prefs?.roleTypes?.length) {
       return NextResponse.json(
         { success: false, error: "No preferences found. Complete the questionnaire first." },
@@ -414,7 +415,7 @@ export async function POST(): Promise<NR> {
     liveJobs.sort((a, b) => b.matchScore - a.matchScore)
 
     const result: CachedLiveJobs = { jobs: liveJobs, cachedAt: Date.now() }
-    await putJsonToS3(`uploads/${userId}/live-job-matches.json`, result)
+    liveJobsCache.set(userId, result)
     return NextResponse.json({ success: true, data: result })
   } catch (error) {
     console.error("match-live error:", error)

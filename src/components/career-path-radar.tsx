@@ -7,6 +7,7 @@ import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Responsi
 import { cn } from "@/lib/utils"
 import { Loader2, Check, X, Star, Database } from "lucide-react"
 import { useResume } from "@/contexts/resume-context"
+import { categorizeUFCourse, UF_CS_PREFIXES } from "@/lib/courseMatching"
 
 interface CourseMatch {
   resumeCourse: string
@@ -102,15 +103,20 @@ export function CareerPathCourseworkChart({
       if (data.success) {
         setMatchedCourses(data.byCategory)
 
-        // Also get all UF courses categorized
-        if (data.allUFCourses) {
+        // The catalog is shared reference data, fetched on demand rather than stored in S3.
+        const catalogResponse = await fetch("/api/uf-courses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prefixes: UF_CS_PREFIXES }),
+        })
+        const catalogData = await catalogResponse.json()
+        if (catalogData.success) {
           const categorized: Record<string, Array<{ name: string; code: string }>> = {}
-          data.allUFCourses.forEach(course => {
-            if (!categorized[course.category]) {
-              categorized[course.category] = []
-            }
-            categorized[course.category].push({ name: course.name, code: course.code })
-          })
+          for (const course of catalogData.courses ?? []) {
+            const category = categorizeUFCourse(course.code, course.name)
+            if (category === "EXCLUDED") continue
+            ;(categorized[category] ??= []).push({ name: course.name, code: course.code })
+          }
           setAllUFCoursesByCategory(categorized)
         }
 

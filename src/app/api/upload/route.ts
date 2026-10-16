@@ -1,190 +1,116 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { auth, currentUser } from "@clerk/nextjs/server"
-import { uploadToS3, getJsonFromS3, putJsonToS3, deleteFromS3 } from "@/lib/aws/s3"
+import { type NextRequest, NextResponse } from "next/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
+import { deleteFromS3, uploadToS3 } from "@/lib/aws/s3";
+import { createClerkSupabaseServerClient } from "@/lib/supabase/server";
+import { getOrCreateProfileId, importLegacyResumeSubmissions } from "@/lib/supabase/resume-documents";
 
-const DAILY_UPLOAD_LIMIT = 3
-const MAX_STORED_SUBMISSIONS = 5
+const DAILY_UPLOAD_LIMIT = 3;
+const MAX_STORED_SUBMISSIONS = 10;
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const ALLOWED_TYPES = new Set([
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/plain",
+]);
 
-interface ResumeSubmission {
-  id: string
-  fileName: string
-  s3Key: string
-  uploadedAt: string
-  score: number
-  isStarred?: boolean
-}
-
-interface SubmissionsMetadata {
-  submissions: ResumeSubmission[]
+function contentTypeFor(fileName: string, fallback: string) {
+  const extension = fileName.split(".").pop()?.toLowerCase();
+  if (extension === "pdf") return "application/pdf";
+  if (extension === "doc") return "application/msword";
+  if (extension === "docx") return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  if (extension === "txt") return "text/plain";
+  return fallback || "application/octet-stream";
 }
 
 export async function POST(request: NextRequest) {
+  let uploadedKey: string | null = null;
+  let persisted = false;
   try {
-    console.log("Upload endpoint called")
+    const { userId } = await auth();
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { userId } = await auth()
+    const missing = ["AWS_BUCKET_NAME", "AWS_BUCKET_REGION", "IAM_AWS_ACCESS_KEY", "IAM_AWS_SECRET_ACCESS_KEY"]
+      .filter((key) => !process.env[key]);
+    if (missing.length) return NextResponse.json({ error: "Server AWS configuration is incomplete." }, { status: 500 });
 
-    if (!userId) {
-      console.log("Unauthorized: No userId")
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const formData = await request.formData();
+    const file = formData.get("file");
+    if (!(file instanceof File)) return NextResponse.json({ error: "No file received" }, { status: 400 });
+    if (!ALLOWED_TYPES.has(file.type)) {
+      return NextResponse.json({ error: "Invalid file type. Only PDF, DOC, DOCX, and TXT files are allowed." }, { status: 400 });
+    }
+    if (file.size > MAX_FILE_SIZE) return NextResponse.json({ error: "File too large. Maximum size is 10MB." }, { status: 400 });
+
+    const supabase = await createClerkSupabaseServerClient();
+    await importLegacyResumeSubmissions(supabase, userId);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const { data: todaysUploads, error: countError } = await supabase.from("resume_documents")
+      .select("id")
+      .eq("clerk_user_id", userId)
+      .gte("created_at", today.toISOString());
+    if (countError) throw countError;
+
+    const user = await currentUser();
+    const exempt = user?.primaryEmailAddress?.emailAddress === "nickslenko@gmail.com";
+    if ((todaysUploads?.length ?? 0) >= DAILY_UPLOAD_LIMIT && !exempt) {
+      return NextResponse.json({ error: `Daily upload limit reached (${DAILY_UPLOAD_LIMIT}/day). Please try again tomorrow.` }, { status: 429 });
     }
 
-    console.log("User authenticated:", userId)
+    const now = Date.now();
+    const safeName = file.name.replace(/[^\w.-]+/g, "-").toLowerCase();
+    uploadedKey = `uploads/${userId}/resumes/${now}-${safeName}`;
+    await uploadToS3(uploadedKey, Buffer.from(await file.arrayBuffer()), contentTypeFor(file.name, file.type));
 
-    const missingKeys: string[] = [];
-    if (!process.env.AWS_BUCKET_NAME) missingKeys.push("AWS_BUCKET_NAME");
-    if (!process.env.AWS_BUCKET_REGION) missingKeys.push("AWS_BUCKET_REGION");
-    if (!process.env.IAM_AWS_ACCESS_KEY) missingKeys.push("IAM_AWS_ACCESS_KEY");
-    if (!process.env.IAM_AWS_SECRET_ACCESS_KEY) missingKeys.push("IAM_AWS_SECRET_ACCESS_KEY");
-
-    if (missingKeys.length > 0) {
-      console.error("AWS configuration missing:", missingKeys)
-      return NextResponse.json(
-        { error: `Server configuration error: AWS credentials not configured. Missing: ${missingKeys.join(", ")}` },
-        { status: 500 }
-      )
-    }
-
-    // --- Daily upload limit check ---
-    const metadataKey = `uploads/${userId}/submissions-metadata.json`
-    let metadata = await getJsonFromS3<SubmissionsMetadata>(metadataKey)
-
-    if (metadata) {
-      const todayStart = new Date()
-      todayStart.setHours(0, 0, 0, 0)
-
-      const uploadsToday = metadata.submissions.filter(
-        (s) => new Date(s.uploadedAt) >= todayStart
-      ).length
-
-      // Check for unlimited upload exemption
-      const user = await currentUser()
-      const userEmail = user?.primaryEmailAddress?.emailAddress
-      const isExempt = userEmail === "nickslenko@gmail.com"
-
-      if (uploadsToday >= DAILY_UPLOAD_LIMIT && !isExempt) {
-        return NextResponse.json(
-          { error: `Daily upload limit reached (${DAILY_UPLOAD_LIMIT}/day). Please try again tomorrow.` },
-          { status: 429 }
-        )
-      }
-    }
-
-    const data = await request.formData()
-    const file: File | null = data.get("file") as unknown as File
-
-    if (!file) {
-      console.log("No file in request")
-      return NextResponse.json({ error: "No file received" }, { status: 400 })
-    }
-
-    console.log("File received:", file.name, file.type, file.size)
-
-    const allowedTypes = [
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "text/plain",
-    ]
-
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json(
-        {
-          error: "Invalid file type. Only PDF, DOC, DOCX, and TXT files are allowed.",
-        },
-        { status: 400 },
-      )
-    }
-
-    // Validate file size (10MB limit)
-    if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json(
-        {
-          error: "File too large. Maximum size is 10MB.",
-        },
-        { status: 400 },
-      )
-    }
-
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-
-    const safeName = file.name.replace(/[^\w.-]+/g, "-").toLowerCase()
-    // Add timestamp to make each upload unique
-    const timestamp = Date.now()
-    const key = `uploads/${userId}/resumes/${timestamp}-${safeName}`
-
-    console.log("Uploading to S3, key:", key)
-
-    await uploadToS3(key, buffer, file.type || "application/octet-stream")
-
-    // Track this submission in metadata
-    const newSubmission: ResumeSubmission = {
-      id: Buffer.from(key + timestamp).toString("base64"),
-      fileName: file.name,
-      s3Key: key,
-      uploadedAt: new Date().toISOString(),
-      // Score starts at 0, will be calculated after parsing
+    const profileId = await getOrCreateProfileId(supabase, userId);
+    const { data: document, error: insertError } = await supabase.from("resume_documents").insert({
+      profile_id: profileId,
+      clerk_user_id: userId,
+      source_type: "uploaded",
+      s3_object_key: uploadedKey,
+      file_name: file.name,
+      content_type: contentTypeFor(file.name, file.type),
+      structured_content: {},
+      status: "draft",
       score: 0,
-      isStarred: false,
+    }).select("id,created_at,score,is_starred").single();
+    if (insertError) throw insertError;
+    persisted = true;
+
+    // Keep the 10 most recent unstarred source files, while starred resumes stay available.
+    const { data: recent, error: recentError } = await supabase.from("resume_documents")
+      .select("id,s3_object_key,is_starred")
+      .eq("clerk_user_id", userId)
+      .not("s3_object_key", "is", null)
+      .neq("status", "archived")
+      .order("created_at", { ascending: false });
+    if (recentError) throw recentError;
+    const unstarred = (recent ?? []).filter((row) => !row.is_starred);
+    for (const old of unstarred.slice(MAX_STORED_SUBMISSIONS)) {
+      if (old.s3_object_key) await deleteFromS3(old.s3_object_key);
+      const { error: deleteError } = await supabase.from("resume_documents")
+        .delete().eq("id", old.id).eq("clerk_user_id", userId);
+      if (deleteError) throw deleteError;
     }
-
-    if (!metadata) {
-      metadata = { submissions: [] }
-    }
-
-    metadata.submissions.unshift(newSubmission) // Add to beginning (most recent first)
-
-    // --- Prune old unstarred submissions beyond the limit ---
-    const unstarred = metadata.submissions.filter(s => !s.isStarred)
-    
-    if (unstarred.length > MAX_STORED_SUBMISSIONS) {
-      const toRemove = unstarred.slice(MAX_STORED_SUBMISSIONS)
-
-      // Delete old S3 files in the background
-      for (const old of toRemove) {
-        try {
-          await deleteFromS3(old.s3Key)
-          await deleteFromS3(`uploads/${userId}/resume-data-${old.id}.json`).catch(() => {})
-          await deleteFromS3(`uploads/${userId}/xyz-feedback-${old.id}.json`).catch(() => {})
-          console.log("Pruned old resume from S3:", old.s3Key)
-        } catch (err) {
-          console.error("Failed to prune S3 file:", old.s3Key, err)
-        }
-      }
-
-      // Reconstruct preserving order
-      metadata.submissions = metadata.submissions.filter(
-        s => !toRemove.find(r => r.id === s.id)
-      )
-    }
-
-    await putJsonToS3(metadataKey, metadata)
 
     return NextResponse.json({
       message: "File uploaded successfully",
-      filename: key,
+      filename: uploadedKey,
       size: file.size,
       type: file.type,
-      submission: newSubmission,
-    })
-  } catch (error) {
-    console.error("Error uploading file:", error)
-
-    // Provide more detailed error message
-    let errorMessage = "Failed to upload file"
-    if (error instanceof Error) {
-      errorMessage = error.message
-      console.error("Error details:", error.stack)
-    }
-
-    return NextResponse.json(
-      {
-        error: errorMessage,
-        details: error instanceof Error ? error.message : String(error)
+      submission: {
+        id: document.id,
+        fileName: file.name,
+        s3Key: uploadedKey,
+        uploadedAt: document.created_at,
+        score: document.score ?? 0,
+        isStarred: document.is_starred,
       },
-      { status: 500 },
-    )
+    });
+  } catch (error) {
+    if (uploadedKey && !persisted) await deleteFromS3(uploadedKey).catch(() => {});
+    console.error("Error uploading resume:", error);
+    return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
   }
 }
-

@@ -51,3 +51,9 @@ data/resume-data.json
 # clerk configuration (can include secrets)
 /.clerk/
 .claude/
+docs/**
+!docs/data-hierarchy.md
+!docs/future-data-model.md
+!docs/vistern-data-er.svg
+.codex-build/
+/supabase/.temp/

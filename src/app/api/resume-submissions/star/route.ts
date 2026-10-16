@@ -1,63 +1,49 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { auth } from "@clerk/nextjs/server"
-import { getJsonFromS3, putJsonToS3, deleteFromS3 } from "@/lib/aws/s3"
+import { type NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { createClerkSupabaseServerClient } from "@/lib/supabase/server";
+import { importLegacyResumeSubmissions } from "@/lib/supabase/resume-documents";
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth()
-    if (!userId) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
+    const { userId } = await auth();
+    if (!userId) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+
+    const { id, starred } = await request.json();
+    if (typeof id !== "string" || typeof starred !== "boolean") {
+      return NextResponse.json({ success: false, error: "Invalid parameters" }, { status: 400 });
     }
 
-    const { id, starred } = await request.json()
-    if (!id || typeof starred !== "boolean") {
-      return NextResponse.json({ success: false, error: "Invalid parameters" }, { status: 400 })
-    }
+    const supabase = await createClerkSupabaseServerClient();
+    await importLegacyResumeSubmissions(supabase, userId);
+    const { data: document, error: lookupError } = await supabase.from("resume_documents")
+      .select("id,file_name,s3_object_key,created_at,score,is_starred")
+      .eq("id", id).eq("clerk_user_id", userId).not("s3_object_key", "is", null).maybeSingle();
+    if (lookupError) throw lookupError;
+    if (!document) return NextResponse.json({ success: false, error: "Submission not found" }, { status: 404 });
 
-    const metadataKey = `uploads/${userId}/submissions-metadata.json`
-    const metadata = await getJsonFromS3<{submissions: any[]}>(metadataKey)
-
-    if (!metadata) {
-      return NextResponse.json({ success: false, error: "No submissions found" }, { status: 404 })
-    }
-
-    const submissionIndex = metadata.submissions.findIndex(s => s.id === id)
-    if (submissionIndex === -1) {
-      return NextResponse.json({ success: false, error: "Submission not found" }, { status: 404 })
-    }
-
-    if (starred) {
-      // Check limit
-      const currentStarred = metadata.submissions.filter(s => s.isStarred).length
-      if (currentStarred >= 3 && !metadata.submissions[submissionIndex].isStarred) {
-        return NextResponse.json({ success: false, error: "You can only star up to 3 resumes" }, { status: 400 })
+    if (starred && !document.is_starred) {
+      const { count, error: countError } = await supabase.from("resume_documents")
+        .select("id", { count: "exact", head: true }).eq("clerk_user_id", userId).eq("is_starred", true);
+      if (countError) throw countError;
+      if ((count ?? 0) >= 3) {
+        return NextResponse.json({ success: false, error: "You can only star up to 3 resumes" }, { status: 400 });
       }
-      
-      // If it's a past unstarred resume, check if data actually exists still:
-      const resumeData = await getJsonFromS3(`uploads/${userId}/resume-data-${id}.json`)
-      if (!resumeData) {
-        return NextResponse.json({ success: false, error: "Data for this resume has already been deleted to save space and cannot be starred." }, { status: 400 })
-      }
-
-      metadata.submissions[submissionIndex].isStarred = true
-    } else {
-      metadata.submissions[submissionIndex].isStarred = false
-      // For storage optimization, delete the past data when unstarred
-      await deleteFromS3(`uploads/${userId}/resume-data-${id}.json`).catch(() => {})
-      await deleteFromS3(`uploads/${userId}/xyz-feedback-${id}.json`).catch(() => {})
     }
 
-    await putJsonToS3(metadataKey, metadata)
-
-    return NextResponse.json({
-      success: true,
-      data: metadata.submissions[submissionIndex]
-    })
+    const { data: updated, error: updateError } = await supabase.from("resume_documents")
+      .update({ is_starred: starred }).eq("id", id).eq("clerk_user_id", userId)
+      .select("id,file_name,s3_object_key,created_at,score,is_starred").single();
+    if (updateError) throw updateError;
+    return NextResponse.json({ success: true, data: {
+      id: updated.id,
+      fileName: updated.file_name || "Resume",
+      s3Key: updated.s3_object_key,
+      uploadedAt: updated.created_at,
+      score: updated.score ?? 0,
+      isStarred: updated.is_starred,
+    } });
   } catch (error) {
-    console.error("Error toggling resume star status:", error)
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    )
+    console.error("Error toggling resume star status:", error);
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
 }

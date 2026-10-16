@@ -220,7 +220,7 @@ export function ResumeUpload() {
       const saveResponse = await fetch("/api/resume", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ resume: data, s3Key: uploadedFile?.filename }),
       })
       const saveResult = await saveResponse.json()
 

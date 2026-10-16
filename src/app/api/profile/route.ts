@@ -1,87 +1,128 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { auth } from "@clerk/nextjs/server"
-import { getJsonFromS3, putJsonToS3 } from "@/lib/aws/s3"
-import type { Resume } from "@/app/api/parse/resumeSchema"
+import { type NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { getJsonFromS3 } from "@/lib/aws/s3";
+import { createClerkSupabaseServerClient } from "@/lib/supabase/server";
+import { hasImportedLegacyDataset, markLegacyDatasetImported } from "@/lib/supabase/legacy-import";
+import { normalizeProfileData, profileItemsFromResume, resumeFromProfileItems } from "@/lib/profile/profile-data";
+import type { Json } from "@/lib/supabase/database.types";
+
+async function readLegacyMasterProfile(userId: string) {
+  const saved = await getJsonFromS3<unknown>(`uploads/${userId}/master-profile.json`);
+  if (saved && typeof saved === "object" && "details" in saved && !("experience" in saved)) {
+    return (saved as { details: unknown }).details;
+  }
+  return saved;
+}
+
+async function getOrImportProfile(userId: string) {
+  const supabase = await createClerkSupabaseServerClient();
+  let { data: profile, error } = await supabase
+    .from("student_profiles")
+    .select("id, basics")
+    .eq("clerk_user_id", userId)
+    .maybeSingle();
+  if (error) throw error;
+
+  if (!profile) {
+    const imported = await readLegacyMasterProfile(userId);
+    const initial = normalizeProfileData(imported);
+    const { data: created, error: createError } = await supabase
+      .from("student_profiles")
+      .insert({ clerk_user_id: userId, basics: initial.basics as unknown as Json })
+      .select("id, basics")
+      .single();
+    if (createError) throw createError;
+    profile = created;
+  }
+
+  if (!(await hasImportedLegacyDataset(supabase, userId, "profile"))) {
+    const legacy = await readLegacyMasterProfile(userId);
+    if (legacy) {
+      const items = profileItemsFromResume(normalizeProfileData(legacy)).map((item) => ({
+        ...item,
+        profile_id: profile!.id,
+        clerk_user_id: userId,
+      }));
+      if (items.length) {
+        const { error: importError } = await supabase
+          .from("profile_items")
+          .upsert(items, { onConflict: "profile_id,clerk_user_id,item_type,identity_key" });
+        if (importError) throw importError;
+      }
+    }
+    await markLegacyDatasetImported(supabase, userId, "profile", 1);
+  }
+
+  const { data: rows, error: itemsError } = await supabase
+    .from("profile_items")
+    .select("item_type, title, content, sort_order")
+    .eq("profile_id", profile.id)
+    .eq("clerk_user_id", userId)
+    .neq("verification_status", "archived")
+    .order("item_type")
+    .order("sort_order");
+  if (itemsError) throw itemsError;
+
+  return {
+    supabase,
+    profile,
+    data: resumeFromProfileItems(profile.basics, rows ?? []),
+  };
+}
 
 export async function GET() {
   try {
-    const { userId } = await auth()
-    if (!userId) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
-    }
-
-    const masterKey = `uploads/${userId}/master-profile.json`
-    let masterProfile = await getJsonFromS3<Resume>(masterKey)
-
-    if (!masterProfile) {
-        // If they don't have a master profile, try to initialize it from their most recent resume data
-        const resumeData = await getJsonFromS3<Resume>(`uploads/${userId}/resume-data.json`)
-        
-        if (resumeData) {
-            masterProfile = resumeData
-            // Strip out resume-specific identifiers if necessary, though it's structurally the same
-            await putJsonToS3(masterKey, masterProfile)
-        } else {
-            // Give them a completely blank slate initialized state
-            masterProfile = {
-                basics: {
-                    name: "",
-                    email: "",
-                    phone: "",
-                    location: { city: "", state: "", country: "" },
-                    linkedin: "",
-                    github: "",
-                    portfolio: ""
-                },
-                education: [],
-                experience: [],
-                projects: [],
-                skills: {
-                    programming_languages: [],
-                    frameworks: [],
-                    libraries: [],
-                    databases: [],
-                    devops_tools: [],
-                    cloud_platforms: [],
-                    other: []
-                },
-                certifications: [],
-                achievements: [],
-                publications: [],
-                extracurriculars: []
-            }
-        }
-    }
-
-    return NextResponse.json({
-        success: true,
-        data: masterProfile
-    })
+    const { userId } = await auth();
+    if (!userId) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    const { data } = await getOrImportProfile(userId);
+    return NextResponse.json({ success: true, data });
   } catch (error) {
-    console.error("Error fetching master profile:", error)
-    return NextResponse.json({ success: false, error: "Failed to fetch master profile" }, { status: 500 })
+    console.error("Error fetching master profile:", error);
+    return NextResponse.json({ success: false, error: "Failed to fetch master profile" }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
-    try {
-        const { userId } = await auth()
-        if (!userId) {
-            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
-        }
+  try {
+    const { userId } = await auth();
+    if (!userId) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
-        const data: Resume = await request.json()
-        const masterKey = `uploads/${userId}/master-profile.json`
-        
-        await putJsonToS3(masterKey, data)
+    const data = normalizeProfileData(await request.json());
+    const { supabase, profile } = await getOrImportProfile(userId);
+    const { error: profileError } = await supabase
+      .from("student_profiles")
+      .update({ basics: data.basics as unknown as Json, updated_at: new Date().toISOString() })
+      .eq("id", profile.id)
+      .eq("clerk_user_id", userId);
+    if (profileError) throw profileError;
 
-        return NextResponse.json({
-            success: true,
-            data
-        })
-
-    } catch (error) {
-        console.error("Error saving master profile:", error)
-        return NextResponse.json({ success: false, error: "Failed to save master profile" }, { status: 500 })
+    const items = profileItemsFromResume(data).map((item) => ({
+      ...item,
+      profile_id: profile.id,
+      clerk_user_id: userId,
+    }));
+    if (items.length) {
+      const { error: saveError } = await supabase
+        .from("profile_items")
+        .upsert(items, { onConflict: "profile_id,clerk_user_id,item_type,identity_key" });
+      if (saveError) throw saveError;
     }
+
+    const incomingKeys = items.map((item) => item.identity_key);
+    let archiveQuery = supabase
+      .from("profile_items")
+      .update({ verification_status: "archived" })
+      .eq("profile_id", profile.id)
+      .eq("clerk_user_id", userId)
+      .eq("verification_status", "verified");
+    if (incomingKeys.length) archiveQuery = archiveQuery.not("identity_key", "in", `(${incomingKeys.join(",")})`);
+    const { error: archiveError } = await archiveQuery;
+    if (archiveError) throw archiveError;
+
+    await markLegacyDatasetImported(supabase, userId, "profile", items.length);
+    return NextResponse.json({ success: true, data });
+  } catch (error) {
+    console.error("Error saving master profile:", error);
+    return NextResponse.json({ success: false, error: "Failed to save master profile" }, { status: 500 });
+  }
 }

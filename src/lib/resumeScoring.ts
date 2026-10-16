@@ -73,15 +73,18 @@ function quantityScore(count: number, ideal: number): number {
   return Math.round((count / ideal) * 100)
 }
 
-interface XYZFeedbackItem {
-  score: number
-  xyz_analysis: string
-  improvements: string[]
-}
+function feedbackScores(feedback: unknown, section: 'projects' | 'experience'): number[] {
+  if (!feedback || typeof feedback !== 'object' || Array.isArray(feedback)) return []
+  const entries = (feedback as Record<string, unknown>)[section]
+  if (!entries || typeof entries !== 'object' || Array.isArray(entries)) return []
 
-interface XYZFeedbackData {
-  projects: Record<number, XYZFeedbackItem>
-  experience: Record<number, XYZFeedbackItem>
+  return Object.values(entries).flatMap((entry) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return []
+    const score = (entry as Record<string, unknown>).score
+    return typeof score === 'number' && Number.isFinite(score) && score >= 0 && score <= 100
+      ? [score]
+      : []
+  })
 }
 
 /**
@@ -89,7 +92,7 @@ interface XYZFeedbackData {
  */
 export function calculateResumeScoreDetailed(
   resume: Resume,
-  xyzFeedback?: XYZFeedbackData | null
+  xyzFeedback?: unknown
 ): ResumeScoreResult {
   // Analyze each category
   const projectAnalysis = analyzeProjectQuality(resume.projects)
@@ -107,18 +110,18 @@ export function calculateResumeScoreDetailed(
   let experienceQuality = experienceAnalysis.qualityScore
 
   if (xyzFeedback) {
-    // Average AI scores for projects
-    const projectScores = Object.values(xyzFeedback.projects || {})
+    // Stored and generated feedback is untrusted JSON; use only valid scores.
+    const projectScores = feedbackScores(xyzFeedback, 'projects')
     if (projectScores.length > 0) {
-      const avgProjectAI = projectScores.reduce((sum, p) => sum + p.score, 0) / projectScores.length
+      const avgProjectAI = projectScores.reduce((sum, score) => sum + score, 0) / projectScores.length
       // Blend: 50% heuristic + 50% AI
       projectQuality = Math.round(projectAnalysis.qualityScore * 0.5 + avgProjectAI * 0.5)
     }
 
     // Average AI scores for experience
-    const expScores = Object.values(xyzFeedback.experience || {})
+    const expScores = feedbackScores(xyzFeedback, 'experience')
     if (expScores.length > 0) {
-      const avgExpAI = expScores.reduce((sum, e) => sum + e.score, 0) / expScores.length
+      const avgExpAI = expScores.reduce((sum, score) => sum + score, 0) / expScores.length
       // Blend: 50% heuristic + 50% AI
       experienceQuality = Math.round(experienceAnalysis.qualityScore * 0.5 + avgExpAI * 0.5)
     }
