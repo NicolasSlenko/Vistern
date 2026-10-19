@@ -2,7 +2,7 @@
 
 ## Final walkthrough, October 18, 2026
 
-Tested the authenticated application on `localhost:4191` with the supplied development environment. The final checkout is `NicolasSlenko/Vistern`, based on `main` at `7c336ee`, branch `feat/scrum-14-student-workspace`. This section supersedes earlier test coverage and fixture counts below.
+Tested the authenticated application on `localhost:4191` with the supplied development environment. The final checkout is `NicolasSlenko/Vistern`, based on `main` at `7c336ee`, branch `student-onboarding-and-home`. This section supersedes earlier test coverage and fixture counts below.
 
 ### Manual results
 

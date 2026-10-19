@@ -3,7 +3,7 @@
 Scope selected with Pablo on October 16, 2026: onboarding and Home first.
 
 Base: `NicolasSlenko/Vistern`, `main` at `7c336ee570804abb88d7a500b0440ad7024b2c4a`.
-Branch: `feat/scrum-14-student-workspace`.
+Branch: `student-onboarding-and-home`.
 
 The October 16 repository invitation identifies this as the team repository. The integration is based on its current main branch and preserves the team’s configuration and architecture-page changes.
 

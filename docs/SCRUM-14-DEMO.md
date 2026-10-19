@@ -6,7 +6,7 @@ Use the authenticated application at `http://localhost:4191/home`. Build with `n
 
 SCRUM-14 asks for the agreed prototype screens in the existing Vistern application, on a feature branch, while preserving Clerk sign-in, storage, and core workflows. The integration uses the existing Next.js, React, TypeScript, Clerk, and S3 setup.
 
-The branch is `feat/scrum-14-student-workspace` in `NicolasSlenko/Vistern`, based on the team’s current `main`. Work started with onboarding and Home and now connects Home to the Career plan, resource pages, Community directory, Resume, and Jobs.
+The branch is `student-onboarding-and-home` in `NicolasSlenko/Vistern`, based on the team’s current `main`. Work started with onboarding and Home and now connects Home to the Career plan, resource pages, Community directory, Resume, and Jobs.
 
 ## Walkthrough
 
