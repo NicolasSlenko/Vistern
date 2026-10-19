@@ -11,16 +11,16 @@ npm run start      # Start production server
 npm run lint       # Run ESLint
 ```
 
-No test suite is configured.
+Regression tests run with `npm run test:student`, `npm run test:resume`, and `npm run test:career`. Build before `npm run start:local` to run the authenticated app at `http://localhost:4191`.
 
 ## Architecture Overview
 
-**Next.js 15 App Router** full-stack SaaS for resume analysis. All persistent data lives in **AWS S3** — there is no active database (Drizzle ORM is scaffolded but unused). Authentication is via **Clerk**.
+**Next.js 15 App Router** student career workspace with resume analysis. All persistent data lives in **AWS S3** — there is no active database (Drizzle ORM is scaffolded but unused). Authentication is via **Clerk**.
 
 ### Data Flow
 
-1. User uploads PDF/DOCX → `POST /api/upload` (stores raw file in S3, enforces 3 uploads/day limit)
-2. `POST /api/parse` — extracts text → OpenAI GPT extracts structured data → Zod validates → saves `resume-data.json` to S3
+1. User uploads PDF/DOCX/TXT → `POST /api/upload` (stores raw file in S3, enforces 3 uploads/day limit)
+2. `POST /api/parse` — extracts text → OpenAI GPT extracts structured data → Zod validates → returns a draft for review; `POST /api/resume` saves confirmed data and merges it into the master profile
 3. `GET /api/resume` — fetches resume data; `ResumeContext` calls this on mount
 4. `POST /api/analyze/xyz-batch` — GPT generates XYZ-framework feedback + actionable insights → cached in `xyz-feedback.json` on S3
 5. Dashboard computes scores client-side via `src/lib/resumeScoring.ts`
@@ -30,18 +30,23 @@ No test suite is configured.
 All keys are prefixed by `uploads/{userId}/`:
 - `resume-data.json` — current parsed resume (source of truth)
 - `xyz-feedback.json` — cached GPT feedback (XYZ analysis + actionable insights)
-- `submissions-metadata.json` — last 10 upload records
+- `submissions-metadata.json` — up to five unstarred uploads, plus starred uploads
 - `master-profile.json` — aggregated data across uploads
 - `matched-courses.json` — UF course matching cache
-- `{submissionId}/resume-data.json` — versioned snapshots
+- `resume-data-{submissionId}.json` — versioned snapshots
+- `student-profile.json` — onboarding answers and completion
+- `career-workspace.json` — versioned activity plan, notes, dates, and completion
+- `job-board.json` — jobs saved through the existing matching tool
 
 ### State Management
 
-`ResumeContext` (`src/contexts/resume-context.tsx`) is the single source of client state:
+`ResumeContext` (`src/contexts/resume-context.tsx`) is the source of client resume state:
 - Loads resume + XYZ feedback on mount from S3 via API routes
 - Triggers lazy generation of XYZ feedback if missing
 - Persists UI state (e.g., `showAiFeedback`) in localStorage
 - Consumed via the `useResume()` hook — all dashboard/profile components use this
+
+Home, Career, Community, and Jobs use server loaders for authenticated data. Career mutations validate Zod payloads and use revision checks with conditional S3 writes; they never modify the resume.
 
 ### API Route Conventions
 

@@ -82,7 +82,6 @@ export async function POST(request: NextRequest) {
 
     const allowedTypes = [
       "application/pdf",
-      "application/msword",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       "text/plain",
     ]
@@ -90,7 +89,7 @@ export async function POST(request: NextRequest) {
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
         {
-          error: "Invalid file type. Only PDF, DOC, DOCX, and TXT files are allowed.",
+          error: "Choose a PDF, DOCX, or TXT file. Save older Word documents as DOCX or PDF first.",
         },
         { status: 400 },
       )

@@ -1,25 +1,18 @@
 "use client"
 
-import { useCallback, useState } from "react"
-import { useDropzone } from "react-dropzone"
+import { useCallback, useEffect, useState } from "react"
+import { useDropzone, type FileRejection } from "react-dropzone"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Upload, FileText, CheckCircle, AlertCircle, X, Rocket, Loader2, FileUp, Edit, ArrowLeft, Cpu, Sparkles, ArrowRight } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle, Loader2 } from "lucide-react"
 import type { Resume } from "@/app/api/parse/resumeSchema"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { toast } from "sonner"
 import { ResumeVerification } from "@/components/resume-verification"
 import { useResume } from "@/contexts/resume-context"
 import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs"
-import { motion } from "framer-motion"
 
 interface UploadedFile {
   name: string
@@ -34,7 +27,12 @@ interface ParseResult {
   missing: string[]
 }
 
-export function ResumeUpload() {
+interface ResumeUploadProps {
+  onComplete?: () => Promise<void>
+  onBusyChange?: (busy: boolean) => void
+}
+
+export function ResumeUpload({ onComplete, onBusyChange }: ResumeUploadProps = {}) {
   const { setResumeData, setCurrentFileName, refreshResumeData } = useResume()
   const router = useRouter()
   const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null)
@@ -44,22 +42,15 @@ export function ResumeUpload() {
   const [parseResult, setParseResult] = useState<ParseResult | null>(null)
   const [isParsing, setIsParsing] = useState(false)
   const [showVerification, setShowVerification] = useState(false)
-  const [verifiedData, setVerifiedData] = useState<Resume | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [processingMessage, setProcessingMessage] = useState("Processing...")
-  const [progress, setProgress] = useState(0)
-
-  // Messages to cycle through while processing
-  const loadingMessages = [
-    "Analyzing detailed experience...",
-    "Extracting project metrics...",
-    "Evaluating skills proficiency...",
-    "Matching coursework to curriculum...",
-    "Calculating comprehensive score...",
-    "Generating actionable insights..."
-  ]
+  useEffect(() => {
+    onBusyChange?.(isUploading || isParsing || isProcessing)
+  }, [isUploading, isParsing, isProcessing, onBusyChange])
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    const file = acceptedFiles[0]
+    if (!file) return
     setIsUploading(true)
     setUploadStatus("idle")
     setErrorMessage("")
@@ -67,7 +58,6 @@ export function ResumeUpload() {
     setParseResult(null)
 
     try {
-      const file = acceptedFiles[0]
       const formData = new FormData()
       formData.append("file", file)
 
@@ -121,15 +111,30 @@ export function ResumeUpload() {
     }
   }, [])
 
+  const onDropRejected = useCallback((rejections: FileRejection[]) => {
+    const code = rejections[0]?.errors[0]?.code
+    const message =
+      code === "file-too-large"
+        ? "Choose a file smaller than 10 MB."
+        : code === "too-many-files"
+          ? "Choose one resume at a time."
+          : "Choose a PDF, DOCX, or TXT file. Save older Word documents as DOCX or PDF first."
+    setUploadStatus("error")
+    setErrorMessage(message)
+    toast.error(message)
+  }, [])
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
+    onDropRejected,
     accept: {
       "application/pdf": [".pdf"],
-      "application/msword": [".doc"],
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
       "text/plain": [".txt"],
     },
     maxFiles: 1,
+    multiple: false,
+    disabled: isUploading || isParsing || isProcessing,
     maxSize: 10 * 1024 * 1024,
   })
 
@@ -137,6 +142,7 @@ export function ResumeUpload() {
     if (!uploadedFile) return
 
     setIsParsing(true)
+    setErrorMessage("")
 
     try {
       const response = await fetch("/api/parse", {
@@ -156,42 +162,26 @@ export function ResumeUpload() {
         throw new Error(result.message || result.error || "Failed to parse")
       }
 
-      setParseResult(result)
+      if (!result.details) {
+        throw new Error("We couldn’t read the resume. Try another file or continue without one.")
+      }
 
-      // Log the full JSON output to console for debugging
-      console.log("==========================================")
-      console.log("PARSED RESUME OUTPUT (SEMANTIC PARSER):")
-      console.log("==========================================")
-      console.log(JSON.stringify(result, null, 2))
-      console.log("==========================================")
+      setParseResult(result)
 
       // Show verification form after successful parse
       if (result.details) {
         setShowVerification(true)
-        toast.success("Resume parsed successfully with AI!")
+        toast.success("Resume ready to review.")
       }
     } catch (error) {
       console.error("Error parsing:", error)
       setParseResult({ details: null, missing: ["Failed to parse"] })
       const errorMsg = error instanceof Error ? error.message : "Failed to parse resume"
+      setErrorMessage(errorMsg)
+      setUploadStatus("error")
       toast.error(errorMsg)
     } finally {
       setIsParsing(false)
-    }
-  }
-
-  const exportJSON = async (method: string) => {
-    if (!parseResult) return
-    const data = JSON.stringify(parseResult)
-
-    if (method === "download") {
-      const download = document.createElement("a")
-      download.href = `data:application/json;charset=utf-8,${JSON.stringify(data)}`
-      download.setAttribute("download", "resume.json")
-      download.click()
-    } else if (method === "clipboard") {
-      await navigator.clipboard.writeText(data)
-      toast.info("Copied to Clipboard")
     }
   }
 
@@ -199,24 +189,16 @@ export function ResumeUpload() {
     setUploadedFile(null)
     setParseResult(null)
     setShowVerification(false)
-    setVerifiedData(null)
     setUploadStatus("idle")
+    setErrorMessage("")
   }
 
   const handleVerificationConfirm = async (data: Resume) => {
-    setVerifiedData(data)
-    setResumeData(data)
     setShowVerification(false)
     setIsProcessing(true)
     setProcessingMessage("Saving resume data...")
 
-    // Update the current filename in context
-    if (uploadedFile?.name) {
-      setCurrentFileName(uploadedFile.name)
-    }
-
     try {
-      // 1. Save Resume Data (and calculate initial score)
       const saveResponse = await fetch("/api/resume", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -224,28 +206,17 @@ export function ResumeUpload() {
       })
       const saveResult = await saveResponse.json()
 
-      if (!saveResult.success) {
+      if (!saveResponse.ok || !saveResult.success) {
         throw new Error("Failed to save resume data")
       }
+      setResumeData(data)
+      if (uploadedFile?.name) setCurrentFileName(uploadedFile.name)
 
-      // Start looping messages for the analysis phase and increment progress
-      let msgIndex = 0
-      let currentProgress = 10
-      setProgress(10)
-
-      const messageInterval = setInterval(() => {
-        setProcessingMessage(loadingMessages[msgIndex])
-        msgIndex = (msgIndex + 1) % loadingMessages.length
-
-        // Asymptotically approach 90%
-        currentProgress = currentProgress + (90 - currentProgress) * 0.1
-        setProgress(currentProgress)
-      }, 1500)
-
-      // 2. Perform Coursework Matching — UF students only (hits UF API, slow for everyone else)
+      // Course matching is available only for UF students.
       const schoolName = data.education?.[0]?.school?.toLowerCase() || ""
       const isUF = schoolName.includes("university of florida") || schoolName === "uf"
       if (isUF) {
+        setProcessingMessage("Matching your coursework...")
         try {
           const matchResponse = await fetch("/api/match-coursework?threshold=80")
           const matchData = await matchResponse.json()
@@ -257,8 +228,7 @@ export function ResumeUpload() {
         }
       }
 
-      // 3. Pre-compute XYZ Analysis for all projects and experiences
-      setProcessingMessage("Analyzing bullet points with AI...")
+      setProcessingMessage("Preparing resume feedback...")
       try {
         const xyzResponse = await fetch("/api/analyze/xyz-batch", {
           method: "POST",
@@ -271,36 +241,22 @@ export function ResumeUpload() {
         }
       } catch (xyzError) {
         console.error("Error in XYZ batch analysis:", xyzError)
-        // Continue even if analysis fails — dashboard will just not show feedback
+        // Feedback can be retried independently of saving the resume.
       }
 
-      // 4. Refresh context so it picks up cached XYZ feedback + insights
       await refreshResumeData()
 
-      clearInterval(messageInterval)
-      setProgress(100)
-      setProcessingMessage("Finalizing profile...")
-
-      // Small delay to let the user see "Finalizing" and 100%
-      await new Promise(resolve => setTimeout(resolve, 800))
-
-      toast.success("Resume processed and analyzed successfully!")
-      router.push("/dashboard") // Redirect to dashboard instead of questionnaire as requested? 
-      // Wait, user said "redirected to the dashboard", but code was redirecting to "/questionnaire".
-      // The original flow was to questionnaire. I'll stick to questionnaire but maybe user meant that flow.
-      // Actually, user said: "redirected to the dashboard", but code was redirecting to "/questionnaire".
-      // The original flow was to questionnaire. I'll stick to questionnaire but maybe user meant that flow.
-      // Re-reading code: `router.push("/questionnaire")` was consistent.
-      // But user said "dashboard". Maybe they mean the whole app flow. 
-      // I will check if I should redirect to dashboard or questionnaire. 
-      // Given the user context "Job Preferences Snapshot", likely questionnaire is the preferences step.
-      // However, if the user explicitly said "redirected to the dashboard", maybe I should check.
-      // USE CASE: "Upload -> Verify -> Questionnaire -> Dashboard".
-      // I will keep "/questionnaire" as the next step in the flow, assuming "dashboard" was a generic term for "the app".
-
+      if (onComplete) await onComplete()
+      else router.push("/dashboard")
+      toast.success("Resume saved.")
     } catch (error) {
       console.error("Error processing resume:", error)
-      toast.error("Failed to process resume completely. Please try again.")
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to process resume completely. Please try again.",
+      )
+    } finally {
       setIsProcessing(false)
     }
   }
@@ -308,12 +264,6 @@ export function ResumeUpload() {
   const handleVerificationCancel = () => {
     setShowVerification(false)
     toast.info("Verification cancelled")
-  }
-
-  const handleEditResume = () => {
-    if (parseResult?.details) {
-      setShowVerification(true)
-    }
   }
 
   const formatFileSize = (bytes: number) => {
@@ -326,197 +276,97 @@ export function ResumeUpload() {
 
   return (
     <div className="space-y-6">
-      {/* Full Screen Processing Overlay */}
       {isProcessing && (
-        <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="flex flex-col items-center max-w-md text-center space-y-8 relative">
-
-            {/* Circular Progress Bar */}
-            <div className="relative h-32 w-32">
-              <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full animate-pulse" />
-              <svg className="h-full w-full rotate-[-90deg]" viewBox="0 0 100 100">
-                {/* Background Circle */}
-                <circle
-                  className="stroke-muted text-muted"
-                  strokeWidth="8"
-                  fill="none"
-                  r="40"
-                  cx="50"
-                  cy="50"
-                />
-                {/* Progress Circle */}
-                <circle
-                  className="stroke-primary text-primary transition-all duration-500 ease-in-out"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  fill="none"
-                  r="40"
-                  cx="50"
-                  cy="50"
-                  strokeDasharray="251.2"
-                  strokeDashoffset={251.2 - (251.2 * progress) / 100}
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-xl font-bold">{Math.round(progress)}%</span>
-              </div>
-            </div>
-
-            <div className="space-y-2 z-10">
-              <h3 className="text-2xl font-bold tracking-tight">AI Analysis in Progress</h3>
-              <p className="text-lg text-muted-foreground animate-pulse min-h-[1.75rem] font-medium">
-                {processingMessage}
-              </p>
-            </div>
+        <div className="fixed inset-0 z-[100] bg-background/95 flex items-center justify-center p-6">
+          <div role="status" className="flex items-center gap-3 text-lg">
+            <Loader2
+              className="h-5 w-5 animate-spin motion-reduce:animate-none"
+              aria-hidden="true"
+            />
+            <p>{processingMessage}</p>
           </div>
         </div>
       )}
 
       <SignedOut>
-        <motion.div
-           initial={{ opacity: 0, scale: 0.95 }}
-           animate={{ opacity: 1, scale: 1 }}
-           transition={{ duration: 0.5, ease: "easeOut" }}
-           className="relative overflow-hidden rounded-2xl border border-primary/20 bg-background/50 backdrop-blur-xl p-8 text-center max-w-lg mx-auto shadow-[0_0_40px_-15px_rgba(var(--primary),0.3)] z-10"
-        >
-          {/* Subtle glowing background effect */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-primary/10 rounded-full blur-[80px] -z-10 pointer-events-none" />
-          
-          <div className="mx-auto w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mb-6 ring-1 ring-primary/20 shadow-[0_0_15px_rgba(var(--primary),0.2)]">
-            <Sparkles className="w-6 h-6 text-primary" />
-          </div>
-          
-          <h2 className="text-3xl font-bold tracking-tight mb-3">Sign in to continue</h2>
-          <p className="text-muted-foreground mb-8 text-sm leading-relaxed max-w-sm mx-auto">
-             Please sign in to securely upload your resume and unlock personalized career pathing insights.
+        <div className="rounded-md border p-8 text-center space-y-4">
+          <h2 className="text-xl font-semibold">Sign in to upload a resume</h2>
+          <p className="text-muted-foreground">
+            Your resume and feedback will be saved to your account.
           </p>
-          
           <SignInButton mode="modal">
-            <Button size="lg" className="w-full h-12 text-md rounded-full shadow-[0_0_20px_rgba(var(--primary),0.2)] hover:shadow-[0_0_30px_rgba(var(--primary),0.4)] transition-all bg-primary hover:bg-primary/90">
-              Sign in to get started <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
+            <Button>Sign in</Button>
           </SignInButton>
-        </motion.div>
+        </div>
       </SignedOut>
 
       <SignedIn>
-        <div className="space-y-6 relative">
-
-          {/* Main Upload Area - Blur when uploaded */}
-          <Card className={cn(
-            "transition-all duration-500",
-            uploadedFile ? "opacity-20 blur-sm pointer-events-none" : "opacity-100"
-          )}>
-            <CardHeader>
-              <CardTitle>Upload Resume</CardTitle>
-              <CardDescription>
-                Upload your resume to kick off the process. Supported formats: PDF, DOC, DOCX, TXT (Max 10MB). Once confirmed,
-                you&apos;ll be routed directly to job preferences.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+        <Card>
+          <CardHeader>
+            <CardTitle>{uploadedFile ? "Review your upload" : "Upload a resume"}</CardTitle>
+            <CardDescription>
+              {uploadedFile
+                ? "Review the extracted details before adding them to your profile."
+                : "Supported formats: PDF, DOCX, and TXT, up to 10 MB."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {uploadedFile ? (
+              <div className="space-y-5">
+                <div>
+                  <p className="font-medium break-all">{uploadedFile.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {formatFileSize(uploadedFile.size)}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <Button onClick={parseResume} disabled={isParsing || isProcessing}>
+                    {isParsing ? "Reading resume..." : "Review resume"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={removeFile}
+                    disabled={isParsing || isProcessing}
+                  >
+                    Choose another file
+                  </Button>
+                </div>
+              </div>
+            ) : (
               <div
-                {...getRootProps()}
+                {...getRootProps({ role: "button", "aria-label": "Choose a resume file" })}
                 className={cn(
-                  "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors hover:border-primary/50",
-                  isDragActive ? "border-primary bg-primary/5" : "border-border",
-                  isUploading ? "pointer-events-none opacity-50" : "",
+                  "rounded-md border border-dashed p-8 text-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                  isDragActive ? "border-primary" : "border-border hover:border-primary",
+                  isUploading && "pointer-events-none opacity-60",
                 )}
               >
                 <input {...getInputProps()} />
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="p-4 rounded-full bg-muted">
-                    <Upload className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                  {isDragActive ? (
-                    <p className="text-lg font-medium">Drop your resume here...</p>
-                  ) : (
-                    <div className="space-y-2">
-                      <p className="text-lg font-medium">
-                        {isUploading ? "Uploading..." : "Click or drag file to upload"}
-                      </p>
-                      <p className="text-sm text-muted-foreground">PDF, DOC, DOCX, TXT up to 10MB</p>
-                    </div>
-                  )}
-                </div>
+                <p>
+                  {isUploading
+                    ? "Uploading..."
+                    : isDragActive
+                      ? "Drop your resume here"
+                      : "Choose a file or drag it here"}
+                </p>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Modern Overlay when File is Uploaded */}
-          {uploadedFile && !showVerification && !isProcessing && (
-            <div className="absolute inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in zoom-in duration-300">
-              <div className="w-full max-w-md bg-background/80 backdrop-blur-xl border border-border/50 shadow-2xl rounded-2xl p-8 flex flex-col items-center text-center space-y-6">
-
-                {/* File Icon */}
-                <div className="relative">
-                  <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full" />
-                  <FileText className="h-16 w-16 text-blue-500 relative z-10" />
-                  <div className="absolute -bottom-1 -right-1 bg-green-500 text-white rounded-full p-1 border-2 border-background z-20">
-                    <CheckCircle className="h-4 w-4" />
-                  </div>
-                </div>
-
-                {/* Title & Info */}
-                <div className="space-y-2">
-                  <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
-                    Resume Uploaded
-                  </h3>
-                  <div className="text-muted-foreground text-sm">
-                    <p className="font-medium text-foreground">{uploadedFile.name}</p>
-                    <p>{formatFileSize(uploadedFile.size)}</p>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex flex-col gap-3 w-full pt-2">
-                  {/* Parse Button with slide animation */}
-                  <button
-                    onClick={parseResume}
-                    disabled={isParsing}
-                    className="group relative w-full overflow-hidden rounded-xl bg-primary p-4 text-primary-foreground font-semibold shadow-md transition-all hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
-                  >
-                    <div className="absolute inset-0 w-0 bg-white/20 transition-all duration-300 ease-out group-hover:w-full" />
-                    <span className="relative flex items-center justify-center gap-2">
-                      {isParsing ? (
-                        <>
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                          Parsing...
-                        </>
-                      ) : (
-                        <>
-                          Parse Resume
-                          <Rocket className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-                        </>
-                      )}
-                    </span>
-                  </button>
-
-                  <Button
-                    variant="ghost"
-                    onClick={removeFile}
-                    className="w-full text-muted-foreground hover:text-foreground"
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back
-                  </Button>
-                </div>
-
-              </div>
-            </div>
-          )}
-
-          {/* Verification Modal (already customized) */}
-          {showVerification && parseResult?.details && (
-            <ResumeVerification
-              parsedData={parseResult.details}
-              onConfirm={handleVerificationConfirm}
-              onCancel={handleVerificationCancel}
-              open={showVerification}
-            />
-          )}
-
-        </div>
+            )}
+            {uploadStatus === "error" && (
+              <Alert variant="destructive" className="mt-4">
+                <AlertCircle className="h-4 w-4" aria-hidden="true" />
+                <AlertDescription>{errorMessage}</AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+        {showVerification && parseResult?.details && (
+          <ResumeVerification
+            parsedData={parseResult.details}
+            onConfirm={handleVerificationConfirm}
+            onCancel={handleVerificationCancel}
+            open={showVerification}
+          />
+        )}
       </SignedIn>
     </div>
   )

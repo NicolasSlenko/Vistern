@@ -1,0 +1,665 @@
+/* The workspace hierarchy is shared by Home, Career, and Community. */
+.career-page {
+  max-width: 1240px;
+  padding: 30px 44px 72px;
+  margin: auto;
+}
+.career-page-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 36px;
+}
+.career-page-heading p {
+  margin-top: 12px;
+}
+.career-page-heading h1 {
+  font-size: 32px;
+  letter-spacing: -1px;
+}
+.career-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 14px;
+}
+.career-section-heading h2 {
+  font-size: 20px;
+  letter-spacing: -0.4px;
+}
+.career-section-description {
+  max-width: 65ch;
+  margin-bottom: 22px !important;
+}
+.career-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 24px;
+  margin-top: 24px;
+}
+.home-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 252px;
+  gap: 56px;
+  align-items: start;
+}
+.home-main-column,
+.home-side-column {
+  min-width: 0;
+}
+.home-current {
+  background: #fff;
+  padding: 30px 32px;
+  border-radius: 12px;
+  box-shadow: 0 3px 16px #27332d07;
+}
+.home-current .home-section-label {
+  font-size: 13px;
+  color: #47604e;
+  margin-bottom: 16px;
+}
+.home-current h2 {
+  font-size: 30px;
+  line-height: 1.2;
+  letter-spacing: -0.9px;
+  max-width: 22ch;
+  overflow-wrap: anywhere;
+}
+.home-current h2 + p {
+  margin-top: 16px;
+  max-width: 52ch;
+  line-height: 1.75;
+}
+.home-other-starts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 22px;
+  margin-top: 30px;
+  font-size: 12px;
+}
+.home-other-starts a {
+  color: var(--student-muted);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.home-section {
+  margin-top: 40px;
+}
+.home-campus-list {
+  display: grid;
+  gap: 22px;
+  margin-top: 24px;
+}
+.home-campus-list > a {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+}
+.home-campus-list h3 {
+  font-size: 16px;
+  letter-spacing: -0.2px;
+  margin-bottom: 4px;
+}
+.home-campus-list p {
+  font-size: 13px;
+}
+.campus-monogram {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: #e6eee7;
+  color: #246347;
+  border-radius: 50%;
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -1px;
+}
+.campus-research {
+  background: #eef0ec;
+  font-size: 17px;
+  letter-spacing: 0;
+}
+.home-growth {
+  text-align: center;
+  padding: 0 8px 28px;
+}
+.home-growth .sx-growth-tree {
+  display: block;
+  width: 200px;
+  margin: -20px auto -8px;
+}
+.home-growth .sx-growth-art {
+  width: 200px;
+}
+.home-growth h2 {
+  font-size: 19px;
+  margin-bottom: 10px;
+}
+.home-growth p {
+  font-size: 13px;
+  line-height: 1.7;
+}
+.home-growth dl {
+  text-align: left;
+  margin: 16px 0 8px;
+  font-size: 12px;
+}
+.home-growth dl > div {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+.home-growth dd {
+  font-weight: 650;
+}
+.home-growth dt {
+  color: var(--student-muted);
+}
+.home-dates {
+  padding-top: 20px;
+}
+.home-dates h2,
+.home-resume-access h2 {
+  font-size: 18px;
+}
+.home-dates > p,
+.home-resume-access p {
+  font-size: 13px;
+  margin: 12px 0;
+}
+.home-date-list {
+  display: grid;
+  gap: 18px;
+  margin: 22px 0;
+}
+.home-date-list > a {
+  display: flex;
+  gap: 16px;
+  align-items: baseline;
+  font-size: 13px;
+}
+.home-date-list time {
+  color: var(--student-accent);
+  min-width: 43px;
+  font-weight: 600;
+}
+.home-date-list span {
+  overflow-wrap: anywhere;
+}
+.home-date-list small {
+  display: block;
+  color: var(--student-muted);
+}
+.home-resume-access {
+  margin-top: 32px;
+  padding-top: 24px;
+}
+.home-opportunities-empty p {
+  max-width: 59ch;
+  margin: 10px 0 15px;
+}
+.home-opportunities-empty a {
+  margin-right: 24px;
+}
+.career-list {
+  display: grid;
+}
+.career-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 18px 0;
+  width: 100%;
+  background: none;
+  border: 0;
+  text-align: left;
+  color: var(--student-ink);
+}
+.career-list-row + .career-list-row {
+  border-top: 1px solid #e7eae4;
+}
+.career-list-row strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.career-list-row p {
+  margin-top: 4px;
+  font-size: 13px;
+  max-width: 60ch;
+  overflow-wrap: anywhere;
+}
+.career-list-row > span,
+.career-list-row > time {
+  flex-shrink: 0;
+  color: var(--student-muted);
+  font-size: 12px;
+}
+.career-list-row:hover strong {
+  color: var(--student-accent);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.career-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -4px 0 36px;
+}
+.career-tabs a {
+  padding: 9px 15px;
+  border-radius: 7px;
+  font-size: 13px;
+  color: var(--student-muted);
+}
+.career-tabs [aria-current] {
+  background: #e5eee6;
+  color: var(--student-accent);
+  font-weight: 600;
+}
+.career-plan-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 230px;
+  gap: 64px;
+}
+.career-plan-empty {
+  padding: 30px;
+  background: white;
+  border-radius: 12px;
+}
+.career-plan-empty p {
+  margin-top: 12px;
+  max-width: 54ch;
+}
+.career-plan-help h2 {
+  font-size: 17px;
+  margin-bottom: 20px;
+}
+.career-plan-help a {
+  display: block;
+  font-size: 13px;
+  padding: 9px 0;
+  color: var(--student-accent);
+}
+.career-plan-help a:hover,
+.career-resource-list > a:hover h3 {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.career-build > p {
+  margin: 16px 0 28px;
+  max-width: 62ch;
+}
+.career-build-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.career-build-options > :is(button, a) {
+  display: block;
+  padding: 26px;
+  background: white;
+  border: 0;
+  border-radius: 10px;
+  text-align: left;
+}
+.career-build-options h3 {
+  font-size: 19px;
+}
+.career-build-options p {
+  margin: 12px 0;
+}
+.career-resource-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px 40px;
+}
+.career-resource-list > a {
+  padding: 10px 0 18px;
+}
+.career-resource-list h3 {
+  font-size: 19px;
+}
+.career-resource-list p {
+  margin: 10px 0;
+  max-width: 60ch;
+}
+.career-reading {
+  max-width: 740px;
+}
+.career-reading > h2 {
+  margin: 18px 0;
+  font-size: 29px;
+}
+.career-reading > p {
+  margin: 14px 0;
+}
+.career-reading-intro {
+  font-size: 16px;
+  line-height: 1.8;
+}
+.career-reading > section {
+  margin: 30px 0;
+}
+.career-reading section h3 {
+  margin-bottom: 10px;
+}
+.career-reading section p {
+  line-height: 1.85;
+}
+.career-reading ul {
+  list-style: disc;
+  padding-left: 22px;
+  color: var(--student-muted);
+}
+.career-reading > .student-text-link {
+  margin-top: 20px;
+  display: block;
+}
+.career-resource-links {
+  display: grid;
+  gap: 18px;
+  margin: 24px 0 30px;
+}
+.career-resource-links a strong {
+  color: var(--student-accent);
+  font-size: 14px;
+}
+.career-resource-links a span {
+  display: block;
+  font-size: 12px;
+  color: var(--student-muted);
+  margin-top: 4px;
+}
+.career-editor {
+  max-width: 790px;
+  padding: 30px;
+  background: white;
+  border-radius: 12px;
+}
+.career-field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-weight: 550;
+  margin-top: 24px;
+  font-size: 14px;
+}
+.career-field > span {
+  font-size: 12px;
+  color: var(--student-muted);
+  font-weight: 400;
+}
+.career-field :is(input, textarea, select),
+.career-step-edit input:not([type="checkbox"]) {
+  color: var(--student-ink);
+  background: #fff;
+  border: 1px solid #bdc9be;
+  border-radius: 6px;
+  padding: 11px 12px;
+  min-width: 0;
+  width: 100%;
+  font-weight: 400;
+}
+.career-field textarea {
+  resize: vertical;
+  line-height: 1.7;
+}
+.career-field small {
+  font-weight: 400;
+  color: var(--student-muted);
+  font-size: 12px;
+}
+.career-form-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.career-source {
+  margin-top: 22px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  font-size: 12px;
+}
+.career-source > span {
+  color: var(--student-muted);
+}
+.career-steps {
+  border: 0;
+  padding: 0;
+  margin: 28px 0 0;
+}
+.career-steps legend {
+  font-weight: 600;
+  font-size: 16px;
+}
+.career-steps > p {
+  font-size: 13px;
+  margin: 7px 0 12px;
+}
+.career-step-edit {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 10px 0;
+}
+.career-step-edit input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--student-accent);
+}
+.career-step-edit > button {
+  background: none;
+  border: 0;
+  color: var(--student-muted);
+  font-size: 11px;
+}
+.career-status-field {
+  max-width: 300px;
+}
+.career-save-hint {
+  color: var(--student-muted);
+  font-size: 12px;
+}
+.community-directory {
+  max-width: 900px;
+}
+.community-directory > h2 {
+  margin-bottom: 14px;
+}
+.community-directory article {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 32px;
+  padding: 28px 0;
+  scroll-margin-top: 24px;
+}
+.community-directory article + article {
+  border-top: 1px solid #e0e6df;
+}
+.community-directory article h3 {
+  margin: 5px 0 10px;
+}
+.community-directory article p {
+  max-width: 60ch;
+}
+.community-directory .community-kind {
+  color: var(--student-muted);
+  font-size: 12px;
+}
+.community-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex-shrink: 0;
+  gap: 12px;
+}
+.student-account-nav {
+  margin-top: auto;
+  padding: 30px 12px 18px;
+}
+.student-account-nav a {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--student-muted);
+}
+.student-sidebar .student-sidebar-bottom {
+  margin-top: 0;
+}
+.student-sidebar nav .student-subnav {
+  padding-left: 25px;
+  margin-bottom: 16px;
+}
+.student-sidebar nav .student-subnav a {
+  font-size: 12px;
+  padding: 8px 12px;
+}
+@media (max-width: 1150px) {
+  .career-page {
+    padding: 24px 30px 56px;
+  }
+  .home-columns {
+    grid-template-columns: minmax(0, 1fr) 215px;
+    gap: 30px;
+  }
+  .home-current {
+    padding: 26px;
+  }
+  .home-current h2 {
+    font-size: 27px;
+  }
+  .career-plan-layout {
+    gap: 32px;
+    grid-template-columns: minmax(0, 1fr) 200px;
+  }
+}
+@media (max-width: 680px) {
+  .career-page {
+    padding: 20px 20px 40px;
+  }
+  .career-page-heading {
+    align-items: flex-start;
+    margin-bottom: 26px;
+    gap: 16px;
+  }
+  .career-page-heading h1 {
+    font-size: 29px;
+  }
+  .career-page-heading p {
+    font-size: 13px;
+  }
+  .career-page-heading > .student-button {
+    padding: 9px 12px;
+    min-height: 40px;
+    font-size: 11px;
+  }
+  .home-columns {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .home-current {
+    padding: 24px;
+  }
+  .home-current h2 {
+    font-size: 27px;
+  }
+  .home-side-column {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+  }
+  .home-growth {
+    padding: 0;
+    text-align: left;
+  }
+  .home-growth .sx-growth-tree,
+  .home-growth .sx-growth-art {
+    width: 120px;
+    margin: 0;
+  }
+  .home-dates {
+    padding-top: 20px;
+  }
+  .home-resume-access {
+    grid-column: 1/-1;
+    padding: 0;
+    margin-top: 0;
+  }
+  .home-section {
+    margin-top: 32px;
+  }
+  .career-section-heading {
+    gap: 12px;
+  }
+  .career-section-heading h2 {
+    font-size: 19px;
+  }
+  .career-section-heading .student-text-link {
+    font-size: 11px;
+  }
+  .career-list-row {
+    gap: 14px;
+  }
+  .career-list-row > span {
+    max-width: 75px;
+  }
+  .career-plan-layout {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+  .career-resource-list,
+  .career-build-options {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .career-form-pair {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .career-editor {
+    padding: 20px 16px;
+  }
+  .career-editor .career-section-heading {
+    flex-wrap: wrap;
+  }
+  .career-tabs {
+    gap: 4px;
+    margin-bottom: 28px;
+  }
+  .career-tabs a {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  .career-step-edit {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .career-step-edit input:not([type="checkbox"]) {
+    width: calc(100% - 28px);
+  }
+  .career-step-edit > button {
+    margin-left: auto;
+  }
+  .community-directory article {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .community-actions {
+    flex-direction: row;
+    gap: 28px;
+  }
+}

@@ -1,7 +1,6 @@
 import * as React from "react"
 import { ThemeProvider } from "@/components/theme-provider"
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
+import { AppChrome } from "@/components/app-chrome"
 import { ResumeProvider } from "@/contexts/resume-context"
 
 export const AppProviders = ({children}: {children: React.ReactNode}) => {
@@ -13,10 +12,7 @@ export const AppProviders = ({children}: {children: React.ReactNode}) => {
           disableTransitionOnChange
       >
         <ResumeProvider>
-          <Header />
-          <div className="pb-20"></div>
-          {children}
-          <Footer />
+          <AppChrome>{children}</AppChrome>
         </ResumeProvider>
       </ThemeProvider>
     )

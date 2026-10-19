@@ -2,7 +2,8 @@ import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { deleteFromS3, getJsonFromS3, putJsonToS3 } from "@/lib/aws/s3"
 import { calculateResumeScoreDetailed } from "@/lib/resumeScoring"
-import type { Resume } from "@/app/api/parse/resumeSchema"
+import ResumeSchema, { type Resume } from "@/app/api/parse/resumeSchema"
+import { mergeResumeProfile } from "@/lib/merge-resume-profile"
 
 interface ResumeSubmission {
   id: string
@@ -25,85 +26,105 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
     }
 
-    const resumeData = await request.json() as Resume
+    const parsed = ResumeSchema.safeParse(await request.json())
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, error: "Check your resume details and try again." },
+        { status: 400 },
+      )
+    }
+    const resumeData = parsed.data
 
     // Calculate the score from parsed resume data
     const xyzFeedback = await getJsonFromS3<any>(`uploads/${userId}/xyz-feedback.json`)
     const score = calculateResumeScoreDetailed(resumeData, xyzFeedback).totalScore
 
+    // Merge only the details the student has reviewed and confirmed.
+    const masterKey = `uploads/${userId}/master-profile.json`
+    const stored = await getJsonFromS3<Resume | { details: Resume }>(masterKey)
+    const master = stored && "details" in stored ? stored.details : stored
+    const validatedMaster = master ? ResumeSchema.parse(master) : null
+    const mergedProfile = mergeResumeProfile(validatedMaster, resumeData)
     await putJsonToS3(`uploads/${userId}/resume-data.json`, resumeData)
+    await putJsonToS3(masterKey, mergedProfile)
 
     // Update the most recent submission's score with the calculated score
     const metadataKey = `uploads/${userId}/submissions-metadata.json`
     const metadata = await getJsonFromS3<SubmissionsMetadata>(metadataKey)
-    
+
     if (metadata && metadata.submissions.length > 0) {
       // Update the most recent submission's score
       metadata.submissions[0].score = score
       await putJsonToS3(metadataKey, metadata)
-      
+
       // Also save the data under the specific submission ID so it can be restored
-      await putJsonToS3(`uploads/${userId}/resume-data-${metadata.submissions[0].id}.json`, resumeData)
+      await putJsonToS3(
+        `uploads/${userId}/resume-data-${metadata.submissions[0].id}.json`,
+        resumeData,
+      )
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       message: "Resume data saved successfully",
-      score 
+      score,
     })
   } catch (error) {
     console.error("Error saving resume data:", error)
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: "Failed to save resume data",
-        message: error instanceof Error ? error.message : "Unknown error"
+        message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }
 
 export async function GET() {
   try {
-    const { userId } = await auth();
+    const { userId } = await auth()
     if (!userId) {
-      return NextResponse.json({ success: false, data: null, error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, data: null, error: "Unauthorized" },
+        { status: 401 },
+      )
     }
 
-    const resumeData = await getJsonFromS3<Resume>(`uploads/${userId}/resume-data.json`);
+    const resumeData = await getJsonFromS3<Resume>(`uploads/${userId}/resume-data.json`)
 
     if (!resumeData) {
       return NextResponse.json({
         success: false,
         data: null,
-        message: "No resume data found"
-      });
+        message: "No resume data found",
+      })
     }
 
     // Calculate score and breakdown using the same logic as frontend
-    const { calculateResumeScoreDetailed, getScoreBreakdown } = await import("@/lib/resumeScoring");
-    const xyzFeedback = await getJsonFromS3<any>(`uploads/${userId}/xyz-feedback.json`);
-    const score = calculateResumeScoreDetailed(resumeData, xyzFeedback).totalScore;
-    const breakdown = getScoreBreakdown(resumeData);
+    const { calculateResumeScoreDetailed, getScoreBreakdown } = await import("@/lib/resumeScoring")
+    const xyzFeedback = await getJsonFromS3<any>(`uploads/${userId}/xyz-feedback.json`)
+    const score = calculateResumeScoreDetailed(resumeData, xyzFeedback).totalScore
+    const breakdown = getScoreBreakdown(resumeData)
 
     return NextResponse.json({
       success: true,
       data: resumeData,
       score,
-      breakdown
-    });
+      breakdown,
+    })
   } catch (error) {
-    console.error("Error loading resume data:", error);
+    console.error("Error loading resume data:", error)
     return NextResponse.json(
       {
         success: false,
         data: null,
         error: "Failed to load resume data",
-        message: error instanceof Error ? error.message : "Unknown error"
+        message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
-    );
+      { status: 500 },
+    )
   }
 }
 export async function DELETE() {
@@ -117,19 +138,19 @@ export async function DELETE() {
 
     await deleteFromS3(`uploads/${userId}/resume-data.json`)
 
-    return NextResponse.json({ 
-      success: true, 
-      message: "Resume data and matched courses cleared successfully" 
+    return NextResponse.json({
+      success: true,
+      message: "Resume data and matched courses cleared successfully",
     })
   } catch (error) {
     console.error("Error clearing resume data:", error)
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: "Failed to clear resume data",
-        message: error instanceof Error ? error.message : "Unknown error"
+        message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

@@ -13,7 +13,7 @@ export default async function QuestionnairePage() {
   const resumeKey = `uploads/${userId}/resume-data.json`
   const hasResume = await objectExistsInS3(resumeKey)
   if (!hasResume) {
-    redirect("/")
+    redirect("/upload")
   }
 
   const preferences = await getJsonFromS3<QuestionnaireData>(`uploads/${userId}/preferences.json`)

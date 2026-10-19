@@ -1,0 +1,85 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.demo-toolbar {
+  padding: 10px 22px;
+  background: #233c2c;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font:
+    12px/1.5 Arial,
+    sans-serif;
+}
+.demo-toolbar > span {
+  color: #d6e6d6;
+}
+.demo-toolbar > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+.demo-toolbar button,
+.demo-toolbar a {
+  background: #35513d;
+  color: white;
+  border: 1px solid #6b836a;
+  border-radius: 5px;
+  padding: 5px 9px;
+  cursor: pointer;
+  text-decoration: none;
+  font: inherit;
+}
+.demo-toolbar #demo-status:empty {
+  display: none;
+}
+.demo-toolbar #demo-status {
+  width: 100%;
+}
+.demo-avatar {
+  width: 28px;
+  height: 28px;
+  background: #e8ebe4;
+  color: #43563c;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  font-size: 12px;
+}
+.student-sidebar {
+  top: var(--preview-toolbar-height, 51px);
+}
+.student-account > span > button {
+  border: 0;
+  background: none;
+  color: #64705f;
+  font-size: 12px;
+  cursor: pointer;
+}
+.demo-tools {
+  padding: 50px;
+  max-width: 800px;
+  margin: auto;
+}
+.demo-tools h1 {
+  margin-bottom: 20px;
+}
+.demo-tools p {
+  margin-bottom: 20px;
+}
+.demo-tools > a {
+  text-decoration: underline;
+}
+@media (max-width: 760px) {
+  .demo-toolbar > div {
+    margin-left: 0;
+  }
+  .demo-tools {
+    padding: 24px;
+  }
+}

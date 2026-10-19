@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { FileText, Menu, LogOut, LayoutDashboard, User, Upload, Info, Settings, Target } from "lucide-react"
+import { FileText, Menu, LogOut, LayoutDashboard, User, Upload, Home, Info, Settings, Target, type LucideIcon } from "lucide-react"
 import {
   SignedIn,
   SignedOut,
@@ -14,7 +14,6 @@ import { ModeToggle } from "./theme-provider"
 import { cn } from "@/lib/utils"
 
 export function Header() {
-  const pathname = usePathname()
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
@@ -35,7 +34,8 @@ export function Header() {
             <NavButton href="/about-us" icon={Info} label="About" />
 
             <SignedIn>
-              <NavButton href="/" icon={Upload} label="Upload" />
+              <NavButton href="/home" icon={Home} label="Home" />
+              <NavButton href="/upload" icon={Upload} label="Upload" />
               <NavButton href="/dashboard" icon={LayoutDashboard} label="Dashboard" />
               <NavButton href="/match" icon={Target} label="Match" />
               <NavButton href="/profile" icon={User} label="Profile" />
@@ -61,13 +61,6 @@ export function Header() {
 
             <SignedIn>
               <div className="flex items-center gap-2">
-                {/* Logout Button in Nav Line as requested, or keep near UserButton? 
-                    User asked to "make them all more in the center... button styyle... of logout"
-                    I'll add logout to the center group? No, logout usually stays right.
-                    The user said "profile, dashboa, and logout... Can we make them all more in the center".
-                    Putting logout in the center nav is non-standard and could be annoying if accidental.
-                    I will put it in the center group as the last item to strictly follow "make them all more in the center".
-                */}
                 <div className="hidden md:block">
                   <SignOutButton redirectUrl="/">
                     <Button variant="ghost" className="gap-2 text-muted-foreground hover:text-foreground">
@@ -94,7 +87,7 @@ export function Header() {
   )
 }
 
-function NavButton({ href, icon: Icon, label }: { href: string; icon: any; label: string }) {
+function NavButton({ href, icon: Icon, label }: { href: string; icon: LucideIcon; label: string }) {
   const pathname = usePathname()
   const isActive = pathname === href
 

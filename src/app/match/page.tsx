@@ -534,7 +534,7 @@ export default function MatchPage() {
           </div>
           <h2 className="text-2xl font-bold mb-2">No Resume Found</h2>
           <p className="text-muted-foreground text-sm mb-8 text-center max-w-sm">Upload your resume to start discovering live job matches powered by AI.</p>
-          <Button asChild size="lg" className="rounded-xl px-10"><Link href="/">Upload Resume</Link></Button>
+          <Button asChild size="lg" className="rounded-xl px-10"><Link href="/upload">Upload Resume</Link></Button>
         </div>
       </div>
     )
@@ -840,7 +840,7 @@ export default function MatchPage() {
               className="space-y-4 xl:sticky xl:top-6">
 
               {/* Job Board */}
-              <Card className="overflow-hidden">
+              <Card id="job-board" className="overflow-hidden scroll-mt-6">
                 <CardHeader className="pb-3 border-b border-border/40">
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2.5 text-sm">

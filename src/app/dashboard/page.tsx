@@ -2036,7 +2036,7 @@ export default function DashboardPage() {
             <h2 className="text-xl font-semibold mb-2">No Resume Yet</h2>
             <p className="text-muted-foreground text-sm mb-6 text-center max-w-md">Upload your resume to unlock personalized analytics, scoring, and career insights.</p>
             <Button asChild size="lg" className="rounded-xl px-8">
-              <Link href="/">Upload Resume</Link>
+              <Link href="/upload">Upload Resume</Link>
             </Button>
           </div>
         </div>

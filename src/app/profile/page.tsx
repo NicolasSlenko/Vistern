@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { useUser } from "@clerk/nextjs"
-import { Header } from "@/components/header"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -438,27 +437,26 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Header />
-      <main className="flex-1 container mx-auto px-4 pt-24 pb-12">
+      <main className="flex-1 container mx-auto px-4 pt-8 pb-12">
         {/* User Stats Header */}
-        <div className="flex items-center justify-between gap-4 mb-8 bg-card border rounded-xl p-6 shadow-sm">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col items-start gap-5 mb-8 bg-card border rounded-xl p-6 shadow-sm xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex min-w-0 items-center gap-4">
             {user?.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.imageUrl} alt="Profile" className="h-16 w-16 rounded-full border-2 border-primary/20" />
+              <img src={user.imageUrl} alt="Profile" className="h-16 w-16 shrink-0 rounded-full border-2 border-primary/20" />
             ) : (
-              <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center"><User className="h-8 w-8" /></div>
+              <div className="h-16 w-16 shrink-0 rounded-full bg-muted flex items-center justify-center"><User className="h-8 w-8" /></div>
             )}
-            <div>
+            <div className="min-w-0 break-words">
               <h1 className="text-2xl font-bold">{user?.fullName || "Your Profile"}</h1>
               <div className="text-muted-foreground">{user?.primaryEmailAddress?.emailAddress}</div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Button variant="outline" size="sm" asChild className="gap-2">
               <Link href="/settings"><Settings className="h-4 w-4" /> Settings</Link>
             </Button>
-            <label className="flex items-center gap-2 cursor-pointer select-none" onClick={(e) => { e.preventDefault(); toggleFeedback(); }}>
+            <button type="button" role="switch" aria-checked={showFeedback} className="flex items-center gap-2 cursor-pointer select-none" onClick={toggleFeedback}>
             <div
               className={cn(
                 "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
@@ -473,7 +471,7 @@ export default function ProfilePage() {
               />
             </div>
             <span className="text-sm font-medium text-muted-foreground">AI Feedback</span>
-            </label>
+            </button>
           </div>
         </div>
 
@@ -540,7 +538,7 @@ export default function ProfilePage() {
                     <FileText className="h-12 w-12 opacity-20 mb-4" />
                     <h3 className="text-lg font-semibold">No Profile Data</h3>
                     <p className="text-muted-foreground mb-4">Upload a resume to automatically initialize your Master Profile.</p>
-                    <Button asChild><Link href="/">Upload Resume</Link></Button>
+                    <Button asChild><Link href="/upload">Upload Resume</Link></Button>
                   </Card>
                 )}
               </div>
@@ -680,7 +678,7 @@ export default function ProfilePage() {
                     <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p className="text-lg font-medium">No resume submissions yet</p>
                     <Button className="mt-4" asChild>
-                      <Link href="/">Upload Resume</Link>
+                      <Link href="/upload">Upload Resume</Link>
                     </Button>
                   </div>
                 ) : (

@@ -41,6 +41,7 @@ Return:
 `
 
 export const extractWithChatGPT = async (content: string) => {
+  if (!content.trim()) throw new Error("Resume text is empty")
   try {
     const client = new OpenAI()
     const result = await client.responses.parse({
