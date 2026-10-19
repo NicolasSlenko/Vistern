@@ -1,36 +1,49 @@
 import "server-only"
-import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3"
-import { s3 } from "@/lib/aws/s3"
-import {
-  workspaceSchema,
-  WorkspaceConflict,
-  type CareerWorkspace,
-} from "./workspace"
+import { getJsonFromS3 } from "@/lib/aws/s3"
+import { createClerkSupabaseServerClient } from "@/lib/supabase/server"
+import { hasImportedLegacyDataset, markLegacyDatasetImported } from "@/lib/supabase/legacy-import"
+import type { Json } from "@/lib/supabase/database.types"
+import { workspaceSchema, WorkspaceConflict, type CareerWorkspace } from "./workspace"
 
-const key = (userId: string) => `uploads/${userId}/career-workspace.json`
+const conflictMessage = "Your plan changed in another window. Reload it before saving."
+const emptyWorkspace = () => workspaceSchema.parse({})
+const legacyKey = (userId: string) => `uploads/${userId}/career-workspace.json`
 
-function statusCode(error: unknown) {
-  return (error as { $metadata?: { httpStatusCode?: number } })?.$metadata
-    ?.httpStatusCode
+function canReadLegacyS3() {
+  return Boolean(process.env.AWS_BUCKET_NAME && process.env.IAM_AWS_ACCESS_KEY && process.env.IAM_AWS_SECRET_ACCESS_KEY)
 }
 
 export async function readCareerWorkspace(userId: string) {
-  try {
-    const result = await s3.send(
-      new GetObjectCommand({
-        Bucket: process.env.AWS_BUCKET_NAME,
-        Key: key(userId),
-      }),
-    )
-    const text = await result.Body?.transformToString()
-    if (!text || !result.ETag)
-      throw new Error("Incomplete career workspace response")
-    return { data: workspaceSchema.parse(JSON.parse(text)), etag: result.ETag }
-  } catch (error) {
-    if (statusCode(error) === 404)
-      return { data: workspaceSchema.parse({}), etag: null }
-    throw error
+  const supabase = await createClerkSupabaseServerClient()
+  const { data: row, error } = await supabase.from("career_workspaces")
+    .select("data,revision")
+    .eq("clerk_user_id", userId)
+    .maybeSingle()
+  if (error) throw error
+  if (row) {
+    const data = workspaceSchema.parse(row.data)
+    if (data.revision !== row.revision) throw new Error("Career workspace revision mismatch")
+    return { data, etag: String(row.revision) }
   }
+
+  if (await hasImportedLegacyDataset(supabase, userId, "career_workspace") || !canReadLegacyS3())
+    return { data: emptyWorkspace(), etag: null }
+
+  const legacy = await getJsonFromS3<unknown>(legacyKey(userId))
+  if (!legacy) {
+    await markLegacyDatasetImported(supabase, userId, "career_workspace", 0)
+    return { data: emptyWorkspace(), etag: null }
+  }
+  const data = workspaceSchema.parse(legacy)
+  const { error: insertError } = await supabase.from("career_workspaces").insert({
+    clerk_user_id: userId,
+    revision: data.revision,
+    data: data as unknown as Json,
+  })
+  if (insertError && insertError.code !== "23505") throw insertError
+  await markLegacyDatasetImported(supabase, userId, "career_workspace", 1)
+  if (insertError) return readCareerWorkspace(userId)
+  return { data, etag: String(data.revision) }
 }
 
 export async function writeCareerWorkspace(
@@ -38,21 +51,32 @@ export async function writeCareerWorkspace(
   data: CareerWorkspace,
   etag: string | null,
 ) {
-  try {
-    await s3.send(
-      new PutObjectCommand({
-        Bucket: process.env.AWS_BUCKET_NAME,
-        Key: key(userId),
-        Body: JSON.stringify(data),
-        ContentType: "application/json",
-        ...(etag ? { IfMatch: etag } : { IfNoneMatch: "*" }),
-      }),
-    )
-  } catch (error) {
-    if ([409, 412].includes(statusCode(error) || 0))
-      throw new WorkspaceConflict(
-        "Your plan changed in another window. Reload it before saving.",
-      )
-    throw error
+  const supabase = await createClerkSupabaseServerClient()
+  const workspace = workspaceSchema.parse(data)
+  if (etag === null) {
+    const { error } = await supabase.from("career_workspaces").insert({
+      clerk_user_id: userId,
+      revision: workspace.revision,
+      data: workspace as unknown as Json,
+    })
+    if (error?.code === "23505") throw new WorkspaceConflict(conflictMessage)
+    if (error) throw error
+    return
   }
+
+  const expectedRevision = Number(etag)
+  if (!Number.isSafeInteger(expectedRevision) || workspace.revision !== expectedRevision + 1)
+    throw new WorkspaceConflict(conflictMessage)
+  const { data: updated, error } = await supabase.from("career_workspaces")
+    .update({
+      revision: workspace.revision,
+      data: workspace as unknown as Json,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("clerk_user_id", userId)
+    .eq("revision", expectedRevision)
+    .select("clerk_user_id")
+    .maybeSingle()
+  if (error) throw error
+  if (!updated) throw new WorkspaceConflict(conflictMessage)
 }

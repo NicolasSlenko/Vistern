@@ -1,8 +1,7 @@
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import QuestionnaireForm from "./_components/questionnaire-form"
-import { getJsonFromS3, objectExistsInS3 } from "@/lib/aws/s3"
-import type { QuestionnaireData } from "./data"
+import { getCurrentResumeData, getUserPreferences } from "@/lib/supabase/user-data"
 
 export default async function QuestionnairePage() {
   const { userId } = await auth()
@@ -10,13 +9,12 @@ export default async function QuestionnairePage() {
     redirect("/sign-in?redirect_url=/questionnaire")
   }
 
-  const resumeKey = `uploads/${userId}/resume-data.json`
-  const hasResume = await objectExistsInS3(resumeKey)
-  if (!hasResume) {
+  const resume = await getCurrentResumeData(userId)
+  if (!resume) {
     redirect("/upload")
   }
 
-  const preferences = await getJsonFromS3<QuestionnaireData>(`uploads/${userId}/preferences.json`)
+  const preferences = await getUserPreferences(userId)
 
   return <QuestionnaireForm initialData={preferences} />
 }

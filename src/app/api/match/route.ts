@@ -3,7 +3,7 @@ import { z } from "zod";
 import { zodTextFormat } from "openai/helpers/zod.mjs";
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { getJsonFromS3, putJsonToS3 } from "@/lib/aws/s3";
+import { getCurrentResumeData, getUserPreferences } from "@/lib/supabase/user-data";
 import type { Resume } from "@/app/api/parse/resumeSchema";
 
 const MODEL = "gpt-4.1-mini";
@@ -80,10 +80,6 @@ export async function GET() {
             return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
         }
 
-        const cached = await getJsonFromS3(`uploads/${userId}/match-suggestions.json`);
-        if (cached) {
-            return NextResponse.json({ success: true, data: cached });
-        }
         return NextResponse.json({ success: false, data: null });
     } catch {
         return NextResponse.json({ success: false, data: null });
@@ -103,7 +99,7 @@ export async function POST(request: NextRequest) {
         const { mode } = body as { mode: "suggest" | "compare" };
 
         // Load resume
-        const resume = await getJsonFromS3<Resume>(`uploads/${userId}/resume-data.json`);
+        const resume = await getCurrentResumeData(userId);
         if (!resume) {
             return NextResponse.json({ error: "No resume found. Upload a resume first." }, { status: 400 });
         }
@@ -111,7 +107,7 @@ export async function POST(request: NextRequest) {
         // Load preferences if available
         let preferencesText = "";
         try {
-            const prefs = await getJsonFromS3<Record<string, any>>(`uploads/${userId}/preferences.json`);
+            const prefs = await getUserPreferences(userId);
             if (prefs) {
                 const parts: string[] = [];
                 if (prefs.techSectors?.length) parts.push(`Preferred sectors: ${prefs.techSectors.join(", ")}`);
@@ -148,9 +144,6 @@ ${preferencesText ? `=== PREFERENCES ===\n${preferencesText}` : ""}
             });
 
             const data = result.output_parsed;
-
-            // Cache
-            await putJsonToS3(`uploads/${userId}/match-suggestions.json`, data);
 
             return NextResponse.json({ success: true, data });
 

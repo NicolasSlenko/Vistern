@@ -1,8 +1,7 @@
 import "server-only"
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
-import { getJsonFromS3 } from "@/lib/aws/s3"
-import type { SavedJob } from "@/app/api/job-board/route"
+import { getJobs } from "@/app/api/job-board/route"
 import { readCareerWorkspace } from "./store"
 
 export async function loadCareer() {
@@ -16,8 +15,8 @@ export async function loadHomeWork() {
   if (!userId) redirect("/sign-in")
   const [workspace, jobs] = await Promise.all([
     readCareerWorkspace(userId),
-    getJsonFromS3<{ jobs: SavedJob[] }>(`uploads/${userId}/job-board.json`)
-      .then((data) => ({ data: data?.jobs || [], error: false }))
+    getJobs(userId)
+      .then((data) => ({ data, error: false }))
       .catch(() => ({ data: [], error: true })),
   ])
   return {

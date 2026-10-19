@@ -1,247 +1,167 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vistern
 
-## Getting Started
-## Environment Setup
+Vistern is a full-stack career workspace for college students pursuing technical internships. Students upload a resume, verify the parsed content, improve weak bullets, compare their background with open roles, and track progress over time.
 
-This app uses AWS S3 (uploads, resume, preferences, matched courses) and Clerk for auth. Create a `.env.local` at the repo root (copy from `.env.example`) and fill in the required values:
+The product was formerly named **Grasshopper Labs**. New product copy and documentation should use **Vistern**.
 
-Required variables:
-- `AWS_BUCKET_NAME`: Your S3 bucket name
-- `AWS_BUCKET_REGION`: Bucket region (e.g., `us-east-1`)
-- `IAM_AWS_ACCESS_KEY`: IAM Access Key ID with Put/Get/Delete access to the bucket
-- `IAM_AWS_SECRET_ACCESS_KEY`: IAM Secret Access Key
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`: Clerk publishable key
-- `CLERK_SECRET_KEY`: Clerk secret key
+## Product flow
 
-On Windows PowerShell, you can scaffold a `.env.local` like this and then edit it:
-
-```powershell
-Copy-Item .env.example .env.local -Force
-notepad .env.local
-```
-
-After updating env vars, restart the dev server so the API routes pick them up.
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-
-
-
-
-# Grasshopper Labs — Project Overview
-
-## What It Is
-
-A **resume analysis and optimization platform** for college students seeking internships and entry-level tech roles. Students upload their resume (PDF/DOCX), and the app provides an interactive dashboard with AI-powered insights, scoring, skill gap analysis, and coursework alignment — all tailored to their target roles.
-
----
-
-## Core User Flow
+1. A student signs in with Clerk and completes role and industry preferences.
+2. They upload a PDF or DOCX resume (10 MB maximum, three uploads per day).
+3. The server extracts the text and asks OpenAI for structured data validated by the resume Zod schema.
+4. The source file stays in S3; structured resume content and metadata go to Supabase and load through `ResumeContext`.
+5. The dashboard calculates resume scores in the browser and requests version-linked XYZ-style feedback from Supabase.
+6. The student can edit their master profile, restore a previous upload, match coursework, and compare their resume with live or pasted job descriptions.
 
 ```mermaid
-graph LR
-    A[Upload Resume] --> B[S3 Storage]
-    B --> C[PDF / DOCX Parsing]
-    C --> D[OpenAI Structured Extraction]
-    D --> E[Zod Schema Validation]
-    E --> F[Save Parsed JSON to S3]
-    F --> G[Dashboard Visualization]
-    G --> H[AI Feedback - XYZ Batch Analysis]
-    H --> I[Actionable Insights]
+flowchart LR
+  Upload[Upload resume] --> Store[Store file in S3]
+  Store --> Parse[Extract and structure]
+  Parse --> Data[Store reviewed document in Supabase]
+  Data --> Verify[Student verification]
+  Verify --> Improve[Resume review]
+  Improve --> Match[Opportunity matching]
+  Match --> Track[Application activity]
 ```
 
-1. **Sign Up / Sign In** — Clerk handles authentication (Google, GitHub, email/password)
-2. **Questionnaire** — Students select target roles (e.g. "Full Stack Developer"), tech sectors, and preferences
-3. **Upload Resume** — Drag-and-drop upload (PDF, DOCX, TXT). Stored in AWS S3 under user-specific paths
-4. **AI Parsing** — Raw text extracted via `pdf-parse` / `mammoth`, then sent to **OpenAI (GPT)** with a structured Zod schema prompt to extract: basics, education, skills, projects, experience, certifications, etc.
-5. **Dashboard** — Multi-tab visualization of parsed data with scoring, charts, and actionable feedback
-6. **Profile / Editor** — Inline resume editor to tweak parsed data directly, plus submission history with restore functionality
+## UX sprint wireframes
 
----
+The current sprint is focused on making the product feel like a coherent career workspace rather than a collection of AI reports. Six connected, interactive HTML references live in [`docs/wireframes`](docs/wireframes/index.html):
 
-## Tech Stack
+- **Landing** — explains the product through one semester of visible progress.
+- **Home base** — converts analytics into a short, ordered plan.
+- **Resume studio** — puts feedback next to the exact line being reviewed.
+- **Opportunities** — connects job-match evidence to a lightweight application pipeline.
+- **Activity** — makes resume and application iteration visible over time.
+- **Student profile** — holds verified projects, experience, coursework, skills, and goals.
+
+The current and proposed experience is documented in [`docs/user-journey.md`](docs/user-journey.md). The assignment-ready first-use walkthrough is in [`docs/tutorial-user-journey.md`](docs/tutorial-user-journey.md).
+
+Open `docs/wireframes/index.html` directly, or serve the repository with any static HTTP server. These files are design references and are intentionally separate from the production Next.js routes.
+
+## Stack
 
 | Layer | Technology |
-|---|---|
-| **Framework** | Next.js 15.5 (App Router, Turbopack) |
-| **Language** | TypeScript |
-| **UI Library** | React 19 |
-| **Styling** | Tailwind CSS 4, tw-animate-css |
-| **Component Library** | Radix UI (Dialog, Tabs, Accordion, Dropdown, etc.) + shadcn/ui patterns |
-| **Charts** | Recharts (Radar, Area, Pie charts) |
-| **Icons** | Lucide React |
-| **Authentication** | Clerk (OAuth + email, session management) |
-| **Cloud Storage** | AWS S3 (resume files, parsed JSON data, feedback cache) |
-| **AI / LLM** | OpenAI API (GPT) — structured output with Zod schemas |
-| **Validation** | Zod (schema validation for parsed resume data) |
-| **Database (planned)** | Drizzle ORM (present in deps) |
-| **PDF Parsing** | pdf-parse (PDFs), mammoth (DOCX) |
-| **Hosting** | Vercel |
-| **Forms** | React Hook Form + Zod resolvers |
-| **Notifications** | Sonner (toast notifications) |
+| --- | --- |
+| Framework | Next.js 15.5 App Router with Turbopack |
+| Language | TypeScript |
+| UI | React 19, Tailwind CSS 4, Radix UI/shadcn patterns, Framer Motion |
+| Charts | Recharts |
+| Authentication | Clerk |
+| Storage | AWS S3 for resume files; Supabase Postgres for structured user data |
+| AI | OpenAI structured output validated with Zod |
+| File parsing | `pdf-parse` and `mammoth` |
+| Deployment | Vercel |
 
----
+## Important architecture rules
 
-## Architecture Overview
+### Current storage boundary
 
-```
+Clerk remains the identity provider. S3 stores private resume file bytes; Supabase Postgres stores the master profile, structured resume documents and feedback, preferences, saved jobs, application state, settings, and usage records. The `supabase/migrations/` schema is the current application contract. Existing S3 JSON objects are read only for compatibility imports and are not the target for new writes. Use `src/lib/aws/s3.ts` for resume file access and `src/lib/supabase/` for structured data.
+
+See [the current data hierarchy](docs/data-hierarchy.md) for the implemented tables and [the future data model](docs/future-data-model.md) for product ideas that are not yet migrations.
+
+### The Zod schema defines resume data
+
+`src/app/api/parse/resumeSchema.ts` is the canonical resume structure. Change it first when adding or modifying resume fields, then update dependent API and UI types.
+
+### ResumeContext owns client resume state
+
+`src/contexts/resume-context.tsx` loads the current resume and feedback, triggers feedback generation when needed, and exposes the shared `useResume()` hook. Dashboard and profile components should consume resume state through this context.
+
+### Scoring is client-side
+
+`src/lib/resumeScoring.ts` combines quantity and quality measures into category and overall scores. AI-generated XYZ feedback is stored in Supabase against the corresponding resume document. Legacy S3 feedback JSON can still be imported on first read.
+
+## Repository map
+
+```text
 src/
 ├── app/
-│   ├── page.tsx                    # Landing / Upload page
-│   ├── dashboard/page.tsx          # Main analytics dashboard (2100+ lines)
-│   ├── profile/page.tsx            # Profile, editor, history, statistics
-│   ├── questionnaire/              # Role & preference selection
-│   ├── about-us/                   # Team page
-│   ├── api/
-│   │   ├── upload/                 # POST: File upload → S3 (daily limit: 3/day)
-│   │   ├── parse/                  # POST: S3 file → text extraction → OpenAI → structured JSON
-│   │   │   ├── resumeSchema.ts     # Zod schema defining the Resume type
-│   │   │   ├── semanticParse.ts    # OpenAI GPT integration
-│   │   │   └── parseContent.ts     # PDF/DOCX text extraction
-│   │   ├── resume/                 # GET/POST: Read/write parsed resume JSON
-│   │   ├── resume-submissions/     # GET/POST/DELETE: Submission history (last 10)
-│   │   │   └── restore/            # POST: Restore a previous resume version
-│   │   ├── resume-preview/         # GET: Presigned S3 URL for PDF preview
-│   │   ├── analyze/
-│   │   │   ├── xyz-batch/          # GET/POST: AI quality analysis (XYZ scoring)
-│   │   │   ├── xyz/                # Single-item XYZ analysis
-│   │   │   └── insights/           # AI-generated actionable insights
-│   │   ├── match-coursework/       # POST: Match resume courses to UF catalog
-│   │   ├── preferences/            # GET/POST: User questionnaire preferences
-│   │   ├── insights/               # Insights schema definitions
-│   │   └── uf-courses/             # GET: University course catalog data
-│   └── sign-in/ & sign-up/        # Clerk auth pages
-│
-├── components/
-│   ├── resume-upload.tsx           # Drag-and-drop upload with progress
-│   ├── gpa-progress-bar.tsx        # GPA visualization with internship benchmark
-│   ├── career-path-radar.tsx       # Coursework alignment radar chart
-│   ├── actionable-insights.tsx     # AI-generated checklist of improvements
-│   ├── xyz-inline-feedback.tsx     # Inline XYZ quality scores on projects/experience
-│   ├── role-skills-match.tsx       # Skills gap analysis vs target roles
-│   ├── resume-verification.tsx     # Resume data verification/review
-│   ├── student-preferences.tsx     # Questionnaire component
-│   ├── header.tsx                  # Navigation header with auth
-│   └── profile/resume-editor.tsx   # Inline resume data editor
-│
-├── contexts/
-│   └── resume-context.tsx          # Global state: resume data, feedback, preferences
-│
-└── lib/
-    ├── aws/s3.ts                   # S3 utilities (upload, download, presign, list, delete)
-    ├── resumeScoring.ts            # Weighted scoring algorithm (quality + quantity)
-    ├── qualityAnalysis.ts          # AI-driven quality metrics
-    └── courseMatching.ts           # Course catalog matching logic
+│   ├── page.tsx                  # Signed-out landing / signed-in upload
+│   ├── dashboard/page.tsx        # Resume analysis dashboard
+│   ├── match/page.tsx            # Live roles, match analysis, job board
+│   ├── profile/page.tsx          # Master profile, statistics, history
+│   ├── questionnaire/            # Student preferences
+│   ├── settings/                 # Account and product settings
+│   └── api/                      # Upload, parsing, analysis, structured user data
+├── components/                   # Product and UI components
+├── contexts/resume-context.tsx   # Shared client resume state
+└── lib/                          # S3 files, Supabase data, scoring, course matching
+
+docs/wireframes/                  # Interactive UX sprint references
 ```
 
----
+## Local development
 
-## Key Features
+### Requirements
 
-### 1. Resume Parsing Pipeline
-- Accepts PDF, DOCX, TXT uploads (max 10MB)
-- Text extracted server-side (`pdf-parse`, `mammoth`)
-- Sent to **OpenAI GPT** with a strict Zod schema prompt
-- Returns structured JSON: basics, education, skills, projects, experience, certifications, publications, extracurriculars
+- Node.js 24.x
+- npm
+- Clerk, AWS, and OpenAI credentials for authenticated product flows
 
-### 2. Dashboard (Multi-Tab)
-| Tab | Components |
-|---|---|
-| **Overall** | Resume Score (weighted), Actionable Insights |
-| **Education** | GPA Progress Bar (benchmark: 3.3 avg internship), Year-in-School Indicator, Career Path Coursework Radar |
-| **Experience** | Experience Summary, Role-Skills Match, XYZ Inline Feedback |
-| **Projects** | Project Portfolio Summary, Skills Radar Chart, XYZ Inline Feedback |
+### Setup
 
-### 3. AI-Powered Scoring
-- **Resume Score** (0-100): Weighted across 6 categories — Projects, Experience, Skills, Links+Contact, GPA, Coursework
-- **XYZ Analysis**: Each project/experience bullet is scored on the "Accomplished [X] by doing [Y], resulting in [Z]" framework
-- **Actionable Insights**: AI-generated checklist (high/low priority) with specific improvement suggestions
-
-### 4. Coursework Matching
-- Matches resume courses against the **UF course catalog**
-- Groups courses by CS discipline (Systems, AI/ML, Software Engineering, etc.)
-- Visualized as a radar chart showing coverage across career-relevant areas
-
-### 5. Profile & History
-- **Resume Editor**: Edit parsed resume data fields inline
-- **Submission History**: Last 10 uploads preserved, any can be restored
-- **Statistics Tab**: Score evolution chart, average/best/current scores
-- **AI Feedback Toggle**: Show/hide XYZ feedback globally
-
-### 6. Preferences / Questionnaire
-- Target role types (Frontend, Backend, ML, DevOps, etc.)
-- Tech sectors of interest
-- Stored server-side, used to personalize skill recommendations
-
----
-
-## Data Flow
-
-```
-User's Browser
-   │
-   ├── Upload PDF ──→ POST /api/upload ──→ AWS S3
-   │                                        │
-   ├── Parse ────────→ POST /api/parse ──→ pdf-parse → OpenAI GPT → Zod Validation
-   │                                        │
-   │                                   PUT resume-data.json → S3
-   │
-   ├── Dashboard ────→ GET /api/resume ──→ S3 → resume-data.json
-   │
-   ├── AI Feedback ──→ POST /api/analyze/xyz-batch ──→ OpenAI GPT
-   │                                        │
-   │                                   PUT xyz-feedback.json → S3
-   │
-   └── Coursework ──→ POST /api/match-coursework ──→ courseMatching.ts
+```powershell
+npm install
+Copy-Item .env.example .env.local
+npm run dev
 ```
 
-All persistent data lives in **AWS S3** as JSON files, keyed by user ID. No traditional database is used for resume data (Drizzle ORM is in deps for future use).
+Open [http://localhost:3000](http://localhost:3000).
 
----
+Useful commands:
 
-## Deployment
+```bash
+npm run dev      # Start the Turbopack development server
+npm run build    # Create a production build
+npm run start    # Run the production build
+```
 
-- **Hosting**: Vercel (auto-deploys from GitHub `main` branch)
-- **Environment Variables**: Clerk keys, AWS credentials (IAM), OpenAI API key
-- **Build**: `next build --turbopack`
-- **Branching**: `main` (production), `develop` (staging)
+No automated test suite is currently configured. The existing `lint` script uses the removed `next lint` command and should be replaced before relying on it.
 
----
+## Environment variables
 
-## Rate Limits & Guardrails
+Copy `.env.example` to `.env.local`. The main runtime variables are:
 
-- **3 uploads/day** per user (exemptions possible)
-- **10MB** max file size
-- **Last 10** submissions retained (older ones auto-pruned from S3)
-- Restoring a resume does **not** count as a new submission in statistics
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk browser configuration |
+| `CLERK_SECRET_KEY` | Clerk server authentication |
+| `OPENAI_API_KEY` | Resume parsing and analysis |
+| `AWS_BUCKET_NAME` | S3 bucket |
+| `AWS_BUCKET_REGION` | S3 region; server fallback is `us-east-1` |
+| `IAM_AWS_ACCESS_KEY` | S3 access key |
+| `IAM_AWS_SECRET_ACCESS_KEY` | S3 secret |
+| `ADZUNA_APP_ID` | Live job search application ID |
+| `ADZUNA_APP_KEY` | Live job search application key |
+| `OWNER_CLERK_USER_ID` | Optional development/owner rate-limit bypass |
+
+Never commit `.env` or `.env.local`.
+
+## Main API routes
+
+| Route | Purpose |
+| --- | --- |
+| `POST /api/upload` | Validate and store a source resume; enforce daily limits |
+| `POST /api/parse` | Extract text, structure it with OpenAI, and save JSON |
+| `GET/POST /api/resume` | Read or update the current parsed resume |
+| `GET/POST /api/resume-submissions` | List and manage version history |
+| `POST /api/resume-submissions/restore` | Restore a previous resume |
+| `POST /api/analyze/xyz-batch` | Generate and cache bullet feedback |
+| `POST /api/match-coursework` | Match parsed courses against the UF catalog |
+| `GET /api/match-live` | Fetch live job matches |
+| `POST /api/match` | Compare a resume and job description |
+| `POST /api/tailor-resume` | Generate a role-specific resume revision |
+| `GET/POST /api/job-board` | Persist saved roles and application stages |
+
+API routes authenticate with Clerk and generally return `{ success, data?, error? }`.
+
+## Guardrails
+
+- Maximum upload size: 10 MB
+- Daily upload limit: 3 per user, unless owner bypass is configured
+- Submission history: last 10 uploads
+- Restoring a version does not create a new submission statistic
+- UF course matching is preference-gated
+- Keep schema changes in reviewed, versioned Supabase migrations; keep future product concepts separate until the student journeys are agreed

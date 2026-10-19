@@ -54,6 +54,24 @@ export interface ResumeSubmission {
   score: number
 }
 
+interface ProfileSuggestion {
+  id: string
+  item_type: string
+  proposed_data: { title?: string; content?: Record<string, unknown> }
+  source_file_name: string | null
+}
+
+function summarizeSuggestion(content: Record<string, unknown> | undefined) {
+  if (!content) return "";
+  const parts = Object.values(content).flatMap((value) => {
+    if (typeof value === "string" && value.trim()) return [value.trim()];
+    if (typeof value === "number") return [String(value)];
+    if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string").slice(0, 3);
+    return [];
+  });
+  return parts.join(" · ").slice(0, 260);
+}
+
 function getScoreBadgeVariant(score: number): "default" | "secondary" | "destructive" | "outline" {
   if (score >= 85) return "default"
   if (score >= 70) return "secondary"
@@ -322,6 +340,8 @@ export default function ProfilePage() {
   // Master Profile state
   const [masterProfile, setMasterProfile] = useState<Resume | null>(null)
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
+  const [profileSuggestions, setProfileSuggestions] = useState<ProfileSuggestion[]>([])
+  const [decidingSuggestionId, setDecidingSuggestionId] = useState<string | null>(null)
 
   // Job board stats
   const [jobBoard, setJobBoard] = useState<Array<{ bucket: string }>>([])
@@ -362,10 +382,21 @@ export default function ProfilePage() {
     }
   }
 
+  const fetchProfileSuggestions = async () => {
+    try {
+      const response = await fetch("/api/profile/import-proposals")
+      const result = await response.json()
+      if (result.success) setProfileSuggestions(result.data)
+    } catch (err) {
+      console.error("Failed to fetch profile suggestions")
+    }
+  }
+
   useEffect(() => {
     if (isLoaded) {
       fetchSubmissions()
       fetchMasterProfile()
+      fetchProfileSuggestions()
       fetch("/api/job-board")
         .then(r => r.json())
         .then(r => { if (r.success) setJobBoard(r.data) })
@@ -376,6 +407,26 @@ export default function ProfilePage() {
         .catch(() => {})
     }
   }, [isLoaded])
+
+  const decideProfileSuggestion = async (suggestion: ProfileSuggestion, decision: "accepted" | "skipped") => {
+    setDecidingSuggestionId(suggestion.id)
+    try {
+      const response = await fetch("/api/profile/import-proposals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ proposalId: suggestion.id, decision }),
+      })
+      const result = await response.json()
+      if (!response.ok || !result.success) throw new Error(result.error || "Unable to save decision")
+      setProfileSuggestions((current) => current.filter((item) => item.id !== suggestion.id))
+      if (decision === "accepted") await fetchMasterProfile()
+      toast.success(decision === "accepted" ? "Added to your master profile" : "Suggestion skipped")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to save decision")
+    } finally {
+      setDecidingSuggestionId(null)
+    }
+  }
 
   const handleRestore = async (id: string) => {
     try {
@@ -522,10 +573,38 @@ export default function ProfilePage() {
                         Comprehensive Master Profile
                     </CardTitle>
                     <CardDescription>
-                        This is your global record. Every time you upload a resume, new experiences and projects are automatically merged here. In the future, you can use this comprehensive list to tailor resumes for specific job matches.
+                        Your verified source of truth for experiences, projects, education, and skills. Resume uploads stay separate until you review suggested additions here.
                     </CardDescription>
                   </CardHeader>
                 </Card>
+                {profileSuggestions.length > 0 && (
+                  <Card className="mb-4 border-primary/30">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg">Review profile suggestions</CardTitle>
+                      <CardDescription>Resume imports never change your master profile automatically. Accept only details you want to keep as verified profile information.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {profileSuggestions.map((suggestion) => (
+                        <div key={suggestion.id} className="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-medium">{suggestion.proposed_data.title || suggestion.item_type}</span>
+                              <Badge variant="secondary">{suggestion.item_type}</Badge>
+                            </div>
+                            <p className="mt-1 text-sm text-muted-foreground">{summarizeSuggestion(suggestion.proposed_data.content)}</p>
+                            {suggestion.source_file_name && <p className="mt-2 text-xs text-muted-foreground">Suggested from {suggestion.source_file_name}</p>}
+                          </div>
+                          <div className="flex shrink-0 gap-2">
+                            <Button size="sm" onClick={() => decideProfileSuggestion(suggestion, "accepted")} disabled={decidingSuggestionId === suggestion.id}>
+                              {decidingSuggestionId === suggestion.id ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}Add
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => decideProfileSuggestion(suggestion, "skipped")} disabled={decidingSuggestionId === suggestion.id}>Skip</Button>
+                          </div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
                 {isLoadingProfile ? (
                     <Card className="flex flex-col items-center justify-center p-12 h-[400px]">
                         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

@@ -51,6 +51,7 @@ data/resume-data.json
 # clerk configuration (can include secrets)
 /.clerk/
 .claude/
-
 # Local meeting preview build
 .student-preview/
+.codex-build/
+/supabase/.temp/

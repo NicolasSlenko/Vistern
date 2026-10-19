@@ -3,9 +3,9 @@ import { z } from "zod"
 import { zodTextFormat } from "openai/helpers/zod.mjs"
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
-import { getJsonFromS3 } from "@/lib/aws/s3"
 import { checkAndIncrementLimit } from "@/lib/usageLimits"
 import type { Resume } from "@/app/api/parse/resumeSchema"
+import { getCurrentResumeData, getMasterProfileData } from "@/lib/supabase/user-data"
 
 const MODEL = "gpt-4.1-mini"
 
@@ -42,8 +42,8 @@ export async function POST(request: NextRequest) {
 
     // Master profile is the bank of all experiences; current resume has latest basics/education
     const [masterProfile, currentResume] = await Promise.all([
-      getJsonFromS3<Resume>(`uploads/${userId}/master-profile.json`),
-      getJsonFromS3<Resume>(`uploads/${userId}/resume-data.json`),
+      getMasterProfileData(userId),
+      getCurrentResumeData(userId),
     ])
 
     const bank = masterProfile || currentResume

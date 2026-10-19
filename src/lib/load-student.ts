@@ -1,16 +1,15 @@
 import "server-only"
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
-import { getJsonFromS3 } from "@/lib/aws/s3"
-import { studentProfileSchema, type StudentProfile } from "@/lib/student-profile"
-import type { Resume } from "@/app/api/parse/resumeSchema"
+import { getCurrentResumeData } from "@/lib/supabase/user-data"
+import { readStudentProfile } from "@/lib/student-profile-store"
 
 export async function loadStudent() {
   const { userId } = await auth()
   if (!userId) redirect("/sign-in")
-  const [stored, resume] = await Promise.all([
-    getJsonFromS3<StudentProfile>(`uploads/${userId}/student-profile.json`),
-    getJsonFromS3<Resume>(`uploads/${userId}/resume-data.json`),
+  const [profile, resume] = await Promise.all([
+    readStudentProfile(userId),
+    getCurrentResumeData(userId),
   ])
-  return { profile: stored ? studentProfileSchema.parse(stored) : null, resume }
+  return { profile, resume }
 }

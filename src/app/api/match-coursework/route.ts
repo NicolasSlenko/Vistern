@@ -1,7 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
-import { getJsonFromS3, putJsonToS3 } from "@/lib/aws/s3"
 import { extractCoursework, matchCoursework, categorizeUFCourse, UF_CS_PREFIXES } from "@/lib/courseMatching"
+import { createClerkSupabaseServerClient } from "@/lib/supabase/server"
+import { getCurrentResumeData } from "@/lib/supabase/user-data"
 
 const UF_API_BASE_URL = "https://one.ufl.edu/apix/soc/schedule/"
 
@@ -59,13 +60,13 @@ export async function GET(request: NextRequest) {
     const term = searchParams.get("term") || "2251"
     const threshold = parseInt(searchParams.get("threshold") || "60")
 
-    // Auth and load resume data from S3
+    // Auth and load the verified resume structure from Supabase.
     const { userId } = await auth()
     if (!userId) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
     }
 
-    const resumeData = await getJsonFromS3<Record<string, any>>(`uploads/${userId}/resume-data.json`)
+    const resumeData = await getCurrentResumeData(userId)
     if (!resumeData) {
       return NextResponse.json({
         success: false,
@@ -84,6 +85,20 @@ export async function GET(request: NextRequest) {
     const resumeCourses = extractCoursework(allAchievements)
 
     if (resumeCourses.length === 0) {
+      const supabase = await createClerkSupabaseServerClient()
+      const { data: progress, error: progressError } = await supabase.from("course_progress")
+        .select("course_code,match_details").eq("clerk_user_id", userId)
+      if (progressError) throw progressError
+      const stale = (progress ?? []).filter((row) => {
+        const details = row.match_details && typeof row.match_details === "object" && !Array.isArray(row.match_details)
+          ? row.match_details as Record<string, unknown> : {}
+        return details.manual !== true
+      }).map((row) => row.course_code)
+      if (stale.length) {
+        const { error: deleteError } = await supabase.from("course_progress").delete()
+          .eq("clerk_user_id", userId).in("course_code", stale)
+        if (deleteError) throw deleteError
+      }
       return NextResponse.json({
         success: true,
         matches: [],
@@ -94,38 +109,9 @@ export async function GET(request: NextRequest) {
 
     console.log(`Found ${resumeCourses.length} courses in resume:`, resumeCourses)
 
-    // Check S3 cache for UF course catalog (shared across all users, keyed by term)
-    const catalogCacheKey = `cache/uf-courses-${term}.json`
-    let allUFCourses: Array<{ name: string; code: string }> = []
-
-    const cachedCatalog = await getJsonFromS3<Array<{ name: string; code: string }>>(catalogCacheKey)
-
-    if (cachedCatalog && cachedCatalog.length > 0) {
-      allUFCourses = cachedCatalog
-      console.log(`Using cached UF courses for term ${term} (${allUFCourses.length} courses)`)
-    } else {
-      // Fetch UF courses from all CS prefixes (first request per semester)
-      console.log("Fetching UF courses from API (no cache found)...")
-
-      for (const prefix of UF_CS_PREFIXES) {
-        const courses = await fetchUFCoursesByPrefix(prefix, term)
-        allUFCourses.push(...courses)
-        console.log(`Fetched ${courses.length} courses for prefix ${prefix}`)
-      }
-
-      console.log(`Total UF courses fetched: ${allUFCourses.length}`)
-
-      // Save to S3 cache for future requests
-      if (allUFCourses.length > 0) {
-        try {
-          await putJsonToS3(catalogCacheKey, allUFCourses)
-          console.log(`Cached UF courses for term ${term}`)
-        } catch (cacheError) {
-          console.error("Error caching UF courses to S3:", cacheError)
-          // Continue anyway — caching failure is not critical
-        }
-      }
-    }
+    // Fetch the public catalog; user data persists separately in Supabase.
+    const allUFCourses: Array<{ name: string; code: string }> = []
+    for (const prefix of UF_CS_PREFIXES) allUFCourses.push(...await fetchUFCoursesByPrefix(prefix, term))
 
     // Filter for undergraduate courses (3000-4000 level only, exclude specific courses)
     const excludedCourses = [
@@ -201,13 +187,34 @@ export async function GET(request: NextRequest) {
       lastUpdated: new Date().toISOString()
     }
 
-    // Save matched courses to S3 for later retrieval
-    try {
-      await putJsonToS3(`uploads/${userId}/matched-courses.json`, responseData)
-      console.log("Saved matched courses to S3")
-    } catch (saveError) {
-      console.error("Error saving matched courses to S3:", saveError)
-      // Continue anyway - this is not critical
+    const supabase = await createClerkSupabaseServerClient()
+    const { data: existingProgress, error: progressError } = await supabase.from("course_progress")
+      .select("course_code,is_selected,match_details").eq("clerk_user_id", userId)
+    if (progressError) throw progressError
+    const selectedCodes = new Set((existingProgress ?? []).filter((row) => row.is_selected).map((row) => row.course_code))
+    if (categorizedMatches.length) {
+      const existingCodes = new Set((existingProgress ?? []).map((row) => row.course_code))
+      const { error: insertError } = await supabase.from("course_progress").upsert(categorizedMatches.map((match) => ({
+        clerk_user_id: userId,
+        course_code: match.ufCourse.code,
+        course_name: match.ufCourse.name,
+        category: match.category,
+        match_score: match.score,
+        match_details: { resumeCourse: match.resumeCourse, ufCourseName: match.ufCourse.name },
+        is_selected: selectedCodes.has(match.ufCourse.code) || !existingCodes.has(match.ufCourse.code),
+      })), { onConflict: "clerk_user_id,course_code" })
+      if (insertError) throw insertError
+    }
+    const matchedCodes = new Set(categorizedMatches.map((match) => match.ufCourse.code))
+    const staleCodes = (existingProgress ?? []).filter((row) => {
+      const details = row.match_details && typeof row.match_details === "object" && !Array.isArray(row.match_details)
+        ? row.match_details as Record<string, unknown> : {}
+      return !matchedCodes.has(row.course_code) && details.manual !== true
+    }).map((row) => row.course_code)
+    if (staleCodes.length) {
+      const { error: staleError } = await supabase.from("course_progress").delete()
+        .eq("clerk_user_id", userId).in("course_code", staleCodes)
+      if (staleError) throw staleError
     }
 
     return NextResponse.json(responseData)

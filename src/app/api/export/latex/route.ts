@@ -1,8 +1,6 @@
 import { OpenAI } from "openai";
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import crypto from "crypto";
-import { getJsonFromS3, putJsonToS3 } from "@/lib/aws/s3";
 import { checkAndIncrementLimit } from "@/lib/usageLimits";
 
 const MODEL = "gpt-4.1-mini";
@@ -148,23 +146,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "No resume data provided" }, { status: 400 });
         }
 
-        let cacheKey = "";
         if (isPreview) {
-            const payloadString = JSON.stringify({ version: "v9-instructions", resumeData, tweaks, xyzImprovements, customInstructions });
-            const hash = crypto.createHash("sha256").update(payloadString).digest("hex");
-            cacheKey = `uploads/${userId}/latex-cache-${hash}.json`;
-
-            try {
-                const cachedPreview = await getJsonFromS3<{ latex: string, diffs: BulletDiff[] }>(cacheKey);
-                if (cachedPreview) {
-                    console.log("Serving LaTeX preview from S3 cache");
-                    return NextResponse.json(cachedPreview);
-                }
-            } catch (err) {
-                console.error("Cache read error:", err);
-            }
-
-            // Cache miss — consume a daily credit before making the GPT call
+            // Preview data is ephemeral; generate it without persisting to S3.
             const { allowed } = await checkAndIncrementLimit(userId, "tailorResume");
             if (!allowed) {
                 return NextResponse.json(
@@ -345,12 +328,7 @@ ${JAKE_TEMPLATE}
                 }
             }
 
-            const previewPayload = { latex, diffs };
-            
-            // Fire and forget caching
-            putJsonToS3(cacheKey, previewPayload).catch(err => console.error("Failed to write LaTeX cache to S3:", err));
-
-            return NextResponse.json(previewPayload);
+            return NextResponse.json({ latex, diffs });
         }
 
         // --- Download mode (default) ---

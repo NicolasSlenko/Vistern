@@ -57,7 +57,7 @@ async function streamToBuffer(body: GetObjectCommandOutput["Body"]): Promise<Buf
   throw new Error("Unsupported S3 body type")
 }
 
-export async function uploadToS3(key: string, body: Buffer | Uint8Array | string, contentType: string) {
+export async function uploadToS3(key: string, body: Buffer | Uint8Array, contentType: string) {
   await s3.send(
     new PutObjectCommand({
       Bucket: ensureBucket(),
@@ -66,10 +66,6 @@ export async function uploadToS3(key: string, body: Buffer | Uint8Array | string
       ContentType: contentType,
     }),
   )
-}
-
-export async function putJsonToS3(key: string, data: unknown) {
-  await uploadToS3(key, JSON.stringify(data), "application/json")
 }
 
 export async function getBufferFromS3(key: string): Promise<Buffer> {

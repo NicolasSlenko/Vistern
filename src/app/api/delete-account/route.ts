@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth, clerkClient } from "@clerk/nextjs/server"
 import { listObjectsInS3, deleteFromS3 } from "@/lib/aws/s3"
+import { createClerkSupabaseServerClient } from "@/lib/supabase/server"
 
 export async function DELETE() {
   try {
@@ -10,7 +11,14 @@ export async function DELETE() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // 1. Delete all S3 data under uploads/{userId}/
+    // Remove the user's relational data before deleting their identity.
+    const supabase = await createClerkSupabaseServerClient()
+    for (const table of ["career_workspaces", "application_events", "saved_jobs", "resume_feedback", "resume_documents", "profile_items", "profile_import_proposals", "student_profiles", "user_preferences", "user_settings", "daily_usage", "course_progress", "legacy_import_state"] as const) {
+      const { error } = await supabase.from(table as "application_events").delete().eq("clerk_user_id", userId)
+      if (error) throw error
+    }
+
+    // Clean up resume binaries and any legacy objects left from the old storage layout.
     const prefix = `uploads/${userId}/`
     const objects = await listObjectsInS3(prefix)
 
