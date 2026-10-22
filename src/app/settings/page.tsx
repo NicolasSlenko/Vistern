@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { useUser, useClerk } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
-import { Header } from "@/components/header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -109,7 +108,6 @@ function ThemeSelector() {
   const { theme, setTheme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- needed for hydration safety with next-themes
   useEffect(() => { setMounted(true) }, [])
 
   const options = [
@@ -282,26 +280,24 @@ export default function SettingsPage() {
 
   if (!isLoaded) {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Header />
-        <main className="flex-1 flex items-center justify-center">
+      <div className="student-tool-page">
+        <div className="flex min-h-48 items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </main>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <Header />
-      <main className="flex-1 container mx-auto px-4 pt-24 pb-12 max-w-2xl">
+    <div className="student-tool-page">
+      <div className="mx-auto max-w-2xl">
         {/* Page Title */}
         <div className="flex items-center gap-3 mb-8">
           <div className="p-2 rounded-lg bg-muted">
             <Settings className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Settings</h1>
+            <h1>Settings</h1>
             <p className="text-sm text-muted-foreground">Manage your profile and preferences</p>
           </div>
         </div>
@@ -318,7 +314,7 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <label htmlFor="firstName" className="text-sm font-medium">First Name</label>
                   <Input
@@ -424,7 +420,7 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </div>
-      </main>
+      </div>
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { StudentShell } from "../../src/components/student/student-shell"
 import { Onboarding } from "../../src/components/student/onboarding"
 import { StudentHome } from "../../src/components/student/student-home"
 import { ResumeUpload } from "../../src/components/resume-upload"
+import { PublicHome } from "../../src/components/landing/public-home"
 import { getResumeObject } from "../../src/app/api/parse/resumeSchema"
 import {
   stepSchema,
@@ -113,6 +114,7 @@ function Preview() {
     return () => observer.disconnect()
   }, [])
   const pathname = window.location.pathname
+  if (pathname === "/landing-page") return <PublicHome />
   const params = new URLSearchParams(window.location.search)
   const profile = readProfile(),
     resume = readResume()

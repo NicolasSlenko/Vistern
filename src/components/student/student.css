@@ -36,7 +36,7 @@
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.6;
   color-scheme: light;
 }
@@ -142,7 +142,9 @@
   border: 0;
   background: none;
   color: var(--student-muted);
-  font-size: 12px;
+  font-size: 13px;
+  min-height: 44px;
+  padding: 0 8px;
 }
 .student-entry {
   background: var(--student-canvas);
@@ -548,7 +550,8 @@
   align-items: center;
   gap: 24px;
   padding: 0 32px;
-  background: var(--student-canvas);
+  background: #fff;
+  border-bottom: 1px solid var(--student-line);
 }
 .student-topbar > span {
   font-weight: 600;
@@ -559,6 +562,28 @@
 }
 .student-workspace .student-main {
   margin-left: 224px;
+  min-width: 0;
+}
+.student-tool-page {
+  width: 100%;
+  max-width: 1240px;
+  min-height: 0;
+  margin: 0 auto;
+  padding: 30px 44px 72px;
+  background: transparent;
+}
+.student-tool-page h1 {
+  font-size: 32px;
+  line-height: 1.2;
+  letter-spacing: -1px;
+  font-weight: 650;
+}
+.student-tool-page [data-slot="card"] {
+  border-color: var(--student-line);
+  box-shadow: var(--student-shadow);
+}
+.student-tool-page [data-slot="card"]:hover {
+  box-shadow: var(--student-shadow);
 }
 .student-load-error {
   max-width: 620px;
@@ -572,6 +597,9 @@
   margin-left: 20px;
 }
 @media (max-width: 1150px) {
+  .student-tool-page {
+    padding: 24px 30px 56px;
+  }
   .student-sidebar {
     width: 204px;
     padding-left: 13px;
@@ -604,7 +632,8 @@
     gap: 8px;
     border: 0;
     background: none;
-    padding: 8px 0;
+    min-height: 44px;
+    padding: 8px;
   }
   .student-topbar > span {
     display: none;
@@ -639,6 +668,15 @@
   }
 }
 @media (max-width: 680px) {
+  .student-app .student-text-link {
+    min-height: 44px;
+  }
+  .student-tool-page {
+    padding: 20px 20px 40px;
+  }
+  .student-tool-page h1 {
+    font-size: 29px;
+  }
   .student-entry-header {
     height: 68px;
     padding: 0 20px;

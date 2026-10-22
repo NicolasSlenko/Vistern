@@ -24,7 +24,6 @@ import {
   Pie,
   Cell,
 } from "recharts"
-import { useUser } from "@clerk/nextjs"
 import { useResume } from "@/contexts/resume-context"
 
 import { Button } from "@/components/ui/button"
@@ -1920,7 +1919,6 @@ function RoleSkillsMatch({
 
 
 export default function DashboardPage() {
-  const { user, isLoaded } = useUser()
   const { resumeData, isLoading: isResumeLoading, xyzFeedback, showFeedback, actionableInsights } = useResume()
   const [activeTab, setActiveTab] = useState("overall")
   const [questionnaireData, setQuestionnaireData] = useState<QuestionnaireData | null>(null)
@@ -2004,7 +2002,7 @@ export default function DashboardPage() {
   // Show loading state
   if (isResumeLoading) {
     return (
-      <div className="min-h-screen bg-background p-6 md:p-10">
+      <div className="student-tool-page">
         <div className="mx-auto max-w-6xl">
           <div className="mb-10">
             <div className="skeleton-loader h-10 w-72 mb-3" />
@@ -2023,18 +2021,18 @@ export default function DashboardPage() {
   // Show message if no resume data
   if (!resumeData) {
     return (
-      <div className="min-h-screen bg-background p-6 md:p-10">
+      <div className="student-tool-page">
         <div className="mx-auto max-w-6xl">
           <div className="mb-10">
-            <h1 className="text-4xl font-bold tracking-tight">Dashboard</h1>
+            <h1>Resume feedback</h1>
           </div>
 
           <div className="flex flex-col items-center justify-center py-16">
             <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-6">
               <FileText className="h-10 w-10 text-primary animate-pulse-subtle" />
             </div>
-            <h2 className="text-xl font-semibold mb-2">No Resume Yet</h2>
-            <p className="text-muted-foreground text-sm mb-6 text-center max-w-md">Upload your resume to unlock personalized analytics, scoring, and career insights.</p>
+            <h2 className="text-xl font-semibold mb-2">Add a resume to get feedback</h2>
+            <p className="text-muted-foreground text-sm mb-6 text-center max-w-md">Review your resume, see what is working, and find concrete ways to improve it.</p>
             <Button asChild size="lg" className="rounded-xl px-8">
               <Link href="/upload">Upload Resume</Link>
             </Button>
@@ -2045,30 +2043,28 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6 md:p-10">
+    <div className="student-tool-page">
       <div className="mx-auto max-w-6xl">
         <div className="mb-10">
-          <h1 className="text-4xl font-bold tracking-tight">
-            Welcome back{user?.firstName ? `, ${user.firstName}` : ""}
-          </h1>
+          <h1>Resume feedback</h1>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="grid w-full max-w-2xl grid-cols-4 mx-auto">
-            <TabsTrigger value="overall" className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
+          <TabsList className="grid w-full max-w-2xl grid-cols-4">
+            <TabsTrigger value="overall" className="gap-1 px-1 text-xs sm:gap-2 sm:px-4 sm:text-sm">
+              <TrendingUp className="h-4 w-4 hidden sm:block" />
               Overall
             </TabsTrigger>
-            <TabsTrigger value="education" className="flex items-center gap-2">
-              <GraduationCap className="h-4 w-4" />
+            <TabsTrigger value="education" className="gap-1 px-1 text-xs sm:gap-2 sm:px-4 sm:text-sm">
+              <GraduationCap className="h-4 w-4 hidden sm:block" />
               Education
             </TabsTrigger>
-            <TabsTrigger value="projects" className="flex items-center gap-2">
-              <FolderKanban className="h-4 w-4" />
+            <TabsTrigger value="projects" className="gap-1 px-1 text-xs sm:gap-2 sm:px-4 sm:text-sm">
+              <FolderKanban className="h-4 w-4 hidden sm:block" />
               Projects
             </TabsTrigger>
-            <TabsTrigger value="experience" className="flex items-center gap-2">
-              <Building2 className="h-4 w-4" />
+            <TabsTrigger value="experience" className="gap-1 px-1 text-xs sm:gap-2 sm:px-4 sm:text-sm">
+              <Building2 className="h-4 w-4 hidden sm:block" />
               Experience
             </TabsTrigger>
           </TabsList>

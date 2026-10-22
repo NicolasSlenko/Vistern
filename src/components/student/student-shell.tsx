@@ -58,7 +58,10 @@ export function StudentShell({
       ? "/jobs"
       : pathname
   const pageTitle =
-    links.find((link) => link.href === activeHref)?.label || "Settings"
+    resumePages.find((page) => page.href === pathname)?.label ||
+    (pathname === "/match" ? "Job matches" : null) ||
+    links.find((link) => link.href === activeHref)?.label ||
+    "Settings"
   const [open, setOpen] = useState(false)
   const menu = useRef<HTMLButtonElement>(null)
   function closeMenu() {

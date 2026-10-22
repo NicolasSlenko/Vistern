@@ -78,7 +78,7 @@
   flex-wrap: wrap;
   gap: 12px 22px;
   margin-top: 30px;
-  font-size: 12px;
+  font-size: 14px;
 }
 .home-other-starts a {
   color: var(--student-muted);
@@ -559,12 +559,12 @@
     font-size: 29px;
   }
   .career-page-heading p {
-    font-size: 13px;
+    font-size: 15px;
   }
   .career-page-heading > .student-button {
-    padding: 9px 12px;
-    min-height: 40px;
-    font-size: 11px;
+    padding: 10px 14px;
+    min-height: 44px;
+    font-size: 13px;
   }
   .home-columns {
     grid-template-columns: 1fr;
@@ -578,25 +578,47 @@
   }
   .home-side-column {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 22px;
+    grid-template-columns: 1fr;
+    gap: 24px;
   }
   .home-growth {
-    padding: 0;
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 4px 18px;
+    align-items: center;
+    padding: 20px;
+    background: #fff;
+    border-radius: 12px;
     text-align: left;
   }
   .home-growth .sx-growth-tree,
   .home-growth .sx-growth-art {
-    width: 120px;
+    width: 96px;
     margin: 0;
   }
+  .home-growth .sx-growth-tree {
+    grid-row: 1 / span 2;
+  }
+  .home-growth h2,
+  .home-growth p {
+    grid-column: 2;
+  }
+  .home-growth dl {
+    grid-column: 1 / -1;
+  }
   .home-dates {
-    padding-top: 20px;
+    padding-top: 0;
   }
   .home-resume-access {
-    grid-column: 1/-1;
+    grid-column: auto;
     padding: 0;
     margin-top: 0;
+  }
+  .home-campus-list p,
+  .home-growth p,
+  .home-dates > p,
+  .home-resume-access p {
+    font-size: 15px;
   }
   .home-section {
     margin-top: 32px;
@@ -608,7 +630,7 @@
     font-size: 19px;
   }
   .career-section-heading .student-text-link {
-    font-size: 11px;
+    font-size: 13px;
   }
   .career-list-row {
     gap: 14px;
@@ -640,8 +662,11 @@
     margin-bottom: 28px;
   }
   .career-tabs a {
-    padding: 8px 10px;
-    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 13px;
   }
   .career-step-edit {
     flex-wrap: wrap;

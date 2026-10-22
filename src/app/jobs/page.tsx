@@ -1,6 +1,8 @@
 import Link from "next/link"
-import { loadStudent } from "@/lib/load-student"
+import { auth } from "@clerk/nextjs/server"
+import { redirect } from "next/navigation"
 import { StudentShell } from "@/components/student/student-shell"
+import { getCurrentResumeData } from "@/lib/supabase/user-data"
 
 const sources = [
   {
@@ -29,7 +31,9 @@ const sources = [
 ]
 
 export default async function JobsPage() {
-  const { resume } = await loadStudent()
+  const { userId } = await auth()
+  if (!userId) redirect("/sign-in")
+  const resume = await getCurrentResumeData(userId)
   return (
     <StudentShell>
       <div className="career-page">

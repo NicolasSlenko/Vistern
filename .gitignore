@@ -15,6 +15,7 @@
 
 # next.js
 /.next/
+/.next-dev/
 /out/
 
 # production
@@ -55,3 +56,6 @@ data/resume-data.json
 .student-preview/
 .codex-build/
 /supabase/.temp/
+.agents/
+docs/
+skills-lock.json

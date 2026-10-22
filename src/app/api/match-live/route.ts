@@ -4,7 +4,6 @@ import { zodTextFormat } from "openai/helpers/zod.mjs"
 import { type NextResponse as NR, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { getCurrentResumeData, getUserPreferences } from "@/lib/supabase/user-data"
-import { generateEmbedding } from "@/lib/embeddings"
 import { searchSimilarDocuments } from "@/lib/vectorSearch"
 import { checkAndIncrementLimit } from "@/lib/usageLimits"
 import type { Resume } from "@/app/api/parse/resumeSchema"
@@ -333,12 +332,14 @@ export async function POST(): Promise<NR> {
       )
     }
 
-    const resume = await getCurrentResumeData(userId)
+    const [resume, prefs] = await Promise.all([
+      getCurrentResumeData(userId),
+      getUserPreferences(userId),
+    ])
     if (!resume) {
       return NextResponse.json({ success: false, error: "No resume found. Upload a resume first." }, { status: 400 })
     }
 
-    const prefs = await getUserPreferences(userId)
     if (!prefs?.roleTypes?.length) {
       return NextResponse.json(
         { success: false, error: "No preferences found. Complete the questionnaire first." },
@@ -364,13 +365,16 @@ export async function POST(): Promise<NR> {
     const resumeSummary = buildResumeSummary(resume)
     const client = new OpenAI()
 
-    // Stage 1: batch embed all jobs + resume, cosine-rank to get top 10
-    const resumeVector = await generateEmbedding(resumeSummary)
+    // Stage 1: embed the resume and jobs in one request, then rank the top 10.
     const jobTexts = allJobs.map(j =>
       `${j.title} at ${j.company.display_name}. ${j.description.slice(0, 600)}`.replace(/\n/g, " ")
     )
-    const embeddingRes = await client.embeddings.create({ model: "text-embedding-3-small", input: jobTexts })
-    const jobDocs = allJobs.map((job, i) => ({ id: job.id, vector: embeddingRes.data[i].embedding, job }))
+    const embeddingRes = await client.embeddings.create({
+      model: "text-embedding-3-small",
+      input: [resumeSummary.replace(/\n/g, " "), ...jobTexts],
+    })
+    const resumeVector = embeddingRes.data[0].embedding
+    const jobDocs = allJobs.map((job, i) => ({ id: job.id, vector: embeddingRes.data[i + 1].embedding, job }))
     const topMatches = searchSimilarDocuments(resumeVector, jobDocs, 10)
 
     // Stage 2: run LLM analysis on top 10 in parallel — strengths/gaps inform the final score

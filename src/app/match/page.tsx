@@ -513,7 +513,7 @@ export default function MatchPage() {
 
   if (isResumeLoading) {
     return (
-      <div className="min-h-screen bg-background p-6 md:p-10">
+      <div className="student-tool-page">
         <div className="mx-auto max-w-7xl space-y-6">
           <div className="skeleton-loader h-12 w-64" />
           <div className="grid xl:grid-cols-[1fr_360px] gap-6">
@@ -527,13 +527,13 @@ export default function MatchPage() {
 
   if (!resumeData) {
     return (
-      <div className="min-h-screen bg-background p-6 md:p-10">
+      <div className="student-tool-page">
         <div className="mx-auto max-w-7xl flex flex-col items-center justify-center py-28">
-          <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary/20 to-violet-500/10 flex items-center justify-center mb-6 ring-1 ring-primary/20">
+          <div className="w-24 h-24 rounded-3xl bg-primary/10 flex items-center justify-center mb-6 ring-1 ring-primary/20">
             <Target className="h-12 w-12 text-primary" />
           </div>
-          <h2 className="text-2xl font-bold mb-2">No Resume Found</h2>
-          <p className="text-muted-foreground text-sm mb-8 text-center max-w-sm">Upload your resume to start discovering live job matches powered by AI.</p>
+          <h2 className="text-2xl font-bold mb-2">Add a resume to find matches</h2>
+          <p className="text-muted-foreground text-sm mb-8 text-center max-w-sm">See how your experience lines up with roles and what to check before applying.</p>
           <Button asChild size="lg" className="rounded-xl px-10"><Link href="/upload">Upload Resume</Link></Button>
         </div>
       </div>
@@ -548,16 +548,14 @@ export default function MatchPage() {
         <input ref={overleafInputRef} type="hidden" name="snip_uri" defaultValue="" />
       </form>
 
-      <div className="min-h-screen bg-background p-6 md:p-8">
+      <div className="student-tool-page">
         <div className="mx-auto max-w-7xl space-y-6">
 
           {/* ── Gradient Header ─────────────────────────────────────── */}
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}
             className="flex items-end justify-between gap-4">
             <div>
-              <h1 className="text-4xl font-bold tracking-tight">
-                Career Match
-              </h1>
+              <h1>Job matches</h1>
               <div className="flex items-center gap-3 mt-2">
                 {totalSaved > 0 && (
                   <span className="text-xs text-muted-foreground">

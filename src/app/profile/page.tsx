@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import {
   FileText,
@@ -97,7 +96,7 @@ function formatChartDate(dateString: string): string {
   })
 }
 
-function ResumePreviewDialog({ submission }: { submission: ResumeSubmission }) {
+function ResumePreviewDialog({ submission, compact = false }: { submission: ResumeSubmission; compact?: boolean }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -124,19 +123,28 @@ function ResumePreviewDialog({ submission }: { submission: ResumeSubmission }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" onClick={loadPreview}>
-          <Eye className="h-4 w-4 mr-1" />
-          Preview
+        <Button
+          variant="outline"
+          size={compact ? "icon" : "sm"}
+          className={cn(
+            "border-[#c8d8ce] text-[#246347] hover:border-[#246347] hover:bg-[#eaf1ec] hover:text-[#1b5038]",
+            compact && "size-11 shrink-0 rounded-xl",
+          )}
+          aria-label={compact ? `Preview ${submission.fileName}` : undefined}
+          onClick={loadPreview}
+        >
+          <Eye className={cn("h-4 w-4", !compact && "mr-1.5")} />
+          {!compact && "Preview"}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl h-[80vh]">
+      <DialogContent className="flex h-[min(82vh,900px)] w-[calc(100vw-24px)] max-w-5xl flex-col gap-3 overflow-hidden rounded-2xl border-[#dce6dd] bg-[#f7f8f6] p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            {submission.fileName}
+          <DialogTitle className="flex min-w-0 items-center gap-3 pr-8 text-left text-[#27332d]">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#eaf1ec] text-[#246347]"><FileText className="h-5 w-5" /></span>
+            <span className="break-words text-base sm:text-lg">{submission.fileName}</span>
           </DialogTitle>
         </DialogHeader>
-        <div className="flex-1 h-full min-h-0">
+        <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-[#dce6dd] bg-white">
           {isLoading && (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -154,7 +162,7 @@ function ResumePreviewDialog({ submission }: { submission: ResumeSubmission }) {
           {previewUrl && !isLoading && !error && (
             <iframe
               src={previewUrl}
-              className="w-full h-[calc(80vh-100px)] border rounded-lg"
+              className="h-full w-full border-0"
               title={`Preview of ${submission.fileName}`}
             />
           )}
@@ -329,7 +337,7 @@ function ClearSubmissionsDialog({ onConfirm, isClearing, trigger }: { onConfirm:
 }
 
 export default function ProfilePage() {
-  const { user, isLoaded } = useUser()
+  const { isLoaded } = useUser()
   // Ensure typed as unknown first to avoid incompatibility if interface changed
   const { resumeData, setResumeData, refreshResumeData, showFeedback, toggleFeedback } = useResume()
 
@@ -487,21 +495,12 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <main className="flex-1 container mx-auto px-4 pt-8 pb-12">
-        {/* User Stats Header */}
-        <div className="flex flex-col items-start gap-5 mb-8 bg-card border rounded-xl p-6 shadow-sm xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex min-w-0 items-center gap-4">
-            {user?.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.imageUrl} alt="Profile" className="h-16 w-16 shrink-0 rounded-full border-2 border-primary/20" />
-            ) : (
-              <div className="h-16 w-16 shrink-0 rounded-full bg-muted flex items-center justify-center"><User className="h-8 w-8" /></div>
-            )}
-            <div className="min-w-0 break-words">
-              <h1 className="text-2xl font-bold">{user?.fullName || "Your Profile"}</h1>
-              <div className="text-muted-foreground">{user?.primaryEmailAddress?.emailAddress}</div>
-            </div>
+    <div className="student-tool-page">
+      <div className="mx-auto max-w-6xl">
+        <div className="flex flex-col items-start gap-5 mb-8 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <h1>My resume</h1>
+            <p className="mt-2 text-muted-foreground">Review your profile, resume versions, and progress.</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <Button variant="outline" size="sm" asChild className="gap-2">
@@ -527,45 +526,47 @@ export default function ProfilePage() {
         </div>
 
         <Tabs defaultValue="editor" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 md:w-[400px]">
-            <TabsTrigger value="editor" className="gap-2"><User className="h-4 w-4" /> Master Profile</TabsTrigger>
-            <TabsTrigger value="stats" className="gap-2"><BarChart3 className="h-4 w-4" /> Statistics</TabsTrigger>
-            <TabsTrigger value="history" className="gap-2"><Calendar className="h-4 w-4" /> History</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 sm:w-[400px]">
+            <TabsTrigger value="editor" className="gap-2 px-2 sm:px-4"><User className="h-4 w-4 hidden sm:block" /> Editor</TabsTrigger>
+            <TabsTrigger value="stats" className="gap-2 px-2 sm:px-4"><BarChart3 className="h-4 w-4 hidden sm:block" /> Progress</TabsTrigger>
+            <TabsTrigger value="history" className="gap-2 px-2 sm:px-4"><Calendar className="h-4 w-4 hidden sm:block" /> History</TabsTrigger>
           </TabsList>
 
           {/* Tab: Resume Editor (The "Big Section") */}
           <TabsContent value="editor" className="space-y-4">
-            <div className="grid md:grid-cols-4 gap-6">
-              {/* Scrollable Past Resumes Sidebar */}
-              <Card className="md:col-span-1 h-fit flex flex-col border-dashed">
-                <CardHeader className="py-4">
-                  <CardTitle className="text-lg flex items-center gap-2"><FileText className="h-4 w-4" /> Past Uploads</CardTitle>
+            <div className="grid items-start gap-6 xl:grid-cols-[minmax(260px,300px)_minmax(0,1fr)]">
+              {/* All saved versions stay visible; no clipped inner scrolling region. */}
+              <Card className="h-fit min-w-0 gap-0 overflow-hidden border-[#dde3dc] bg-white xl:col-span-1">
+                <CardHeader className="border-b border-[#e7ece7] px-5 py-4">
+                  <CardTitle className="flex items-center justify-between gap-2 text-base text-[#27332d]">
+                    <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#246347]" /> Past uploads</span>
+                    <span className="rounded-full bg-[#eaf1ec] px-2.5 py-1 text-xs font-semibold text-[#246347]">{submissions.length}</span>
+                  </CardTitle>
+                  <CardDescription>Every saved version, newest first.</CardDescription>
                 </CardHeader>
-                <CardContent className="flex-1 p-0">
-                  <ScrollArea className="h-[400px] md:h-[600px]">
-                    <div className="p-4 space-y-2">
-                      {submissions.map((sub, index) => (
-                        <div key={sub.id} className="text-sm p-3 border rounded-lg hover:bg-muted/50 transition-colors group bg-card">
-                          <div className="flex justify-between items-start mb-1">
-                            <div className="font-medium truncate flex-1">{sub.fileName}</div>
-                          </div>
-                          <div className="flex justify-between items-center text-xs text-muted-foreground">
-                            <span>{formatChartDate(sub.uploadedAt)}</span>
-                            <Badge variant="secondary" className="text-[10px] h-5">{sub.score}</Badge>
-                          </div>
-                          <div className="mt-2 text-xs text-muted-foreground/50 italic">
-                            Preview only
-                          </div>
+                <CardContent className="space-y-2 p-3">
+                  {submissions.map((sub, index) => (
+                    <div key={sub.id} className="flex min-w-0 items-center gap-3 rounded-xl border border-[#e3e9e2] bg-[#fbfcfa] p-3 transition-colors hover:border-[#c8d8ce] hover:bg-white">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="min-w-0 break-words text-sm font-semibold leading-snug text-[#27332d]">{sub.fileName}</span>
+                          {index === 0 && <span className="rounded-full bg-[#eaf1ec] px-2 py-0.5 text-[11px] font-semibold text-[#246347]">Current</span>}
                         </div>
-                      ))}
-                      {submissions.length === 0 && <div className="text-sm text-muted-foreground text-center py-8">No uploads yet</div>}
+                        <div className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-[#5c685f]">
+                          <span>{formatDate(sub.uploadedAt)}</span>
+                          <span aria-hidden="true">·</span>
+                          <span>Score {sub.score}</span>
+                        </div>
+                      </div>
+                      {sub.fileName.toLowerCase().endsWith(".pdf") && <ResumePreviewDialog submission={sub} compact />}
                     </div>
-                  </ScrollArea>
+                  ))}
+                  {submissions.length === 0 && <div className="px-3 py-8 text-center text-sm text-[#5c685f]">{isLoadingSubs ? "Loading uploads…" : "No uploads yet"}</div>}
                 </CardContent>
               </Card>
 
               {/* Main Editor */}
-              <div className="md:col-span-3">
+              <div className="min-w-0">
                 <Card className="mb-4">
                   <CardHeader className="py-4 bg-muted/30 border-b">
                     <CardTitle className="text-xl flex items-center gap-2">
@@ -775,7 +776,7 @@ export default function ProfilePage() {
           </TabsContent>
         </Tabs>
 
-      </main>
+      </div>
     </div>
   )
 }
