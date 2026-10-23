@@ -48,6 +48,10 @@ All keys are prefixed by `uploads/{userId}/`:
 
 Home, Career, Community, and Jobs use server loaders for authenticated data. Career mutations validate Zod payloads and use revision checks with conditional S3 writes; they never modify the resume.
 
+### Resume workspace (front end only, mock data)
+
+`/resume` (generated resume with section review), `/resume/experience` (master profile editor) and `/resume/tailor` (per-role resumes) replace the old `/profile` page in the sidebar. They are not wired to Supabase yet: state comes from `src/lib/resume/mock-data.ts`, is reduced in `src/lib/resume/workspace.ts`, and persists to `localStorage` via `ResumeWorkspaceProvider`. Suggestions are mock rules, not AI. Model rules: the profile is the only source of truth; rejecting a suggestion leaves it unchanged; tailored wording never writes back; every level stores `visibility` (default `private`) but the Public option is hidden. Tests: `npx tsx --test tests/resume-workspace.test.ts`.
+
 ### API Route Conventions
 
 - Auth: every route calls Clerk's `auth()` and returns 401 if unauthenticated

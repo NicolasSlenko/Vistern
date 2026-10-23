@@ -38,11 +38,13 @@ const links = [
   { href: "/home", label: "Home", icon: Home },
   { href: "/career", label: "Career", icon: Compass },
   { href: "/community", label: "Community", icon: Users },
-  { href: "/profile", label: "Resume", icon: FileText },
+  { href: "/resume", label: "Resume", icon: FileText },
   { href: "/jobs", label: "Jobs", icon: Search },
 ]
 const resumePages = [
-  { href: "/profile", label: "My resume" },
+  { href: "/resume", label: "Resume" },
+  { href: "/resume/experience", label: "Experience" },
+  { href: "/resume/tailor", label: "Tailor for a role" },
   { href: "/dashboard", label: "Resume feedback" },
   { href: "/upload", label: "Upload resume" },
 ]
@@ -75,8 +77,8 @@ export function StudentShell({
   activeSubpage?: string
 }) {
   const pathname = usePathname()
-  const activeHref = resumePages.some((page) => page.href === pathname)
-    ? "/profile"
+  const activeHref = resumePages.some((page) => page.href === pathname) || pathname === "/profile"
+    ? "/resume"
     : pathname === "/match"
       ? "/jobs"
       : pathname.startsWith("/community/")
@@ -84,7 +86,7 @@ export function StudentShell({
         : pathname.startsWith("/jobs/")
           ? "/jobs"
           : pathname
-  const subpages = activeHref === "/profile" ? resumePages
+  const subpages = activeHref === "/resume" ? resumePages
     : activeHref === "/career" ? careerPages
       : activeHref === "/community" ? communityPages
         : activeHref === "/jobs" ? jobsPages : []

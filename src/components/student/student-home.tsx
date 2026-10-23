@@ -354,7 +354,7 @@ export function StudentHome({
             </p>
             <Link
               className="student-text-link"
-              href={resume ? "/profile" : "/upload"}
+              href={resume ? "/resume" : "/upload"}
             >
               {resume ? "Open resume" : "Add a resume"}
             </Link>
