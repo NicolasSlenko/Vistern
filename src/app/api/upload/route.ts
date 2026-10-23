@@ -3,25 +3,11 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { deleteFromS3, uploadToS3 } from "@/lib/aws/s3";
 import { createClerkSupabaseServerClient } from "@/lib/supabase/server";
 import { getOrCreateProfileId, importLegacyResumeSubmissions } from "@/lib/supabase/resume-documents";
+import { matchesResumeFileFormat, resumeContentType } from "@/lib/resume-file-validation";
 
 const DAILY_UPLOAD_LIMIT = 3;
 const MAX_STORED_SUBMISSIONS = 10;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const ALLOWED_TYPES = new Set([
-  "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "text/plain",
-]);
-
-function contentTypeFor(fileName: string, fallback: string) {
-  const extension = fileName.split(".").pop()?.toLowerCase();
-  if (extension === "pdf") return "application/pdf";
-  if (extension === "doc") return "application/msword";
-  if (extension === "docx") return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-  if (extension === "txt") return "text/plain";
-  return fallback || "application/octet-stream";
-}
-
 export async function POST(request: NextRequest) {
   let uploadedKey: string | null = null;
   let persisted = false;
@@ -36,10 +22,15 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get("file");
     if (!(file instanceof File)) return NextResponse.json({ error: "No file received" }, { status: 400 });
-    if (!ALLOWED_TYPES.has(file.type)) {
+    const contentType = resumeContentType(file.name);
+    if (!contentType) {
       return NextResponse.json({ error: "Invalid file type. Only PDF, DOCX, and TXT files are allowed." }, { status: 400 });
     }
     if (file.size > MAX_FILE_SIZE) return NextResponse.json({ error: "File too large. Maximum size is 10MB." }, { status: 400 });
+    const bytes = Buffer.from(await file.arrayBuffer());
+    if (!matchesResumeFileFormat(contentType, bytes)) {
+      return NextResponse.json({ error: "This file does not appear to be a valid PDF, DOCX, or TXT file." }, { status: 400 });
+    }
 
     const supabase = await createClerkSupabaseServerClient();
     await importLegacyResumeSubmissions(supabase, userId);
@@ -60,7 +51,7 @@ export async function POST(request: NextRequest) {
     const now = Date.now();
     const safeName = file.name.replace(/[^\w.-]+/g, "-").toLowerCase();
     uploadedKey = `uploads/${userId}/resumes/${now}-${safeName}`;
-    await uploadToS3(uploadedKey, Buffer.from(await file.arrayBuffer()), contentTypeFor(file.name, file.type));
+    await uploadToS3(uploadedKey, bytes, contentType);
 
     const profileId = await getOrCreateProfileId(supabase, userId);
     const { data: document, error: insertError } = await supabase.from("resume_documents").insert({
@@ -69,7 +60,7 @@ export async function POST(request: NextRequest) {
       source_type: "uploaded",
       s3_object_key: uploadedKey,
       file_name: file.name,
-      content_type: contentTypeFor(file.name, file.type),
+      content_type: contentType,
       structured_content: {},
       status: "draft",
       score: 0,
@@ -97,7 +88,7 @@ export async function POST(request: NextRequest) {
       message: "File uploaded successfully",
       filename: uploadedKey,
       size: file.size,
-      type: file.type,
+      type: contentType,
       submission: {
         id: document.id,
         fileName: file.name,

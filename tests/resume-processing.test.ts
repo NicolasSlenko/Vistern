@@ -5,6 +5,19 @@ import { parseFileContent, ResumeFileError } from "../src/app/api/parse/parseCon
 import { extractWithChatGPT } from "../src/app/api/parse/semanticParse"
 import { getResumeObject } from "../src/app/api/parse/resumeSchema"
 import { mergeResumeProfile } from "../src/lib/merge-resume-profile"
+import { matchesResumeFileFormat, resumeContentType } from "../src/lib/resume-file-validation"
+
+test("upload accepts supported file contents even when the browser supplies a different MIME type", async () => {
+  for (const extension of ["pdf", "docx", "txt"]) {
+    const bytes = await readFile(new URL(`../test-fixtures/vistern-qa-resume.${extension}`, import.meta.url))
+    const contentType = resumeContentType(`resume.${extension.toUpperCase()}`)
+    assert(contentType)
+    assert(matchesResumeFileFormat(contentType, bytes))
+  }
+  assert.equal(resumeContentType("resume.doc"), null)
+  assert.equal(matchesResumeFileFormat("application/pdf", Buffer.from("not a PDF")), false)
+  assert.equal(matchesResumeFileFormat("text/plain", Buffer.from([0, 1, 2])), false)
+})
 
 test("PDF extraction reads the actual fixture and leaves its bytes unchanged", async () => {
   const buffer = await readFile(new URL("../test-fixtures/vistern-qa-resume.pdf", import.meta.url))
