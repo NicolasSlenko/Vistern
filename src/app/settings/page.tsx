@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { useUser, useClerk } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
-import { useTheme } from "next-themes"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,9 +19,6 @@ import {
   AlertTriangle,
   Trash2,
   UserX,
-  Sun,
-  Moon,
-  Monitor,
   BrainCircuit,
   Database,
   Check,
@@ -99,38 +95,6 @@ function DeleteAccountDialog() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
-}
-
-// ─── Theme Selector ────────────────────────────────────────────────────────────
-
-function ThemeSelector() {
-  const { theme, setTheme, resolvedTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => { setMounted(true) }, [])
-
-  const options = [
-    { value: "light", label: "Light", icon: Sun },
-    { value: "dark", label: "Dark", icon: Moon },
-    { value: "system", label: "System", icon: Monitor },
-  ] as const
-
-  return (
-    <div className="flex gap-2">
-      {options.map(({ value, label, icon: Icon }) => (
-        <Button
-          key={value}
-          variant={theme === value ? "default" : "outline"}
-          size="sm"
-          className="gap-2 flex-1"
-          onClick={() => setTheme(value)}
-        >
-          <Icon className="h-4 w-4" />
-          {label}
-        </Button>
-      ))}
-    </div>
   )
 }
 
@@ -373,17 +337,6 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Theme */}
-              <div className="space-y-3">
-                <div className="space-y-0.5">
-                  <p className="text-sm font-medium">Theme</p>
-                  <p className="text-xs text-muted-foreground">Choose your preferred color scheme</p>
-                </div>
-                <ThemeSelector />
-              </div>
-
-              <Separator />
-
               {/* AI Feedback */}
               <ToggleRow
                 label="AI Feedback"

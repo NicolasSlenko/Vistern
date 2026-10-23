@@ -226,7 +226,7 @@ export function StudentPreferences({ onSubmit, onSkip }: StudentPreferencesProps
         </div>
 
         {!isValid && (selectedRoles.length === 0 || selectedCompanies.length === 0) && (
-          <p className="text-sm text-orange-600 dark:text-orange-400">
+          <p className="text-sm text-orange-600 ">
             Please select at least one role and one company to continue
           </p>
         )}

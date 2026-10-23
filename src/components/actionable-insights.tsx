@@ -57,13 +57,13 @@ const PRIORITY_DOT: Record<string, string> = {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  projects: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
-  experience: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
-  skills: "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20",
-  formatting: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
-  links: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20",
-  gpa: "bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20",
-  coursework: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20",
+  projects: "bg-blue-500/10 text-blue-600  border-blue-500/20",
+  experience: "bg-purple-500/10 text-purple-600  border-purple-500/20",
+  skills: "bg-green-500/10 text-green-600  border-green-500/20",
+  formatting: "bg-orange-500/10 text-orange-600  border-orange-500/20",
+  links: "bg-cyan-500/10 text-cyan-600  border-cyan-500/20",
+  gpa: "bg-pink-500/10 text-pink-600  border-pink-500/20",
+  coursework: "bg-indigo-500/10 text-indigo-600  border-indigo-500/20",
 }
 
 export function ActionableInsights({ insights: initialInsights, currentYear, graduationYear, resumeData, xyzFeedback, onInsightsChange }: ActionableInsightsProps) {
@@ -186,7 +186,7 @@ export function ActionableInsights({ insights: initialInsights, currentYear, gra
         "group flex items-start gap-2.5 p-3 rounded-lg border transition-all duration-200 cursor-pointer",
         item.checked
           ? "bg-muted/30 border-muted/50 opacity-50"
-          : "bg-background hover:shadow-sm hover:border-border/80 dark:bg-card"
+          : "bg-background hover:shadow-sm hover:border-border/80 "
       )}
       onClick={() => handleToggle(item.id)}
     >
@@ -288,7 +288,7 @@ export function ActionableInsights({ insights: initialInsights, currentYear, gra
           {/* LEFT PANEL — Resume Tweaks */}
           <div className="lg:w-[380px] xl:w-[420px] shrink-0 flex flex-col">
             {/* Panel header */}
-            <div className="px-4 py-3 border-b bg-orange-500/5 dark:bg-orange-500/10">
+            <div className="px-4 py-3 border-b bg-orange-500/5 ">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <FileEdit className="h-4 w-4 text-orange-500" />
@@ -372,7 +372,7 @@ export function ActionableInsights({ insights: initialInsights, currentYear, gra
             </div>
 
             {/* Active year subtitle */}
-            <div className="px-4 py-2 border-b bg-primary/[0.03] dark:bg-primary/[0.06]">
+            <div className="px-4 py-2 border-b bg-primary/[0.03] ">
               <div className="flex items-center justify-between">
                 <p className="text-[10px] text-muted-foreground">
                   {activeYear === currentYear

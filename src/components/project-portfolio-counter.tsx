@@ -12,22 +12,22 @@ export function ProjectPortfolioCounter({ projectCount }: ProjectPortfolioCounte
       status: "Build More", 
       message: "Build more projects to showcase your skills!", 
       color: "text-amber-600",
-      bgColor: "bg-amber-50 dark:bg-amber-950/20",
-      borderColor: "border-amber-200 dark:border-amber-900"
+      bgColor: "bg-amber-50 ",
+      borderColor: "border-amber-200 "
     }
     if (count <= 3) return { 
       status: "Good Portfolio", 
       message: "Good portfolio! Consider adding 1-2 more diverse projects.", 
       color: "text-green-600",
-      bgColor: "bg-green-50 dark:bg-green-950/20",
-      borderColor: "border-green-200 dark:border-green-900"
+      bgColor: "bg-green-50 ",
+      borderColor: "border-green-200 "
     }
     return { 
       status: "Impressive!", 
       message: "Impressive portfolio! Great demonstration of hands-on experience.", 
       color: "text-emerald-600",
-      bgColor: "bg-emerald-50 dark:bg-emerald-950/20",
-      borderColor: "border-emerald-200 dark:border-emerald-900"
+      bgColor: "bg-emerald-50 ",
+      borderColor: "border-emerald-200 "
     }
   }
 

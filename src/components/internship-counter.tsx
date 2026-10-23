@@ -11,22 +11,22 @@ export function InternshipCounter({ internshipCount }: InternshipCounterProps) {
     if (count === 0) return {
       message: "No worries! Everyone starts somewhere. We'll help you land your first opportunity!",
       color: "text-blue-600",
-      bgColor: "bg-blue-50 dark:bg-blue-950/20",
-      borderColor: "border-blue-200 dark:border-blue-900",
+      bgColor: "bg-blue-50 ",
+      borderColor: "border-blue-200 ",
       icon: Briefcase
     }
     if (count === 1) return {
       message: "Great start! Previous experience makes future opportunities easier to secure.",
       color: "text-green-600",
-      bgColor: "bg-green-50 dark:bg-green-950/20",
-      borderColor: "border-green-200 dark:border-green-900",
+      bgColor: "bg-green-50 ",
+      borderColor: "border-green-200 ",
       icon: Briefcase
     }
     return {
       message: "Excellent position! You're highly competitive for top roles.",
       color: "text-amber-600",
-      bgColor: "bg-amber-50 dark:bg-amber-950/20",
-      borderColor: "border-amber-200 dark:border-amber-900",
+      bgColor: "bg-amber-50 ",
+      borderColor: "border-amber-200 ",
       icon: Star
     }
   }

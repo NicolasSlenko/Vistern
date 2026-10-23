@@ -44,9 +44,9 @@ export function TechStackAlignment() {
           </div>
         ))}
 
-        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
-          <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Top Skills to Learn:</h4>
-          <ul className="space-y-1 text-sm text-blue-700 dark:text-blue-300">
+        <div className="mt-6 p-4 bg-blue-50  rounded-lg border border-blue-200 ">
+          <h4 className="font-semibold text-blue-900  mb-2">Top Skills to Learn:</h4>
+          <ul className="space-y-1 text-sm text-blue-700 ">
             <li>• AWS/Azure basics (for Cloud Computing)</li>
             <li>• TensorFlow or PyTorch (for AI/ML)</li>
             <li>• Docker & Kubernetes (for DevOps)</li>

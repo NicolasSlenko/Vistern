@@ -81,7 +81,7 @@ export function ResumeCompletenessScore({ resume }: ResumeCompletenessScoreProps
                   key={item.label}
                   className={cn(
                     "flex items-center justify-between p-3 rounded-lg border-2 transition-all",
-                    item.value ? "border-green-500 bg-green-50 dark:bg-green-950/20" : "border-border bg-muted/30",
+                    item.value ? "border-green-500 bg-green-50 " : "border-border bg-muted/30",
                   )}
                 >
                   <div className="flex items-center gap-3">

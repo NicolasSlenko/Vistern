@@ -306,7 +306,7 @@ export function RoleSkillsMatch({ skills, roleTypes = [] }: RoleSkillsMatchProps
                                 <Badge
                                   key={skill}
                                   variant="outline"
-                                  className="text-xs bg-green-50 dark:bg-green-950/30 border-green-300 dark:border-green-800 text-green-700 dark:text-green-400"
+                                  className="text-xs bg-green-50  border-green-300  text-green-700 "
                                 >
                                   <Check className="h-3 w-3 mr-1" />
                                   {skill}
@@ -322,7 +322,7 @@ export function RoleSkillsMatch({ skills, roleTypes = [] }: RoleSkillsMatchProps
                                 <Badge
                                   key={skill}
                                   variant="outline"
-                                  className="text-xs bg-red-50 dark:bg-red-950/30 border-red-300 dark:border-red-800 text-red-700 dark:text-red-400"
+                                  className="text-xs bg-red-50  border-red-300  text-red-700 "
                                 >
                                   <X className="h-3 w-3 mr-1" />
                                   {skill}
@@ -336,8 +336,8 @@ export function RoleSkillsMatch({ skills, roleTypes = [] }: RoleSkillsMatchProps
                       {/* Summary */}
                       <div className="pt-2 border-t">
                         <p className="text-xs text-muted-foreground">
-                          <span className="font-medium text-green-600 dark:text-green-400">{role.matched} skills</span> matched, 
-                          <span className="font-medium text-red-600 dark:text-red-400 ml-1">{role.missingSkills.length} skills</span> to learn
+                          <span className="font-medium text-green-600">{role.matched} skills</span> matched,
+                          <span className="font-medium text-red-600  ml-1">{role.missingSkills.length} skills</span> to learn
                         </p>
                       </div>
                     </div>
@@ -349,8 +349,8 @@ export function RoleSkillsMatch({ skills, roleTypes = [] }: RoleSkillsMatchProps
         </div>
 
         {roleTypes.length > 0 && targetRolesInTop.length === 0 && (
-          <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-lg">
-            <p className="text-sm text-amber-700 dark:text-amber-400 flex items-center gap-2">
+          <div className="mt-4 p-3 bg-amber-50  border border-amber-200  rounded-lg">
+            <p className="text-sm text-amber-700  flex items-center gap-2">
               <Star className="h-4 w-4" />
               Your target roles ({roleTypes.slice(0, 2).join(", ")}{roleTypes.length > 2 ? "..." : ""}) aren&apos;t in your top 3 matches yet. Consider building skills in those areas!
             </p>

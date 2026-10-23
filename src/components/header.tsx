@@ -10,7 +10,6 @@ import {
   UserButton,
 } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
-import { ModeToggle } from "./theme-provider"
 import { cn } from "@/lib/utils"
 
 export function Header() {
@@ -46,8 +45,6 @@ export function Header() {
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-2">
-            <ModeToggle />
-
             <SignedOut>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" asChild>

@@ -29,7 +29,6 @@ import {
   Settings
 } from "lucide-react"
 import { toast } from "sonner"
-import { useTheme } from "next-themes"
 import {
   AreaChart,
   Area,
@@ -248,9 +247,6 @@ function ScoreChartTooltip({ active, payload, label }: any) {
 }
 
 function ScoreHistoryChart({ submissions }: { submissions: ResumeSubmission[] }) {
-  const { theme } = useTheme()
-  const isDark = theme === "dark"
-
   const chartData = [...submissions]
     .sort((a, b) => new Date(a.uploadedAt).getTime() - new Date(b.uploadedAt).getTime())
     .map((s, index) => ({
@@ -261,8 +257,8 @@ function ScoreHistoryChart({ submissions }: { submissions: ResumeSubmission[] })
       index: index + 1,
     }))
 
-  const chartColor = isDark ? "#ffffff" : "hsl(var(--primary))"
-  const gridColor = isDark ? "#333333" : "hsl(var(--muted))"
+  const chartColor = "#246347"
+  const gridColor = "#dde3dc"
 
   return (
     <Card className="h-full">
@@ -289,12 +285,12 @@ function ScoreHistoryChart({ submissions }: { submissions: ResumeSubmission[] })
               <XAxis
                 dataKey="date"
                 className="text-xs"
-                tick={{ fontSize: 12, fill: isDark ? '#ffffff' : 'hsl(var(--muted-foreground))' }}
+                tick={{ fontSize: 12, fill: '#5c685f' }}
               />
               <YAxis
                 domain={[0, 100]}
                 className="text-xs"
-                tick={{ fontSize: 12, fill: isDark ? '#ffffff' : 'hsl(var(--muted-foreground))' }}
+                tick={{ fontSize: 12, fill: '#5c685f' }}
               />
               <Tooltip content={<ScoreChartTooltip />} />
               <Area

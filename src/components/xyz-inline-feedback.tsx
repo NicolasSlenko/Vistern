@@ -5,11 +5,11 @@ import { Badge } from "@/components/ui/badge"
 import { Wand2, ChevronDown, ChevronRight } from "lucide-react"
 
 export function getXYZScoreColor(score: number) {
-    if (score >= 80) return "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800"
-    if (score >= 60) return "bg-green-100 text-green-800 border-green-200 dark:bg-green-950/50 dark:text-green-400 dark:border-green-800"
-    if (score >= 40) return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-950/50 dark:text-yellow-400 dark:border-yellow-800"
-    if (score >= 20) return "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-950/50 dark:text-orange-400 dark:border-orange-800"
-    return "bg-red-100 text-red-800 border-red-200 dark:bg-red-950/50 dark:text-red-400 dark:border-red-800"
+    if (score >= 80) return "bg-emerald-100 text-emerald-800 border-emerald-200   "
+    if (score >= 60) return "bg-green-100 text-green-800 border-green-200   "
+    if (score >= 40) return "bg-yellow-100 text-yellow-800 border-yellow-200   "
+    if (score >= 20) return "bg-orange-100 text-orange-800 border-orange-200   "
+    return "bg-red-100 text-red-800 border-red-200   "
 }
 
 interface XYZFeedback {

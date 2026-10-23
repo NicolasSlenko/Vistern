@@ -774,29 +774,29 @@ function ProjectPortfolioSummary({
       status: "Get Started",
       message: "Add projects to your resume to showcase your hands-on experience!",
       color: "text-blue-600",
-      bgColor: "bg-blue-50 dark:bg-blue-950/20",
-      borderColor: "border-blue-200 dark:border-blue-900"
+      bgColor: "bg-blue-50 ",
+      borderColor: "border-blue-200 "
     }
     if (score < 40) return {
       status: "Build More",
       message: "Focus on building more projects, especially in areas related to your target roles.",
       color: "text-amber-600",
-      bgColor: "bg-amber-50 dark:bg-amber-950/20",
-      borderColor: "border-amber-200 dark:border-amber-900"
+      bgColor: "bg-amber-50 ",
+      borderColor: "border-amber-200 "
     }
     if (score < 70) return {
       status: "Good Progress",
       message: `Good foundation! ${relevantCategories.size > 0 && relevantProjectCount < projectCount ? "Consider adding more projects aligned with your target roles." : "Keep building diverse projects."}`,
       color: "text-green-600",
-      bgColor: "bg-green-50 dark:bg-green-950/20",
-      borderColor: "border-green-200 dark:border-green-900"
+      bgColor: "bg-green-50 ",
+      borderColor: "border-green-200 "
     }
     return {
       status: "Excellent!",
       message: "Strong portfolio with good diversity and alignment to your career goals!",
       color: "text-emerald-600",
-      bgColor: "bg-emerald-50 dark:bg-emerald-950/20",
-      borderColor: "border-emerald-200 dark:border-emerald-900"
+      bgColor: "bg-emerald-50 ",
+      borderColor: "border-emerald-200 "
     }
   }
 
@@ -1183,7 +1183,7 @@ function ResumeCompletenessScore({ resume }: { resume: typeof mockStudentData.re
                   key={item.label}
                   className={cn(
                     "flex items-center justify-between p-3 rounded-lg border-2 transition-all",
-                    item.value ? "border-green-500 bg-green-50 dark:bg-green-950/20" : "border-border bg-muted/30",
+                    item.value ? "border-green-500 bg-green-50 " : "border-border bg-muted/30",
                   )}
                 >
                   <div className="flex items-center gap-3">
@@ -1304,8 +1304,8 @@ function ExperienceSummary({
       status: "Get Started",
       message: "No experience listed yet — that's okay! Focus on projects and skills to land your first opportunity.",
       color: "text-blue-600",
-      bgColor: "bg-blue-50 dark:bg-blue-950/20",
-      borderColor: "border-blue-200 dark:border-blue-900",
+      bgColor: "bg-blue-50 ",
+      borderColor: "border-blue-200 ",
       icon: Briefcase
     }
     if (totalCount === 1) {
@@ -1314,8 +1314,8 @@ function ExperienceSummary({
           status: "Good Start",
           message: "You have experience! Consider seeking roles more aligned with your target career path.",
           color: "text-amber-600",
-          bgColor: "bg-amber-50 dark:bg-amber-950/20",
-          borderColor: "border-amber-200 dark:border-amber-900",
+          bgColor: "bg-amber-50 ",
+          borderColor: "border-amber-200 ",
           icon: Briefcase
         }
       }
@@ -1323,8 +1323,8 @@ function ExperienceSummary({
         status: "Great Start",
         message: "Having professional experience gives you a significant advantage. Keep building!",
         color: "text-green-600",
-        bgColor: "bg-green-50 dark:bg-green-950/20",
-        borderColor: "border-green-200 dark:border-green-900",
+        bgColor: "bg-green-50 ",
+        borderColor: "border-green-200 ",
         icon: Briefcase
       }
     }
@@ -1333,8 +1333,8 @@ function ExperienceSummary({
         status: "Strong Experience",
         message: `Solid background! Consider targeting roles more aligned with your goal of ${roleTypes[0]}.`,
         color: "text-green-600",
-        bgColor: "bg-green-50 dark:bg-green-950/20",
-        borderColor: "border-green-200 dark:border-green-900",
+        bgColor: "bg-green-50 ",
+        borderColor: "border-green-200 ",
         icon: Star
       }
     }
@@ -1342,8 +1342,8 @@ function ExperienceSummary({
       status: "Excellent!",
       message: "Outstanding experience highly relevant to your career goals. You're very competitive!",
       color: "text-emerald-600",
-      bgColor: "bg-emerald-50 dark:bg-emerald-950/20",
-      borderColor: "border-emerald-200 dark:border-emerald-900",
+      bgColor: "bg-emerald-50 ",
+      borderColor: "border-emerald-200 ",
       icon: Star
     }
   }
@@ -1353,12 +1353,12 @@ function ExperienceSummary({
 
   // Badge color per experience type
   const typeBadgeColor: Record<string, string> = {
-    'Internship': 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
-    'Research': 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300',
-    'Full-Time / Other': 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300',
-    'Part-Time': 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
-    'Freelance': 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300',
-    'Volunteer / Teaching': 'bg-pink-100 text-pink-700 dark:bg-pink-950 dark:text-pink-300',
+    'Internship': 'bg-blue-100 text-blue-700  ',
+    'Research': 'bg-purple-100 text-purple-700  ',
+    'Full-Time / Other': 'bg-green-100 text-green-700  ',
+    'Part-Time': 'bg-amber-100 text-amber-700  ',
+    'Freelance': 'bg-orange-100 text-orange-700  ',
+    'Volunteer / Teaching': 'bg-pink-100 text-pink-700  ',
   }
 
   return (
@@ -1861,7 +1861,7 @@ function RoleSkillsMatch({
                                 <Badge
                                   key={skill}
                                   variant="outline"
-                                  className="text-xs bg-green-50 dark:bg-green-950/30 border-green-300 dark:border-green-800 text-green-700 dark:text-green-400"
+                                  className="text-xs bg-green-50  border-green-300  text-green-700 "
                                 >
                                   <Check className="h-3 w-3 mr-1" />
                                   {skill}
@@ -1877,7 +1877,7 @@ function RoleSkillsMatch({
                                 <Badge
                                   key={skill}
                                   variant="outline"
-                                  className="text-xs bg-red-50 dark:bg-red-950/30 border-red-300 dark:border-red-800 text-red-700 dark:text-red-400"
+                                  className="text-xs bg-red-50  border-red-300  text-red-700 "
                                 >
                                   <X className="h-3 w-3 mr-1" />
                                   {skill}
@@ -1891,8 +1891,8 @@ function RoleSkillsMatch({
                       {/* Summary */}
                       <div className="pt-2 border-t">
                         <p className="text-xs text-muted-foreground">
-                          <span className="font-medium text-green-600 dark:text-green-400">{role.matched} skills</span> matched,
-                          <span className="font-medium text-red-600 dark:text-red-400 ml-1">{role.missingSkills.length} skills</span> to learn
+                          <span className="font-medium text-green-600 ">{role.matched} skills</span> matched,
+                          <span className="font-medium text-red-600  ml-1">{role.missingSkills.length} skills</span> to learn
                         </p>
                       </div>
                     </div>
@@ -1904,8 +1904,8 @@ function RoleSkillsMatch({
         </div>
 
         {roleTypes.length > 0 && targetRolesInTop.length === 0 && (
-          <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-lg">
-            <p className="text-sm text-amber-700 dark:text-amber-400 flex items-center gap-2">
+          <div className="mt-4 p-3 bg-amber-50  border border-amber-200  rounded-lg">
+            <p className="text-sm text-amber-700  flex items-center gap-2">
               <Star className="h-4 w-4" />
               Your target roles ({roleTypes.slice(0, 2).join(", ")}{roleTypes.length > 2 ? "..." : ""}) aren&apos;t in your top 3 matches yet. Consider building skills in those areas!
             </p>

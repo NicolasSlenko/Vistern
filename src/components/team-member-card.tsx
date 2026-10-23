@@ -35,7 +35,7 @@ export function TeamMemberCard({
       {/* Header Image / Color Block */}
       <div className={cn(
         "h-32 w-full relative",
-        isProfessor ? "bg-amber-100/50 dark:bg-amber-950/30" : "bg-primary/10"
+        isProfessor ? "bg-amber-100/50 " : "bg-primary/10"
       )}>
         {/* Avatar Area */}
         <div className="absolute -bottom-12 left-1/2 -translate-x-1/2">

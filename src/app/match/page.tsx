@@ -648,7 +648,7 @@ export default function MatchPage() {
                                     <h2 className="font-bold text-base leading-tight">{currentJob.title}</h2>
                                     {(() => { const l = formatContract(currentJob.contractType, currentJob.title); return l ? (
                                       <Badge variant="secondary" className={cn("text-[10px] rounded-full px-2",
-                                        l === "Internship" && "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300")}>
+                                        l === "Internship" && "bg-violet-100 text-violet-700  ")}>
                                         {l}
                                       </Badge>
                                     ) : null })()}

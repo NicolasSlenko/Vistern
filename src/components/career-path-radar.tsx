@@ -329,7 +329,7 @@ export function CareerPathCourseworkChart({
                     selectedCategory === category
                       ? "border-primary bg-primary text-primary-foreground"
                       : recommended
-                        ? "border-amber-400 bg-amber-50 dark:bg-amber-950/20 hover:border-amber-500"
+                        ? "border-amber-400 bg-amber-50  hover:border-amber-500"
                         : "border-border bg-background hover:border-primary/50"
                   )}
                 >
@@ -390,8 +390,8 @@ export function CareerPathCourseworkChart({
                           "hover:shadow-md active:scale-[0.98]",
                           "disabled:opacity-50 disabled:cursor-not-allowed",
                           taken
-                            ? "border-green-500 bg-green-50 dark:bg-green-950/20 hover:border-green-600"
-                            : "border-gray-300 bg-gray-50 dark:bg-gray-950/20 hover:border-gray-400"
+                            ? "border-green-500 bg-green-50  hover:border-green-600"
+                            : "border-gray-300 bg-gray-50  hover:border-gray-400"
                         )}
                       >
                         <div className={cn(
@@ -458,8 +458,8 @@ export function CareerPathCourseworkChart({
                                   "hover:shadow-sm active:scale-[0.98]",
                                   "disabled:opacity-50 disabled:cursor-not-allowed",
                                   taken
-                                    ? "border-green-500/50 bg-green-50/50 dark:bg-green-950/10 hover:border-green-500"
-                                    : "border-gray-300/50 bg-gray-50/50 dark:bg-gray-950/10 hover:border-gray-400"
+                                    ? "border-green-500/50 bg-green-50/50  hover:border-green-500"
+                                    : "border-gray-300/50 bg-gray-50/50  hover:border-gray-400"
                                 )}
                               >
                                 <div className={cn(
@@ -521,7 +521,7 @@ export function CareerPathCourseworkChart({
                     onClick={() => {
                       setSelectedCategory(course.category)
                     }}
-                    className="flex items-center gap-2 p-2.5 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/20 hover:border-amber-400 transition-all text-left"
+                    className="flex items-center gap-2 p-2.5 rounded-lg border border-amber-300  bg-amber-50/50  hover:border-amber-400 transition-all text-left"
                   >
                     <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400 flex-shrink-0" />
                     <div className="flex-1 min-w-0">

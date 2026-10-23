@@ -239,12 +239,12 @@ export function LaTeXPreviewModal({
                           </div>
 
                           {/* Original */}
-                          <div className="bg-red-500/5 dark:bg-red-500/10 px-4 py-3 border-b border-red-500/10 sm:pr-24 pr-4">
+                          <div className="bg-red-500/5  px-4 py-3 border-b border-red-500/10 sm:pr-24 pr-4">
                             <div className="flex items-start gap-2">
                               <span className="shrink-0 mt-0.5 text-[10px] font-bold text-red-500/70 uppercase tracking-wider">
                                 Before
                               </span>
-                              <p className={cn(isRejected ? "text-sm text-foreground leading-relaxed" : "text-sm text-red-700 dark:text-red-400 leading-relaxed line-through decoration-red-400/50")}>
+                              <p className={cn(isRejected ? "text-sm text-foreground leading-relaxed" : "text-sm text-red-700  leading-relaxed line-through decoration-red-400/50")}>
                                 {diff.original}
                               </p>
                             </div>
@@ -258,12 +258,12 @@ export function LaTeXPreviewModal({
                           </div>
 
                           {/* Improved */}
-                          <div className={cn("px-4 py-3 border-t border-emerald-500/10", isRejected ? "bg-muted/10" : "bg-emerald-500/5 dark:bg-emerald-500/10")}>
+                          <div className={cn("px-4 py-3 border-t border-emerald-500/10", isRejected ? "bg-muted/10" : "bg-emerald-500/5 ")}>
                             <div className="flex items-start gap-2">
                               <span className={cn("shrink-0 mt-0.5 text-[10px] font-bold uppercase tracking-wider", isRejected ? "text-muted-foreground/60" : "text-emerald-500/70")}>
                                 After
                               </span>
-                              <p className={cn("text-sm leading-relaxed", isRejected ? "text-muted-foreground line-through decoration-muted-foreground/50" : "text-emerald-700 dark:text-emerald-400")}>
+                              <p className={cn("text-sm leading-relaxed", isRejected ? "text-muted-foreground line-through decoration-muted-foreground/50" : "text-emerald-700 ")}>
                                 {stripLatex(diff.improved)}
                               </p>
                             </div>
