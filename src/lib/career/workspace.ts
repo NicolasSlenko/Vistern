@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { roadmapStages, roadmapTaskKey, trackIds } from "./roadmap"
 
 const dateSchema = z
   .string()
@@ -51,6 +52,8 @@ export const activitySchema = activityFieldsSchema.extend({
 export const workspaceSchema = z.object({
   version: z.literal(1).default(1),
   revision: z.number().int().nonnegative().default(0),
+  selectedPathId: z.enum(trackIds).nullable().default(null),
+  roadmapDone: z.array(z.string().max(80)).max(100).default([]),
   activities: z.array(activitySchema).max(250).default([]),
 })
 export type CareerActivity = z.infer<typeof activitySchema>
@@ -74,6 +77,18 @@ export const workspaceUpdateSchema = z.discriminatedUnion("intent", [
       status: activityStatusSchema,
     })
     .strict(),
+  z.object({
+    intent: z.literal("selectPath"),
+    revision: z.number().int().nonnegative(),
+    pathId: z.enum(trackIds),
+  }).strict(),
+  z.object({
+    intent: z.literal("toggleRoadmapTask"),
+    revision: z.number().int().nonnegative(),
+    pathId: z.enum(trackIds),
+    taskId: z.string().max(60),
+    done: z.boolean(),
+  }).strict(),
 ])
 export type WorkspaceUpdate = z.infer<typeof workspaceUpdateSchema>
 
@@ -93,6 +108,20 @@ export function updateWorkspace(
     throw new WorkspaceConflict(
       "Your plan changed in another window. Reload it before saving.",
     )
+  if (update.intent === "selectPath") {
+    return { ...current, selectedPathId: update.pathId, revision: current.revision + 1 }
+  }
+  if (update.intent === "toggleRoadmapTask") {
+    if (current.selectedPathId !== update.pathId)
+      throw new Error("Choose this path before updating its roadmap.")
+    if (!roadmapStages[update.pathId].some((stage) => stage.tasks.some((task) => task.id === update.taskId)))
+      throw new Error("That roadmap step is no longer available.")
+    const key = roadmapTaskKey(update.pathId, update.taskId)
+    const done = new Set(current.roadmapDone)
+    if (update.done) done.add(key)
+    else done.delete(key)
+    return { ...current, roadmapDone: [...done], revision: current.revision + 1 }
+  }
   if (update.intent === "create") {
     if (current.activities.length >= 250)
       throw new Error("Your plan has reached its activity limit.")

@@ -45,7 +45,7 @@ export function createCareerHandler(deps: {
           { status: 400 },
         )
       const update = parsed.data
-      const source = update.activity.source
+      const source = "activity" in update ? update.activity.source : null
       if (
         source &&
         !(

@@ -433,8 +433,8 @@
   color: var(--student-ink);
   border-color: var(--student-line);
 }
-.dark .student-app :is(.student-sidebar nav a[aria-current], .student-mobile-nav a[aria-current],
-  .career-tabs [aria-current], .scaffold-empty-icon, .application-company-mark,
+.dark .student-app :is(.student-sidebar nav a[aria-current], .student-mobile-nav a[aria-current], .student-nav-disclosure[aria-current],
+  .scaffold-empty-icon, .application-company-mark,
   .student-profile-intro, .campus-monogram) {
   background: var(--secondary);
   color: var(--student-accent);
@@ -491,10 +491,13 @@
   color: var(--student-ink);
   min-height: 100vh;
   font-family:
-    var(--font-geist-sans),
     -apple-system,
     BlinkMacSystemFont,
+    "SF Pro Display",
+    "SF Pro Text",
+    "Segoe UI Variable",
     "Segoe UI",
+    var(--font-geist-sans),
     sans-serif;
   font-size: 15px;
   line-height: 1.6;
@@ -573,8 +576,8 @@
   gap: 10px;
   font-size: 28px;
   line-height: 1;
-  letter-spacing: -1px;
-  font-weight: 700;
+  letter-spacing: -1.5px;
+  font-weight: 750;
 }
 .student-brand > span {
   width: 36px;
@@ -946,26 +949,46 @@
 .student-sidebar .student-brand {
   margin: 0 8px 36px;
 }
-.student-app .student-nav-label {
-  padding: 0 13px;
-  margin-bottom: 12px;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--student-muted);
-}
 .student-sidebar nav {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
+.student-nav-section,
+.student-mobile-nav-section { display: grid; gap: 4px; }
+.student-nav-disclosure {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 12px 13px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--student-muted);
+  font-size: 14px;
+  font-weight: 570;
+  letter-spacing: -.025em;
+  text-align: left;
+}
+.student-nav-disclosure span { flex: 1; }
+.student-nav-disclosure svg:last-child { opacity: .7; transition: transform .18s ease; }
+.student-nav-disclosure[aria-expanded="true"] svg:last-child { transform: rotate(180deg); }
+.student-nav-disclosure[aria-current] { color: var(--student-accent); background: #eaf1ec; font-weight: 650; }
+.student-nav-disclosure:hover:not([aria-current]) { background: var(--student-canvas); color: var(--student-ink); }
+.student-mobile-subnav { display: grid; padding-left: 25px; }
+.student-mobile-subnav a { min-height: 40px; font-size: 12px; }
 .student-sidebar nav a,
 .student-mobile-nav a {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 12px 13px;
-  border-radius: 7px;
-  font-size: 13px;
+  border-radius: 11px;
+  font-size: 14px;
+  font-weight: 570;
+  letter-spacing: -0.025em;
 }
 .student-sidebar nav a {
   color: var(--student-muted);
@@ -990,6 +1013,7 @@
 .student-mobile-nav a:hover:not([aria-current]) {
   background: var(--student-canvas);
 }
+@media (prefers-reduced-motion: reduce) { .student-nav-disclosure svg:last-child { transition: none; } }
 .student-sidebar-bottom {
   margin-top: auto;
   padding: 18px 8px 0;
@@ -1004,17 +1028,19 @@
   flex: 1;
 }
 .student-topbar {
-  margin-left: 224px;
-  height: 70px;
+  position: fixed;
+  top: 16px;
+  right: 28px;
+  z-index: 40;
+  min-height: 54px;
   display: flex;
   align-items: center;
-  gap: 24px;
-  padding: 0 32px;
-  background: #fff;
-  border-bottom: 1px solid var(--student-line);
-}
-.student-topbar > span {
-  font-weight: 600;
+  gap: 8px;
+  padding: 4px 10px;
+  background: var(--card);
+  border: 1px solid var(--student-line);
+  border-radius: 16px;
+  box-shadow: 0 8px 28px #10201612;
 }
 .student-menu,
 .student-mobile-nav {
@@ -1023,6 +1049,7 @@
 .student-workspace .student-main {
   margin-left: 224px;
   min-width: 0;
+  padding-top: 82px;
 }
 .student-tool-page {
   width: 100%;
@@ -1065,8 +1092,7 @@
     padding-left: 13px;
     padding-right: 13px;
   }
-  .student-workspace .student-main,
-  .student-topbar {
+  .student-workspace .student-main {
     margin-left: 204px;
   }
   .student-onboarding {
@@ -1082,9 +1108,11 @@
     display: none;
   }
   .student-topbar {
-    margin: 0;
-    padding: 0 24px;
-    height: 62px;
+    left: 16px;
+    right: 16px;
+    top: 10px;
+    justify-content: space-between;
+    padding: 4px 8px;
   }
   .student-menu {
     display: flex;
@@ -1095,14 +1123,20 @@
     min-height: 44px;
     padding: 8px;
   }
-  .student-topbar > span {
-    display: none;
-  }
   .student-mobile-nav {
     display: grid;
+    position: fixed;
+    z-index: 39;
+    top: 76px;
+    left: 16px;
+    right: 16px;
+    max-height: calc(100vh - 92px);
+    overflow-y: auto;
     padding: 12px 18px;
-    background: white;
-    border-bottom: 1px solid var(--student-line);
+    background: var(--card);
+    border: 1px solid var(--student-line);
+    border-radius: 14px;
+    box-shadow: 0 20px 40px #10201622;
   }
   .student-workspace .student-main {
     margin-left: 0;

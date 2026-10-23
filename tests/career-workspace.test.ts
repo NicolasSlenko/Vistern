@@ -10,6 +10,7 @@ import {
   WorkspaceConflict,
   studentDate,
 } from "../src/lib/career/workspace"
+import { careerGrowthProgress, completedTrackIds, roadmapStages, roadmapTaskKey } from "../src/lib/career/roadmap"
 
 const id = "96a81b0a-8799-459f-963b-5037eb09745a"
 const now = "2026-10-18T14:00:00.000Z"
@@ -23,12 +24,14 @@ const request = (body: unknown) =>
   })
 
 test("an activity can be planned without a resume, imposed date, or focus", () => {
-  const workspace = updateWorkspace(workspaceSchema.parse({}), create, id, now)
+  const empty = workspaceSchema.parse({})
+  const workspace = updateWorkspace(empty, create, id, now)
   assert.equal(workspace.activities[0].scheduledOn, null)
   assert.equal(workspace.activities[0].status, "active")
   assert.equal(workspace.activities[0].steps.length, 3)
   assert.equal("resume" in workspace, false)
   assert.equal(workspace.activities[0].completedAt, null)
+  assert.ok(careerGrowthProgress(workspace) > careerGrowthProgress(empty))
 })
 
 test("pausing and resuming preserve steps, notes, reflection, and history", () => {
@@ -99,8 +102,48 @@ test("completion requires finished steps and does not write a resume", () => {
   assert.deepEqual(Object.keys(completed).sort(), [
     "activities",
     "revision",
+    "roadmapDone",
+    "selectedPathId",
     "version",
   ])
+})
+
+test("selecting a track and checking roadmap tasks persist without changing activities", () => {
+  const oldWorkspace = workspaceSchema.parse({ revision: 0, activities: [] })
+  assert.equal(oldWorkspace.selectedPathId, null)
+  assert.deepEqual(oldWorkspace.roadmapDone, [])
+  const selected = updateWorkspace(oldWorkspace, { intent: "selectPath", revision: 0, pathId: "data" }, id, now)
+  const checked = updateWorkspace(selected, { intent: "toggleRoadmapTask", revision: 1, pathId: "data", taskId: "dataset", done: true }, id, now)
+  assert.equal(checked.selectedPathId, "data")
+  assert.deepEqual(checked.roadmapDone, ["data:dataset"])
+  assert.deepEqual(checked.activities, [])
+  assert.ok(careerGrowthProgress(checked) > careerGrowthProgress(selected))
+  const reloaded = workspaceSchema.parse(JSON.parse(JSON.stringify(checked)))
+  assert.deepEqual(reloaded.roadmapDone, ["data:dataset"])
+  const switched = updateWorkspace(reloaded, { intent: "selectPath", revision: 2, pathId: "cyber" }, id, now)
+  assert.deepEqual(switched.roadmapDone, ["data:dataset"])
+  assert.throws(() => updateWorkspace(switched, { intent: "toggleRoadmapTask", revision: 3, pathId: "data", taskId: "dataset", done: false }, id, now), /Choose this path/)
+  assert.throws(() => updateWorkspace(switched, { intent: "toggleRoadmapTask", revision: 3, pathId: "cyber", taskId: "unknown", done: true }, id, now), /no longer available/)
+})
+
+test("finished tracks remain in completed work after selecting another track", () => {
+  const keys = roadmapStages.data.flatMap((stage) => stage.tasks.map((task) => roadmapTaskKey("data", task.id)))
+  const finished = workspaceSchema.parse({ selectedPathId: "cyber", roadmapDone: keys })
+  assert.deepEqual(completedTrackIds(finished), ["data"])
+  const reopened = workspaceSchema.parse({ ...finished, roadmapDone: keys.slice(1) })
+  assert.deepEqual(completedTrackIds(reopened), [])
+})
+
+test("the career API saves a selected track without an activity payload", async () => {
+  let saved = workspaceSchema.parse({})
+  const handler = createCareerHandler({
+    userId: async () => "student-a",
+    read: async () => ({ data: saved, etag: null }),
+    write: async (_userId, data) => { saved = data },
+  })
+  const response = await handler(request({ intent: "selectPath", revision: 0, pathId: "product" }))
+  assert.equal(response.status, 200)
+  assert.equal(saved.selectedPathId, "product")
 })
 
 test("recorded preparation dates take priority without removing other work", () => {
