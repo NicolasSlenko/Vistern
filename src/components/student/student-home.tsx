@@ -10,6 +10,7 @@ import {
   type CareerWorkspace,
 } from "@/lib/career/workspace"
 import { GrowthTree } from "./growth-tree"
+import { careerGrowthProgress } from "@/lib/career/roadmap"
 
 const emptyWorkspace = workspaceSchema.parse({})
 const jobStage = {
@@ -266,7 +267,7 @@ export function StudentHome({
         <aside className="home-side-column">
           <section className="home-growth" aria-labelledby="growth-title">
             <GrowthTree
-              progress={Math.min(100, 38 + completed.length * 12)}
+              progress={careerGrowthProgress(workspace)}
               decorative
             />
             <h2 id="growth-title">Your growth</h2>

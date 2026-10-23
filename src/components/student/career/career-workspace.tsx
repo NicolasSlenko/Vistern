@@ -1,15 +1,18 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import {
   type CareerWorkspace as Workspace,
   type CareerActivity,
   type ActivityFields,
-  formatActivityDate,
+  type WorkspaceUpdate,
+  updateWorkspace,
 } from "@/lib/career/workspace"
+import type { CareerExperience } from "@/lib/career/recommendations"
+import type { TrackId } from "@/lib/career/roadmap"
+import { careerNavigationEvent, navigateCareer } from "@/lib/career/navigation"
 import {
   activityDraft,
   projectChoices,
@@ -19,17 +22,17 @@ import {
 import { ActivityEditor } from "./activity-editor"
 import { ResourceBrowser } from "./resource-browser"
 import { ProjectBrowser } from "./project-browser"
+import { PlanRoadmap } from "./plan-roadmap"
+import { CompletedWork } from "./completed-work"
 import { saveWorkspace } from "./save-workspace"
 
-const tabs = [
-  { id: "plan", label: "My plan" },
-  { id: "explore", label: "Career paths" },
-  { id: "projects", label: "Projects" },
-  { id: "guides", label: "Guides" },
-  { id: "practice", label: "Coding practice" },
-]
 type EditingActivity = ActivityFields &
   Partial<Pick<CareerActivity, "id" | "status">>
+type QuickAction = {
+  build: (current: Workspace) => WorkspaceUpdate
+  message: string
+  resolve: (saved: boolean) => void
+}
 
 export function CareerWorkspace({
   initial,
@@ -38,6 +41,7 @@ export function CareerWorkspace({
   resource,
   create,
   organization,
+  experience,
 }: {
   initial: Workspace
   view?: string
@@ -45,9 +49,10 @@ export function CareerWorkspace({
   resource?: string
   create?: string
   organization?: string
+  experience: CareerExperience
 }) {
-  const router = useRouter()
   const [workspace, setWorkspace] = useState(initial)
+  const [location, setLocation] = useState({ view, resource })
   const [editing, setEditing] = useState<EditingActivity | null>(
     () =>
       initial.activities.find((activity) => activity.id === activityId) ||
@@ -59,19 +64,104 @@ export function CareerWorkspace({
   )
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
-  const active = workspace.activities.filter(
-    (activity) => activity.status === "active",
-  )
-  const paused = workspace.activities.filter(
-    (activity) => activity.status === "paused",
-  )
-  const complete = workspace.activities.filter(
-    (activity) => activity.status === "completed",
-  )
+  const [quickSaving, setQuickSaving] = useState(false)
+  const [quickError, setQuickError] = useState("")
+  const confirmedRef = useRef(initial)
+  const visibleRef = useRef(initial)
+  const quickQueueRef = useRef<QuickAction[]>([])
+  const drainingRef = useRef(false)
+  const idleRef = useRef<Promise<void>>(Promise.resolve())
+
+  useEffect(() => {
+    const updateLocation = () => {
+      const query = new URLSearchParams(window.location.search)
+      setLocation({ view: query.get("view") || "plan", resource: query.get("resource") || undefined })
+      setEditing(null)
+    }
+    window.addEventListener(careerNavigationEvent, updateLocation)
+    window.addEventListener("popstate", updateLocation)
+    return () => {
+      window.removeEventListener(careerNavigationEvent, updateLocation)
+      window.removeEventListener("popstate", updateLocation)
+    }
+  }, [])
 
   function choose(draft: EditingActivity) {
-    setEditing(draft)
+    setEditing(draft.id ? visibleRef.current.activities.find((activity) => activity.id === draft.id) || draft : draft)
     setError("")
+  }
+  async function drainQuickQueue() {
+    drainingRef.current = true
+    setQuickSaving(true)
+    while (quickQueueRef.current.length) {
+      const action = quickQueueRef.current[0]
+      try {
+        const saved = await saveWorkspace(action.build(confirmedRef.current))
+        confirmedRef.current = saved
+        quickQueueRef.current.shift()
+        action.resolve(true)
+        if (action.message) toast.success(action.message)
+        let visible = saved
+        for (const queued of quickQueueRef.current) {
+          visible = updateWorkspace(visible, queued.build(visible), crypto.randomUUID(), new Date().toISOString())
+        }
+        visibleRef.current = visible
+        setWorkspace(visible)
+      } catch (reason) {
+        const message = reason instanceof Error ? reason.message : "Your plan couldn’t be saved. Please try again."
+        for (const queued of quickQueueRef.current) queued.resolve(false)
+        quickQueueRef.current = []
+        visibleRef.current = confirmedRef.current
+        setWorkspace(confirmedRef.current)
+        setQuickError(message)
+        toast.error(message)
+      }
+    }
+    drainingRef.current = false
+    setQuickSaving(false)
+  }
+  function saveQuick(build: QuickAction["build"], message = ""): Promise<boolean> {
+    try {
+      const visible = visibleRef.current
+      const predicted = updateWorkspace(visible, build(visible), crypto.randomUUID(), new Date().toISOString())
+      visibleRef.current = predicted
+      setWorkspace(predicted)
+      setQuickError("")
+    } catch (reason) {
+      const message = reason instanceof Error ? reason.message : "This change couldn’t be made."
+      setQuickError(message)
+      return Promise.resolve(false)
+    }
+    return new Promise((resolve) => {
+      quickQueueRef.current.push({ build, message, resolve })
+      if (!drainingRef.current) idleRef.current = drainQuickQueue()
+    })
+  }
+  function activityFields(activity: CareerActivity): ActivityFields {
+    const { title, kind, notes, reflection, scheduledOn, source, steps } = activity
+    return { title, kind, notes, reflection, scheduledOn, source, steps }
+  }
+  async function selectPath(pathId: TrackId, navigate = false) {
+    const saved = await saveQuick((current) => ({ intent: "selectPath", revision: current.revision, pathId }), "Track updated.")
+    if (saved && navigate) navigateCareer("/career")
+  }
+  async function toggleRoadmapTask(pathId: TrackId, taskId: string, done: boolean) {
+    await saveQuick((current) => ({ intent: "toggleRoadmapTask", revision: current.revision, pathId, taskId, done }))
+  }
+  async function toggleActivityStep(activity: CareerActivity, stepIndex: number, done: boolean) {
+    await saveQuick((current) => {
+      const latest = current.activities.find((item) => item.id === activity.id)
+      if (!latest) throw new Error("This activity is no longer available. Reload your plan.")
+      const steps = latest.steps.map((step, index) => index === stepIndex ? { ...step, done } : step)
+      return { intent: "edit", revision: current.revision, id: activity.id, activity: { ...activityFields(latest), steps }, status: latest.status }
+    })
+  }
+  async function changeActivityStatus(activity: CareerActivity, status: CareerActivity["status"]) {
+    await saveQuick((current) => {
+      const latest = current.activities.find((item) => item.id === activity.id)
+      if (!latest) throw new Error("This activity is no longer available. Reload your plan.")
+      return { intent: "edit", revision: current.revision, id: activity.id, activity: activityFields(latest), status }
+    }, status === "completed" ? "Activity completed." : "Activity moved to in progress.")
   }
   async function save(
     fields: ActivityFields,
@@ -92,24 +182,26 @@ export function CareerWorkspace({
       steps,
     }
     try {
+      await idleRef.current
       const saved = await saveWorkspace(
         editing?.id
           ? {
               intent: "edit",
-              revision: workspace.revision,
+              revision: confirmedRef.current.revision,
               id: editing.id,
               activity,
               status,
             }
-          : { intent: "create", revision: workspace.revision, activity },
+          : { intent: "create", revision: confirmedRef.current.revision, activity },
       )
+      confirmedRef.current = saved
+      visibleRef.current = saved
       setWorkspace(saved)
       setEditing(null)
       toast.success(
         editing?.id ? "Changes saved." : "Activity added to your plan.",
       )
-      router.replace("/career")
-      router.refresh()
+      navigateCareer("/career", true)
     } catch (reason) {
       setError(
         reason instanceof Error
@@ -120,37 +212,6 @@ export function CareerWorkspace({
       setSaving(false)
     }
   }
-  const list = (items: CareerActivity[]) => (
-    <div className="career-list">
-      {items.map((activity) => (
-        <button
-          key={activity.id}
-          className="career-list-row"
-          onClick={() => choose(activity)}
-        >
-          <div>
-            <strong>{activity.title}</strong>
-            <p>
-              {activity.status === "completed"
-                ? activity.reflection || "Completed activity"
-                : activity.steps.find((step) => !step.done)?.title ||
-                  (activity.steps.length
-                    ? "Open notes and review the outcome"
-                    : "Open your notes")}
-            </p>
-          </div>
-          <span>
-            {activity.scheduledOn
-              ? formatActivityDate(activity.scheduledOn)
-              : activity.steps.length
-                ? `${activity.steps.filter((step) => step.done).length} of ${activity.steps.length} steps`
-                : "Notes only"}
-          </span>
-        </button>
-      ))}
-    </div>
-  )
-
   return (
     <div className="career-page">
       <header className="career-page-heading">
@@ -167,22 +228,7 @@ export function CareerWorkspace({
           </button>
         )}
       </header>
-      <nav className="career-tabs" aria-label="Career pages">
-        {tabs.map((tab) => (
-          <Link
-            key={tab.id}
-            href={tab.id === "plan" ? "/career" : `/career?view=${tab.id}`}
-            aria-current={
-              view === tab.id ||
-              (tab.id === "plan" && ["build", "history"].includes(view))
-                ? "page"
-                : undefined
-            }
-          >
-            {tab.label}
-          </Link>
-        ))}
-      </nav>
+      {quickError && location.view !== "plan" && <p className="student-error" role="alert">{quickError}</p>}
       {editing ? (
         <ActivityEditor
           key={editing.id || "new"}
@@ -191,12 +237,12 @@ export function CareerWorkspace({
           onCancel={() => {
             setEditing(null)
             setError("")
-            router.replace("/career")
+            navigateCareer("/career", true)
           }}
           saving={saving}
           error={error}
         />
-      ) : view === "build" ? (
+      ) : location.view === "build" ? (
         <section className="career-build">
           <h2>Build experience</h2>
           <p>
@@ -223,96 +269,24 @@ export function CareerWorkspace({
             </Link>
           </div>
         </section>
-      ) : view === "projects" ? (
-        <ProjectBrowser resource={resource} onChoose={choose} />
-      ) : ["explore", "guides", "practice"].includes(view) ? (
-        <ResourceBrowser view={view} resource={resource} onChoose={choose} />
+      ) : location.view === "projects" ? (
+        <ProjectBrowser resource={location.resource} onChoose={choose} />
+      ) : ["explore", "guides", "practice"].includes(location.view) ? (
+        <ResourceBrowser view={location.view} resource={location.resource} onChoose={choose} onSelectPath={(pathId) => { void selectPath(pathId, true) }} />
+      ) : location.view === "history" ? (
+        <CompletedWork workspace={workspace} onChoose={choose} />
       ) : (
-        <>
-        {view !== "history" && <section className="career-plan-hero">
-          <div>
-            <span className="career-eyebrow">Your direction starts here</span>
-            <h2>Find work worth trying.</h2>
-            <p>Explore four core paths in tech, then turn one small experiment into a project, a conversation, or an activity in your plan.</p>
-            <Link className="career-plan-hero-link" href="/career?view=explore">Explore career paths <span aria-hidden="true">↗</span></Link>
-          </div>
-          <div className="career-plan-hero-mark" aria-hidden="true"><span>01</span><span>02</span><span>03</span><span>04</span></div>
-        </section>}
-        <div className="career-plan-layout">
-          <div>
-            <section>
-              <div className="career-section-heading">
-                <h2>{view === "history" ? "Completed work" : "In progress"}</h2>
-                {view !== "history" && (
-                  <Link className="student-text-link" href="/career?view=projects">
-                    Start a project
-                  </Link>
-                )}
-              </div>
-              {view === "history" ? (
-                complete.length ? (
-                  list(complete)
-                ) : (
-                  <p>No completed activities yet.</p>
-                )
-              ) : active.length ? (
-                list(active)
-              ) : (
-                <div className="career-plan-empty">
-                  <h3>Choose something you’d like to work on</h3>
-                  <p>
-                    Start with a project, explore a career, or add an activity
-                    of your own. You can leave it unscheduled until you’re
-                    ready.
-                  </p>
-                  <div className="career-actions">
-                    <Link className="student-button" href="/career?view=projects">
-                      Work on a project
-                    </Link>
-                    <Link
-                      className="student-text-link"
-                      href="/career?view=explore"
-                    >
-                      Explore careers
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </section>
-            {paused.length > 0 && (
-              <section className="home-section">
-                <h2>Saved for later</h2>
-                {list(paused)}
-              </section>
-            )}
-            {view !== "history" && complete.length > 0 && (
-              <section className="home-section">
-                <div className="career-section-heading">
-                  <h2>Completed work</h2>
-                </div>
-                {list(complete.slice(0, 5))}
-                <Link className="student-text-link" href="/career?view=history">
-                  View history
-                </Link>
-              </section>
-            )}
-          </div>
-          <aside className="career-plan-help">
-            <h2>Find a starting point</h2>
-            <Link href="/career?view=guides&resource=projects">
-              Build on your coursework
-            </Link>
-            <Link href="/career?view=guides&resource=internships">
-              Learn how internships work
-            </Link>
-            <Link href="/community">Find a group or research opportunity</Link>
-            <Link href="/career?view=practice">Plan coding practice</Link>
-            <Link href="/career?new=preparation">
-              Prepare for an application or interview
-            </Link>
-          </aside>
-        </div>
-        </>
+        <PlanRoadmap
+          workspace={workspace}
+          experience={experience}
+          pending={quickSaving}
+          error={quickError}
+          onSelectPath={(pathId) => { void selectPath(pathId) }}
+          onToggleRoadmapTask={(pathId, taskId, done) => { void toggleRoadmapTask(pathId, taskId, done) }}
+          onToggleActivityStep={(activity, index, done) => { void toggleActivityStep(activity, index, done) }}
+          onChangeActivityStatus={(activity, status) => { void changeActivityStatus(activity, status) }}
+          onChoose={choose}
+        />
       )}
     </div>
   )

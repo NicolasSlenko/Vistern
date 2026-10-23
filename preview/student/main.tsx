@@ -104,6 +104,7 @@ window.fetch = async (input, init) => {
 function reset(withResume = false) {
   localStorage.removeItem(PROFILE)
   localStorage.removeItem(RESUME)
+  localStorage.removeItem(CAREER)
   localStorage.removeItem(FAIL)
   if (withResume) {
     localStorage.setItem(RESUME, JSON.stringify(sample))
@@ -174,10 +175,15 @@ function Preview() {
             editing={params.get("edit") === "1"}
           />
         ) : pathname === "/home" ? (
-          <StudentHome profile={profile} resume={resume} />
+          <StudentHome profile={profile} resume={resume} workspace={readCareer()} />
         ) : pathname === "/career" ? (
           <CareerWorkspace
             initial={readCareer()}
+            experience={{
+              year: profile?.year || null,
+              backgroundAreas: profile?.backgroundAreas || [],
+              resumeProjectCount: resume?.projects?.length || 0,
+            }}
             view={params.get("view") || "plan"}
             resource={params.get("resource") || undefined}
             activityId={params.get("activity") || undefined}

@@ -2,6 +2,7 @@ import Link from "next/link"
 import { ArrowRight, ArrowUpRight, BookOpen, Check, Code2, Compass } from "lucide-react"
 import { careers, guides } from "@/lib/career/catalog"
 import { undergradPaths, type UndergradPath } from "@/lib/career/undergrad-paths"
+import type { TrackId } from "@/lib/career/roadmap"
 import { activityDraft, sourceDraft } from "@/lib/career/templates"
 import type { ActivityFields } from "@/lib/career/workspace"
 
@@ -9,10 +10,12 @@ export function ResourceBrowser({
   view,
   resource,
   onChoose,
+  onSelectPath,
 }: {
   view: string
   resource?: string
   onChoose: (draft: ActivityFields) => void
+  onSelectPath?: (pathId: TrackId) => void
 }) {
   if (view === "practice") return <PracticeView onChoose={onChoose} />
 
@@ -22,7 +25,7 @@ export function ResourceBrowser({
   }
   const career = careers.find((career) => career.id === resource)
   const path = undergradPaths.find((item) => item.id === resource)
-  if (path && career) return <PathDetail path={path} career={career} onChoose={onChoose} />
+  if (path && career) return <PathDetail path={path} career={career} onChoose={onChoose} onSelectPath={onSelectPath} />
   if (career)
     return (
       <article className="career-reading">
@@ -213,10 +216,12 @@ function PathDetail({
   path,
   career,
   onChoose,
+  onSelectPath,
 }: {
   path: UndergradPath
   career: (typeof careers)[number]
   onChoose: (draft: ActivityFields) => void
+  onSelectPath?: (pathId: TrackId) => void
 }) {
   return (
     <article className="career-path-detail">
@@ -228,17 +233,20 @@ function PathDetail({
           <p>{path.short} {path.focus}</p>
           <div className="career-path-role-tags" aria-label="Possible roles">{path.roles.map((role) => <span key={role}>{role}</span>)}</div>
         </div>
-        <button
-          className="student-button"
-          onClick={() => onChoose({
-            ...sourceDraft({ type: "career", id: path.id }),
-            title: `Explore ${path.title}`,
-            notes: path.project,
-            steps: path.steps.map((step) => ({ title: step.title, done: false })),
-          })}
-        >
-          Add path to my plan <ArrowRight size={17} aria-hidden="true" />
-        </button>
+        <div className="career-path-detail-actions">
+          {onSelectPath && <button className="student-button" onClick={() => onSelectPath(path.id)}>Choose this track <ArrowRight size={17} aria-hidden="true" /></button>}
+          <button
+            className="student-button student-secondary"
+            onClick={() => onChoose({
+              ...sourceDraft({ type: "career", id: path.id }),
+              title: `Explore ${path.title}`,
+              notes: path.project,
+              steps: path.steps.map((step) => ({ title: step.title, done: false })),
+            })}
+          >
+            Add exploration activity
+          </button>
+        </div>
       </header>
       <div className="career-path-detail-layout">
         <div className="career-roadmap">
