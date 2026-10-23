@@ -1,5 +1,6 @@
 @import "./tree.css";
 @import "./career.css";
+@import "./scaffold.css";
 
 /* Shared surfaces and interaction colors for onboarding and Home. */
 .student-app {

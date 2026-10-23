@@ -13,7 +13,7 @@ export default async function CareerPage({
     typeof query[key] === "string" ? (query[key] as string) : undefined
   const view = value("view") || "plan"
   return (
-    <StudentShell>
+    <StudentShell activeSubpage={view}>
       <CareerWorkspace
         key={JSON.stringify(query)}
         initial={workspace}

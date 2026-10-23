@@ -43,22 +43,56 @@ const resumePages = [
   { href: "/dashboard", label: "Resume feedback" },
   { href: "/upload", label: "Upload resume" },
 ]
+const careerPages = [
+  { href: "/career", label: "My plan" },
+  { href: "/career?view=explore", label: "Explore careers" },
+  { href: "/career?view=guides", label: "Career guides" },
+  { href: "/career?view=practice", label: "Coding practice" },
+]
+const communityPages = [
+  { href: "/community", label: "Campus directory" },
+  { href: "/community/feed", label: "Community feed" },
+  { href: "/community/people", label: "People" },
+  { href: "/community/sessions", label: "Sessions" },
+  { href: "/community/messages", label: "Messages" },
+]
+const jobsPages = [
+  { href: "/jobs", label: "Browse jobs" },
+  { href: "/jobs/applications", label: "Applications" },
+]
 
 export function StudentShell({
   children,
   onboarding = false,
+  activeSubpage,
 }: {
   children: React.ReactNode
   onboarding?: boolean
+  activeSubpage?: string
 }) {
   const pathname = usePathname()
   const activeHref = resumePages.some((page) => page.href === pathname)
     ? "/profile"
     : pathname === "/match"
       ? "/jobs"
-      : pathname
+      : pathname.startsWith("/community/")
+        ? "/community"
+        : pathname.startsWith("/jobs/")
+          ? "/jobs"
+          : pathname
+  const subpages = activeHref === "/profile" ? resumePages
+    : activeHref === "/career" ? careerPages
+      : activeHref === "/community" ? communityPages
+        : activeHref === "/jobs" ? jobsPages : []
+  const isCurrentSubpage = (href: string) => activeHref === "/career" && activeSubpage
+    ? (href === "/career" ? activeSubpage === "plan" : href.endsWith(`view=${activeSubpage}`))
+    : pathname === href
   const pageTitle =
+    (pathname === "/student-profile" ? "Student profile" : null) ||
+    (activeHref === "/career" ? careerPages.find((page) => isCurrentSubpage(page.href))?.label : null) ||
     resumePages.find((page) => page.href === pathname)?.label ||
+    communityPages.find((page) => page.href === pathname)?.label ||
+    jobsPages.find((page) => page.href === pathname)?.label ||
     (pathname === "/match" ? "Job matches" : null) ||
     links.find((link) => link.href === activeHref)?.label ||
     "Settings"
@@ -98,14 +132,14 @@ export function StudentShell({
                     <Icon size={19} />
                     {label}
                   </Link>
-                  {href === "/profile" && activeHref === "/profile" && (
+                  {href === activeHref && subpages.length > 0 && (
                     <div className="student-subnav">
-                      {resumePages.map((page) => (
+                      {subpages.map((page) => (
                         <Link
                           key={page.href}
                           href={page.href}
                           aria-current={
-                            pathname === page.href ? "page" : undefined
+                            isCurrentSubpage(page.href) ? "page" : undefined
                           }
                         >
                           {page.label}
@@ -122,9 +156,9 @@ export function StudentShell({
                 Settings
               </Link>
             </div>
-            <Link className="student-sidebar-bottom" href="/onboarding?edit=1">
+            <Link className="student-sidebar-bottom" href="/student-profile" aria-current={pathname === "/student-profile" ? "page" : undefined}>
               <UserRound size={19} />
-              <span>Your background</span>
+              <span>Student profile</span>
               <ChevronRight size={16} />
             </Link>
           </aside>
@@ -159,15 +193,14 @@ export function StudentShell({
                     <Icon size={18} />
                     {label}
                   </Link>
-                  {href === "/profile" &&
-                    activeHref === "/profile" &&
-                    resumePages.map((page) => (
+                  {href === activeHref &&
+                    subpages.map((page) => (
                       <Link
                         key={page.href}
                         href={page.href}
                         onClick={closeMenu}
                         aria-current={
-                          pathname === page.href ? "page" : undefined
+                          isCurrentSubpage(page.href) ? "page" : undefined
                         }
                       >
                         {page.label}
@@ -178,8 +211,8 @@ export function StudentShell({
               <Link href="/settings" onClick={closeMenu}>
                 Settings
               </Link>
-              <Link href="/onboarding?edit=1" onClick={closeMenu}>
-                Your background
+              <Link href="/student-profile" onClick={closeMenu} aria-current={pathname === "/student-profile" ? "page" : undefined}>
+                Student profile
               </Link>
             </nav>
           )}

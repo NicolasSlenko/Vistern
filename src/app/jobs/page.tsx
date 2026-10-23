@@ -39,20 +39,16 @@ export default async function JobsPage() {
       <div className="career-page">
         <header className="career-page-heading">
           <div>
-            <h1>Jobs</h1>
+            <h1>Browse jobs</h1>
             <p>
               Explore opportunities and keep track of the roles you’re
               considering.
             </p>
           </div>
-          {resume && (
-            <Link
-              className="student-button student-secondary"
-              href="/match#job-board"
-            >
-              Open my job board
-            </Link>
-          )}
+          <div className="scaffold-actions">
+            <Link className="student-button student-secondary" href="/jobs/applications">My applications</Link>
+            {resume && <Link className="student-button" href="/match#job-board">Open my job board</Link>}
+          </div>
         </header>
         <div className="career-plan-layout">
           <section>
