@@ -10,7 +10,11 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   if (pathname === "/" || pathname === "/landing-page")
     return children
-  if (["/home", "/career", "/community", "/jobs"].includes(pathname))
+  if (
+    ["/home", "/career", "/community", "/jobs", "/student-profile"].includes(pathname) ||
+    pathname.startsWith("/community/") ||
+    pathname.startsWith("/jobs/")
+  )
     return children
   if (pathname === "/onboarding")
     return <ResumeProvider>{children}</ResumeProvider>

@@ -3,8 +3,9 @@
 import Link from "next/link"
 import dynamic from "next/dynamic"
 import { usePathname } from "next/navigation"
-import { Fragment, useRef, useState } from "react"
+import { Fragment, useEffect, useRef, useState } from "react"
 import { SignOutButton } from "@clerk/nextjs"
+import { useTheme } from "next-themes"
 import {
   Home,
   Compass,
@@ -17,6 +18,8 @@ import {
   X,
   UserRound,
   ChevronRight,
+  Moon,
+  Sun,
 } from "lucide-react"
 import "./student.css"
 
@@ -45,7 +48,8 @@ const resumePages = [
 ]
 const careerPages = [
   { href: "/career", label: "My plan" },
-  { href: "/career?view=explore", label: "Explore careers" },
+  { href: "/career?view=explore", label: "Career paths" },
+  { href: "/career?view=projects", label: "Projects" },
   { href: "/career?view=guides", label: "Career guides" },
   { href: "/career?view=practice", label: "Coding practice" },
 ]
@@ -239,10 +243,29 @@ function Brand() {
 function AccountControls() {
   return (
     <div className="student-account">
+      <ThemeToggle />
       <UserButton />
       <SignOutButton redirectUrl="/">
         <button type="button">Sign out</button>
       </SignOutButton>
     </div>
+  )
+}
+
+function ThemeToggle() {
+  const { resolvedTheme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  const dark = mounted && resolvedTheme === "dark"
+  return (
+    <button
+      type="button"
+      className="student-theme-toggle"
+      onClick={() => setTheme(dark ? "light" : "dark")}
+      aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+      title={dark ? "Light mode" : "Dark mode"}
+    >
+      {dark ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}
+    </button>
   )
 }

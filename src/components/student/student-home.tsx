@@ -104,7 +104,7 @@ export function StudentHome({
                   primary
                     ? `/career?activity=${primary.id}`
                     : hasProjects
-                      ? "/career?view=build"
+                      ? "/career?view=projects"
                       : "/career?view=explore"
                 }
               >
@@ -112,7 +112,7 @@ export function StudentHome({
                   ? "Continue activity"
                   : hasProjects
                     ? "Work on a project"
-                    : "Explore careers"}
+                    : "Explore career paths"}
               </Link>
               <Link
                 className="student-text-link"
@@ -121,13 +121,13 @@ export function StudentHome({
                     ? "/career"
                     : hasProjects
                       ? "/career?view=explore"
-                      : "/career?view=build"
+                      : "/career?view=projects"
                 }
               >
                 {primary
                   ? "View my plan"
                   : hasProjects
-                    ? "Explore careers"
+                    ? "Explore career paths"
                     : "Start a project"}
               </Link>
             </div>

@@ -385,6 +385,82 @@
   .scaffold-page *, .applications-page * { scroll-behavior: auto !important; }
 }
 
+.student-theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--student-line) !important;
+  border-radius: 10px;
+  background: var(--card) !important;
+  color: var(--student-ink) !important;
+}
+.student-theme-toggle:hover { background: var(--secondary) !important; }
+
+.dark .student-app {
+  --background: #0c0e10;
+  --foreground: #ecf0ec;
+  --card: #171a1e;
+  --card-foreground: #ecf0ec;
+  --popover: #171a1e;
+  --popover-foreground: #ecf0ec;
+  --primary: #8fd2a4;
+  --primary-foreground: #101714;
+  --secondary: #23282b;
+  --secondary-foreground: #e4ece6;
+  --muted: #202529;
+  --muted-foreground: #b8c3bc;
+  --accent: #23282b;
+  --accent-foreground: #e4ece6;
+  --border: #353e3c;
+  --input: #353e3c;
+  --ring: #9ad8aa;
+  --student-ink: #ecf0ec;
+  --student-muted: #b8c3bc;
+  --student-accent: #9ad8aa;
+  --student-brand: #397c54;
+  --student-line: #353e3c;
+  --student-canvas: #0c0e10;
+  --student-shadow: 0 5px 20px #0004;
+  color-scheme: dark;
+}
+.dark .student-app :is(.student-sidebar, .student-topbar, .student-entry-header, .student-mobile-nav,
+  .student-growth-panel, .student-onboarding-content, .home-current, .home-growth,
+  .career-plan-empty, .career-build-options > button, .career-build-options > a,
+  .career-editor, .scaffold-empty, .student-profile-panel, .application-card,
+  .application-stats > div, .application-toolbar > div) {
+  background: var(--card);
+  color: var(--student-ink);
+  border-color: var(--student-line);
+}
+.dark .student-app :is(.student-sidebar nav a[aria-current], .student-mobile-nav a[aria-current],
+  .career-tabs [aria-current], .scaffold-empty-icon, .application-company-mark,
+  .student-profile-intro, .campus-monogram) {
+  background: var(--secondary);
+  color: var(--student-accent);
+}
+.dark .student-app :is(.application-column, .student-year-symbol) {
+  background: var(--muted);
+  color: var(--student-muted);
+  border-color: var(--student-line);
+}
+.dark .student-app :is(.application-card h3, .application-stats strong,
+  .student-profile-panel-heading h2, .student-profile-intro h2, .career-build-options h3,
+  .student-growth-intro h2) { color: var(--student-ink); }
+.dark .student-app :is(.career-field input, .career-field textarea, .career-field select,
+  .career-step-edit input:not([type="checkbox"]), .application-card-actions select) {
+  background: var(--card);
+  color: var(--student-ink);
+  border-color: var(--student-line);
+}
+.dark .student-app .student-secondary { background: var(--secondary); }
+.dark .student-app .student-button { color: #102016; }
+.dark .student-app .student-button.student-secondary { color: var(--student-accent); background: var(--secondary); }
+.dark .student-app .student-skip { background: var(--card); }
+.dark .student-app .home-current .home-section-label { color: var(--student-accent); }
+.dark .student-app .career-list-row + .career-list-row,
+.dark .student-app .community-directory article + article { border-color: var(--student-line); }
+
 /* Shared surfaces and interaction colors for onboarding and Home. */
 .student-app {
   --background: #f7f8f6;
@@ -1160,3 +1236,72 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Shared page rhythm for Home, Community, Jobs, and student tools. */
+.student-app .career-page-heading h1,
+.student-app .student-tool-page h1 { font-size: clamp(32px, 3.2vw, 42px); line-height: 1.08; letter-spacing: -.05em; }
+.student-app .career-page-heading p { max-width: 65ch; font-size: 16px; line-height: 1.6; }
+.student-app .scaffold-eyebrow { color: var(--student-accent); font-family: var(--font-geist-mono), monospace; }
+.student-app .home-current,
+.student-app .home-growth,
+.student-app .scaffold-empty,
+.student-app .student-profile-panel,
+.student-app .application-stats > div { border: 1px solid var(--student-line); }
+.student-app .home-current { box-shadow: none; }
+.student-app .home-current h2 { font-size: clamp(28px, 3vw, 36px); letter-spacing: -.045em; }
+.student-app .home-growth { border-radius: 13px; background: var(--card); }
+.student-app .career-plan-help { align-self: start; padding: 23px; border: 1px solid var(--student-line); border-radius: 12px; background: var(--card); }
+.student-app .career-plan-help h2 { margin-bottom: 10px; }
+.student-app .career-plan-help a { padding: 11px 0; border-bottom: 1px solid var(--student-line); font-size: 13px; line-height: 1.45; }
+.student-app .career-plan-help a:last-child { border-bottom: 0; }
+.student-app .community-directory { max-width: none; display: grid; gap: 14px; }
+.student-app .community-directory > h2 { font-size: clamp(26px, 3vw, 34px); letter-spacing: -.045em; }
+.student-app .community-directory > .career-section-description { margin-bottom: 8px !important; }
+.student-app .community-directory article,
+.student-app .community-directory article + article {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 235px;
+  padding: 24px;
+  border: 1px solid var(--student-line);
+  border-radius: 13px;
+  background: var(--card);
+}
+.student-app .community-directory article h3 { font-size: 21px; letter-spacing: -.035em; }
+.student-app .community-directory article p { font-size: 14px; line-height: 1.6; }
+.student-app .community-actions { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.student-app .community-kind { color: var(--student-accent); font-family: var(--font-geist-mono), monospace; font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+.student-app .student-profile-panel { border-radius: 13px; }
+.student-app .student-profile-evidence > div { background: var(--secondary); }
+.student-app .student-profile-tags span { background: var(--secondary); color: var(--student-accent); }
+.student-app .student-tool-page [data-slot="card"] { border-radius: 13px; }
+@media (min-width: 720px) {
+  .student-app .community-directory { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .student-app .community-directory > h2,
+  .student-app .community-directory > .career-section-description { grid-column: 1 / -1; }
+}
+.dark .student-app .student-button:hover { background: #a8e4b6; color: #101714; border-color: #a8e4b6; }
+.dark .student-app .student-button.student-secondary:hover { background: #2c3335; color: var(--student-accent); border-color: var(--student-accent); }
+.dark .student-app .student-options > label,
+.dark .student-app .student-options i,
+.dark .student-app .student-note textarea { background: var(--card); color: var(--student-ink); border-color: var(--student-line); }
+.dark .student-app .student-options > label:hover,
+.dark .student-app .student-options > label:has(input:checked) { background: var(--secondary); }
+.dark .student-app .student-options input:checked ~ .student-year-symbol,
+.dark .student-app .student-setup-track [data-complete="true"] > span { background: var(--secondary); color: var(--student-accent); border-color: var(--student-line); }
+.dark .student-app :is(.student-profile-intro p, .student-profile-note, .student-profile-muted,
+  .application-toolbar p, .application-toolbar button, .application-stats span,
+  .application-card p, .application-card-copy > span, .application-card-actions label,
+  .application-column-empty, .student-profile-evidence span) { color: var(--student-muted); }
+.dark .student-app :is(.student-profile-panel-heading, .student-profile-intro a,
+  .student-profile-panel > a, .application-card-actions a) { color: var(--student-accent); }
+.dark .student-app .student-profile-evidence strong { color: var(--student-ink); }
+.dark .student-app .student-profile-evidence > div,
+.dark .student-app .student-profile-tags span { background: var(--secondary); }
+.dark .student-app .application-column > header span { background: var(--card); color: var(--student-muted); }
+.dark .student-app .application-toolbar button[aria-pressed="true"] { background: var(--secondary); color: var(--student-accent); }
+.dark .student-app .application-card-actions { border-color: var(--student-line); }
+.dark .student-app .application-error { background: #302022; color: #f1b5b5; border-color: #6f3e43; }

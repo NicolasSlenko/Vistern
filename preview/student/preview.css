@@ -4,7 +4,7 @@ body {
 }
 .demo-toolbar {
   padding: 10px 22px;
-  background: #233c2c;
+  background: #1b2022;
   color: white;
   display: flex;
   align-items: center;
@@ -26,9 +26,9 @@ body {
 }
 .demo-toolbar button,
 .demo-toolbar a {
-  background: #35513d;
+  background: #2b3234;
   color: white;
-  border: 1px solid #6b836a;
+  border: 1px solid #505c58;
   border-radius: 5px;
   padding: 5px 9px;
   cursor: pointer;

@@ -10,6 +10,7 @@ export default async function CommunityPage() {
       <div className="career-page">
         <header className="career-page-heading">
           <div>
+            <span className="scaffold-eyebrow">Community / find your people</span>
             <h1>Campus directory</h1>
             <p>
               Find computing groups, project collaborators, and research at UF.

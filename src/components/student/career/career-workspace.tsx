@@ -18,11 +18,13 @@ import {
 } from "@/lib/career/templates"
 import { ActivityEditor } from "./activity-editor"
 import { ResourceBrowser } from "./resource-browser"
+import { ProjectBrowser } from "./project-browser"
 import { saveWorkspace } from "./save-workspace"
 
 const tabs = [
   { id: "plan", label: "My plan" },
-  { id: "explore", label: "Explore careers" },
+  { id: "explore", label: "Career paths" },
+  { id: "projects", label: "Projects" },
   { id: "guides", label: "Guides" },
   { id: "practice", label: "Coding practice" },
 ]
@@ -221,16 +223,28 @@ export function CareerWorkspace({
             </Link>
           </div>
         </section>
+      ) : view === "projects" ? (
+        <ProjectBrowser resource={resource} onChoose={choose} />
       ) : ["explore", "guides", "practice"].includes(view) ? (
         <ResourceBrowser view={view} resource={resource} onChoose={choose} />
       ) : (
+        <>
+        {view !== "history" && <section className="career-plan-hero">
+          <div>
+            <span className="career-eyebrow">Your direction starts here</span>
+            <h2>Find work worth trying.</h2>
+            <p>Explore four core paths in tech, then turn one small experiment into a project, a conversation, or an activity in your plan.</p>
+            <Link className="career-plan-hero-link" href="/career?view=explore">Explore career paths <span aria-hidden="true">↗</span></Link>
+          </div>
+          <div className="career-plan-hero-mark" aria-hidden="true"><span>01</span><span>02</span><span>03</span><span>04</span></div>
+        </section>}
         <div className="career-plan-layout">
           <div>
             <section>
               <div className="career-section-heading">
                 <h2>{view === "history" ? "Completed work" : "In progress"}</h2>
                 {view !== "history" && (
-                  <Link className="student-text-link" href="/career?view=build">
+                  <Link className="student-text-link" href="/career?view=projects">
                     Start a project
                   </Link>
                 )}
@@ -252,7 +266,7 @@ export function CareerWorkspace({
                     ready.
                   </p>
                   <div className="career-actions">
-                    <Link className="student-button" href="/career?view=build">
+                    <Link className="student-button" href="/career?view=projects">
                       Work on a project
                     </Link>
                     <Link
@@ -298,6 +312,7 @@ export function CareerWorkspace({
             </Link>
           </aside>
         </div>
+        </>
       )}
     </div>
   )

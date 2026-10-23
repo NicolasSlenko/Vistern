@@ -126,7 +126,7 @@ function ResumePreviewDialog({ submission, compact = false }: { submission: Resu
           variant="outline"
           size={compact ? "icon" : "sm"}
           className={cn(
-            "border-[#c8d8ce] text-[#246347] hover:border-[#246347] hover:bg-[#eaf1ec] hover:text-[#1b5038]",
+            "border-border text-primary hover:border-primary hover:bg-secondary hover:text-primary",
             compact && "size-11 shrink-0 rounded-xl",
           )}
           aria-label={compact ? `Preview ${submission.fileName}` : undefined}
@@ -136,14 +136,14 @@ function ResumePreviewDialog({ submission, compact = false }: { submission: Resu
           {!compact && "Preview"}
         </Button>
       </DialogTrigger>
-      <DialogContent className="flex h-[min(82vh,900px)] w-[calc(100vw-24px)] max-w-5xl flex-col gap-3 overflow-hidden rounded-2xl border-[#dce6dd] bg-[#f7f8f6] p-4 sm:p-6">
+      <DialogContent className="flex h-[min(82vh,900px)] w-[calc(100vw-24px)] max-w-5xl flex-col gap-3 overflow-hidden rounded-2xl border-border bg-background p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="flex min-w-0 items-center gap-3 pr-8 text-left text-[#27332d]">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#eaf1ec] text-[#246347]"><FileText className="h-5 w-5" /></span>
+          <DialogTitle className="flex min-w-0 items-center gap-3 pr-8 text-left text-foreground">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary text-primary"><FileText className="h-5 w-5" /></span>
             <span className="break-words text-base sm:text-lg">{submission.fileName}</span>
           </DialogTitle>
         </DialogHeader>
-        <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-[#dce6dd] bg-white">
+        <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-border bg-card">
           {isLoading && (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -257,8 +257,8 @@ function ScoreHistoryChart({ submissions }: { submissions: ResumeSubmission[] })
       index: index + 1,
     }))
 
-  const chartColor = "#246347"
-  const gridColor = "#dde3dc"
+  const chartColor = "var(--primary)"
+  const gridColor = "var(--border)"
 
   return (
     <Card className="h-full">
@@ -285,12 +285,12 @@ function ScoreHistoryChart({ submissions }: { submissions: ResumeSubmission[] })
               <XAxis
                 dataKey="date"
                 className="text-xs"
-                tick={{ fontSize: 12, fill: '#5c685f' }}
+                tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
               />
               <YAxis
                 domain={[0, 100]}
                 className="text-xs"
-                tick={{ fontSize: 12, fill: '#5c685f' }}
+                tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
               />
               <Tooltip content={<ScoreChartTooltip />} />
               <Area
@@ -532,23 +532,23 @@ export default function ProfilePage() {
           <TabsContent value="editor" className="space-y-4">
             <div className="grid items-start gap-6 xl:grid-cols-[minmax(260px,300px)_minmax(0,1fr)]">
               {/* All saved versions stay visible; no clipped inner scrolling region. */}
-              <Card className="h-fit min-w-0 gap-0 overflow-hidden border-[#dde3dc] bg-white xl:col-span-1">
-                <CardHeader className="border-b border-[#e7ece7] px-5 py-4">
-                  <CardTitle className="flex items-center justify-between gap-2 text-base text-[#27332d]">
-                    <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-[#246347]" /> Past uploads</span>
-                    <span className="rounded-full bg-[#eaf1ec] px-2.5 py-1 text-xs font-semibold text-[#246347]">{submissions.length}</span>
+              <Card className="h-fit min-w-0 gap-0 overflow-hidden border-border bg-card xl:col-span-1">
+                <CardHeader className="border-b border-border px-5 py-4">
+                  <CardTitle className="flex items-center justify-between gap-2 text-base text-foreground">
+                    <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-primary" /> Past uploads</span>
+                    <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-semibold text-primary">{submissions.length}</span>
                   </CardTitle>
                   <CardDescription>Every saved version, newest first.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2 p-3">
                   {submissions.map((sub, index) => (
-                    <div key={sub.id} className="flex min-w-0 items-center gap-3 rounded-xl border border-[#e3e9e2] bg-[#fbfcfa] p-3 transition-colors hover:border-[#c8d8ce] hover:bg-white">
+                    <div key={sub.id} className="flex min-w-0 items-center gap-3 rounded-xl border border-border bg-card p-3 transition-colors hover:border-primary hover:bg-secondary">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="min-w-0 break-words text-sm font-semibold leading-snug text-[#27332d]">{sub.fileName}</span>
-                          {index === 0 && <span className="rounded-full bg-[#eaf1ec] px-2 py-0.5 text-[11px] font-semibold text-[#246347]">Current</span>}
+                          <span className="min-w-0 break-words text-sm font-semibold leading-snug text-foreground">{sub.fileName}</span>
+                          {index === 0 && <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-semibold text-primary">Current</span>}
                         </div>
-                        <div className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-[#5c685f]">
+                        <div className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
                           <span>{formatDate(sub.uploadedAt)}</span>
                           <span aria-hidden="true">·</span>
                           <span>Score {sub.score}</span>
@@ -557,7 +557,7 @@ export default function ProfilePage() {
                       {sub.fileName.toLowerCase().endsWith(".pdf") && <ResumePreviewDialog submission={sub} compact />}
                     </div>
                   ))}
-                  {submissions.length === 0 && <div className="px-3 py-8 text-center text-sm text-[#5c685f]">{isLoadingSubs ? "Loading uploads…" : "No uploads yet"}</div>}
+                  {submissions.length === 0 && <div className="px-3 py-8 text-center text-sm text-muted-foreground">{isLoadingSubs ? "Loading uploads…" : "No uploads yet"}</div>}
                 </CardContent>
               </Card>
 

@@ -39,6 +39,7 @@ export default async function JobsPage() {
       <div className="career-page">
         <header className="career-page-heading">
           <div>
+            <span className="scaffold-eyebrow">Opportunities / get started</span>
             <h1>Browse jobs</h1>
             <p>
               Explore opportunities and keep track of the roles you’re

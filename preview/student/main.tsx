@@ -4,6 +4,8 @@ import { Toaster } from "sonner"
 import { StudentShell } from "../../src/components/student/student-shell"
 import { Onboarding } from "../../src/components/student/onboarding"
 import { StudentHome } from "../../src/components/student/student-home"
+import { CareerWorkspace } from "../../src/components/student/career/career-workspace"
+import { ThemeProvider } from "../../src/components/theme-provider"
 import { ResumeUpload } from "../../src/components/resume-upload"
 import { PublicHome } from "../../src/components/landing/public-home"
 import { getResumeObject } from "../../src/app/api/parse/resumeSchema"
@@ -13,11 +15,13 @@ import {
   updateStudentProfile,
   type StudentProfile,
 } from "../../src/lib/student-profile"
+import { workspaceSchema, workspaceUpdateSchema, updateWorkspace } from "../../src/lib/career/workspace"
 import "../../src/app/globals.css"
 import "./preview.css"
 
 const PROFILE = "vistern-meeting-profile",
   RESUME = "vistern-meeting-resume",
+  CAREER = "vistern-meeting-career",
   FAIL = "vistern-meeting-fail"
 const sample = getResumeObject()
 sample.basics.name = "Sam Rivera"
@@ -44,6 +48,7 @@ sample.projects = [
 sample.skills.programming_languages = ["Python"]
 const readProfile = (): StudentProfile | null => JSON.parse(localStorage.getItem(PROFILE) || "null")
 const readResume = () => JSON.parse(localStorage.getItem(RESUME) || "null")
+const readCareer = () => workspaceSchema.parse(JSON.parse(localStorage.getItem(CAREER) || "{}"))
 const reply = (data: unknown, status = 200) => Promise.resolve(Response.json(data, { status }))
 
 // Test data stays in this browser. No auth, storage, AI, or team API is contacted.
@@ -77,6 +82,17 @@ window.fetch = async (input, init) => {
     return reply({ success: true })
   }
   if (url === "/api/resume") return reply({ success: true, data: readResume() })
+  if (url === "/api/career" && init?.method === "POST") {
+    const parsed = workspaceUpdateSchema.safeParse(JSON.parse(String(init.body)))
+    if (!parsed.success) return reply({ success: false, error: "Check your activity and try again." }, 400)
+    try {
+      const saved = updateWorkspace(readCareer(), parsed.data, crypto.randomUUID(), new Date().toISOString())
+      localStorage.setItem(CAREER, JSON.stringify(saved))
+      return reply({ success: true, data: saved })
+    } catch (error) {
+      return reply({ success: false, error: error instanceof Error ? error.message : "Try again." }, 409)
+    }
+  }
   if (url === "/api/analyze/xyz-batch")
     return reply({ success: true, data: { projects: {}, experience: {} } })
   return reply(
@@ -143,7 +159,7 @@ function Preview() {
         </div>
         <span id="demo-status" role="status" />
       </div>
-      <StudentShell onboarding={onboarding}>
+      <StudentShell onboarding={onboarding} activeSubpage={pathname === "/career" ? params.get("view") || "plan" : undefined}>
         {onboarding ? (
           <Onboarding
             initialProfile={profile}
@@ -159,6 +175,14 @@ function Preview() {
           />
         ) : pathname === "/home" ? (
           <StudentHome profile={profile} resume={resume} />
+        ) : pathname === "/career" ? (
+          <CareerWorkspace
+            initial={readCareer()}
+            view={params.get("view") || "plan"}
+            resource={params.get("resource") || undefined}
+            activityId={params.get("activity") || undefined}
+            create={params.get("new") || undefined}
+          />
         ) : pathname === "/upload" ? (
           <div className="demo-tools">
             <h1>Resume upload</h1>
@@ -195,4 +219,8 @@ function Preview() {
     </>
   )
 }
-createRoot(document.getElementById("root")!).render(<Preview />)
+createRoot(document.getElementById("root")!).render(
+  <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <Preview />
+  </ThemeProvider>,
+)

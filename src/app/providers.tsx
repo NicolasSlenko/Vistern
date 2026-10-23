@@ -6,9 +6,8 @@ export const AppProviders = ({children}: {children: React.ReactNode}) => {
     return (
       <ThemeProvider
           attribute="class"
-          defaultTheme="light"
-          forcedTheme="light"
-          enableSystem={false}
+          defaultTheme="system"
+          enableSystem
           disableTransitionOnChange
       >
         <AppChrome>{children}</AppChrome>
