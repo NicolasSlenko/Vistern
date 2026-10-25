@@ -128,6 +128,7 @@ function EntryCard({
   onDelete,
   rewrites,
   suggestions,
+  notes,
 }: {
   spec: ListSectionSpec
   entry: Entry
@@ -139,6 +140,8 @@ function EntryCard({
   onDelete: () => void
   rewrites?: EntryRewrites
   suggestions?: SuggestionHandlers
+  /** The review's notes about this entry, shown inside the card when it opens. */
+  notes?: { id: string; tier: string; text: string; why?: string }[]
 }) {
   const [confirming, setConfirming] = useState(false)
   const name = asText(entry[spec.titleKey]).trim()
@@ -234,7 +237,25 @@ function EntryCard({
         }`}
       >
         <div className={`min-h-0 overflow-hidden transition-opacity duration-200 motion-reduce:transition-none ${open ? "opacity-100" : "opacity-0"}`}>
-          <div className="px-4 pb-5 pt-2">
+          <div className="flex flex-col gap-4 px-4 pb-5 pt-2">
+            {/* What the dot on the card is about. Without this the marker
+                promised a correction the card never showed. */}
+            {notes && notes.length > 0 && (
+              <ul className="flex flex-col gap-2 rounded-[12px] bg-fill/70 p-3">
+                {notes.map((note) => (
+                  <li key={note.id} className="flex gap-2.5">
+                    <span
+                      aria-hidden="true"
+                      className={`mt-[6px] h-[7px] w-[7px] shrink-0 rounded-full ${note.tier === "fix" ? "bg-alert" : "bg-caution"}`}
+                    />
+                    <span className="flex min-w-0 flex-col gap-0.5">
+                      <span className="text-[14px] leading-snug text-ink">{note.text}</span>
+                      {note.why && <span className="text-[13px] leading-snug text-ink-2">{note.why}</span>}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
             <EntryFields fields={spec.fields} entry={entry} onChange={onChange} rewrites={rewrites} suggestions={suggestions} />
           </div>
         </div>
@@ -257,6 +278,7 @@ export function SectionForm({
   /** The AI's line-level rewrites, looked up per entry. */
   rewritesFor,
   suggestions,
+  notesFor,
 }: {
   spec: ListSectionSpec
   entries: Entry[]
@@ -264,6 +286,8 @@ export function SectionForm({
   flagged?: number[]
   rewritesFor?: (entryIndex: number) => EntryRewrites
   suggestions?: SuggestionHandlers
+  /** The review's notes about one entry, shown inside its card. */
+  notesFor?: (entryIndex: number) => { id: string; tier: string; text: string; why?: string }[]
 }) {
   const [open, setOpen] = useState<number | null>(entries.length === 1 ? 0 : null)
 
@@ -304,6 +328,7 @@ export function SectionForm({
             onDelete={() => removeEntry(index)}
             rewrites={rewritesFor?.(index)}
             suggestions={suggestions}
+            notes={notesFor?.(index)}
           />
         ))}
 

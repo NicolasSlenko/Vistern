@@ -176,6 +176,7 @@ export function ProfileStudio() {
               spec={LIST_SECTIONS[section as ListSection]}
               entries={(profile[section as ListSection] ?? []) as Record<string, unknown>[]}
               flagged={flaggedEntries(notes, section)}
+              notesFor={(entryIndex) => notes.filter((note) => note.section === section && note.entryIndex === entryIndex)}
               onChange={(entries) => edit({ ...profile, [section]: entries } as Resume)}
             />
           )}
