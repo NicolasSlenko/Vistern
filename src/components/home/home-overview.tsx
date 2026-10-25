@@ -13,7 +13,7 @@ import type { StudentProfile } from "@/lib/student-profile"
 import { formatActivityDate, homeActivities, studentDate, workspaceSchema, type CareerWorkspace } from "@/lib/career/workspace"
 import { careerGrowthProgress } from "@/lib/career/roadmap"
 import { calculateResumeScoreDetailed } from "@/lib/resumeScoring"
-import { GrowthGarden } from "./growth-garden"
+import { GrowthGarden, type GardenLeaf } from "@/components/growth/growth-garden"
 
 /**
  * Home: what to do next, and how the work so far is adding up.
@@ -25,6 +25,16 @@ import { GrowthGarden } from "./growth-garden"
  */
 
 const emptyWorkspace = workspaceSchema.parse({})
+
+/** What each kind of work is called where a leaf names itself. */
+const ACTIVITY_NAME: Record<string, string> = {
+  project: "Project",
+  learning: "Learning",
+  exploration: "Exploration",
+  practice: "Practice",
+  community: "Community",
+  preparation: "Preparation",
+}
 
 const JOB_STAGE: Record<string, string> = {
   interested: "Saved",
@@ -120,6 +130,19 @@ export function HomeOverview({
   const weakest = resume
     ? [...calculateResumeScoreDetailed(resume).breakdown].sort((a, b) => a.combinedScore - b.combinedScore)[0]
     : null
+
+  // Oldest first, so a leaf keeps its place on the tree as more work is added.
+  const growthLeaves: GardenLeaf[] = [...completed]
+    .sort((a, b) => (a.completedAt ?? a.updatedAt).localeCompare(b.completedAt ?? b.updatedAt))
+    .map((activity) => ({
+      id: activity.id,
+      title: activity.title,
+      tone: activity.kind,
+      label: ACTIVITY_NAME[activity.kind],
+      note: activity.reflection || activity.notes || undefined,
+      date: activity.completedAt,
+      href: `/career?activity=${activity.id}`,
+    }))
 
   return (
     <div className="zip-scope desk desk-bright min-h-[calc(100vh-var(--chrome-top,82px))] p-2 pb-10 sm:p-5 xl:p-6">
@@ -230,7 +253,7 @@ export function HomeOverview({
                     </span>
                     <span className="label-mono text-ink-2">{completed.length === 1 ? "activity done" : "activities done"}</span>
                   </p>
-                  <GrowthGarden activities={workspace.activities} className="-mt-1" />
+                  <GrowthGarden leaves={growthLeaves} className="-mt-1" />
                   {growth > 0 && <p className="text-[12px] text-ink-3">{growth}% along your roadmap</p>}
                 </Panel>
 

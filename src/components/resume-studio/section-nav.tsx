@@ -153,9 +153,6 @@ export function SectionNav({
           </button>
         )
       })}
-      <p className="mt-[19px] hidden px-3 text-[13px] leading-5 text-ink-3 @6xl/studio:block">
-        Everything here is your master profile. Uploads stay separate until you accept them.
-      </p>
     </nav>
   )
 }

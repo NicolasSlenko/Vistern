@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState } from "react"
-import { Eye, PencilLine } from "lucide-react"
+import { Eye, PanelLeftClose, PanelLeftOpen, PencilLine } from "lucide-react"
 import { ModeTabs, MODE_PANEL_ID, modeTabId, type ModeOption } from "./mode-tabs"
 
 /**
@@ -50,6 +50,10 @@ export function StudioShell<Id extends string>({
   // Narrow screens show the form or the page, not both.
   const [view, setView] = useState<"edit" | "preview">("edit")
   const showing = preview ? view : "edit"
+  // Three columns in the room two want is tight, and the page is the one that
+  // suffers. Folding the left panel away gives its width back to the page,
+  // which is the thing you are actually reading.
+  const [folded, setFolded] = useState(false)
 
   return (
     <div className="@container/studio zip-scope">
@@ -66,7 +70,19 @@ export function StudioShell<Id extends string>({
               <div className="flex min-h-[72px] flex-wrap items-center justify-between gap-x-4 gap-y-2 px-3 py-[13px] sm:px-[14px] @6xl/studio:grid @6xl/studio:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
                 <div className="flex min-w-0 items-center gap-3">{title}{note}</div>
                 {/* In the middle of the bar on wide screens; narrower, atop the left column. */}
-                <div className="hidden @6xl/studio:block">
+                <div className="hidden items-center gap-2 @6xl/studio:flex">
+                  {preview && (
+                    <button
+                      type="button"
+                      onClick={() => setFolded(!folded)}
+                      aria-pressed={folded}
+                      aria-label={folded ? "Show the side panel" : "Hide the side panel, giving the page more room"}
+                      title={folded ? "Show the side panel" : "Hide the side panel"}
+                      className="white-button inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-2"
+                    >
+                      {folded ? <PanelLeftOpen className="h-[17px] w-[17px]" /> : <PanelLeftClose className="h-[17px] w-[17px]" />}
+                    </button>
+                  )}
                   <ModeTabs modes={modes} mode={mode} onChoose={onMode} />
                 </div>
                 <div className="flex min-w-0 items-center justify-end gap-2.5">{actions}</div>
@@ -78,9 +94,9 @@ export function StudioShell<Id extends string>({
                   fades at its foot as a sign there's more. */}
               <aside
                 data-mode={mode}
-                className={`shrink-0 border-b border-hairline @6xl/studio:flex @6xl/studio:w-[276px] @6xl/studio:flex-col @6xl/studio:overflow-clip @6xl/studio:rounded-bl-[28px] @6xl/studio:border-b-0 @6xl/studio:border-r ${
-                  showing === "preview" ? "hidden @6xl/studio:flex" : ""
-                }`}
+                className={`shrink-0 border-b border-hairline @6xl/studio:flex @6xl/studio:flex-col @6xl/studio:overflow-clip @6xl/studio:rounded-bl-[28px] @6xl/studio:border-b-0 @6xl/studio:border-r ${
+                  folded ? "@6xl/studio:w-0 @6xl/studio:border-r-0" : "@6xl/studio:w-[276px]"
+                } ${showing === "preview" ? "hidden @6xl/studio:flex" : ""}`}
               >
                 <div className="bg-sheet px-3 pt-3 sm:px-4 @6xl/studio:hidden">
                   <ModeTabs modes={modes} mode={mode} onChoose={onMode} stretch />
@@ -102,11 +118,11 @@ export function StudioShell<Id extends string>({
                   as is comfortable to write in; without one, it takes the room. */}
               <main
                 ref={formRef}
-                className={`min-w-0 flex-1 px-4 pb-12 pt-7 sm:px-9 @6xl/studio:overflow-y-auto @6xl/studio:pb-14 ${
-                  preview ? "@6xl/studio:w-[clamp(440px,44cqw,580px)] @6xl/studio:flex-none" : ""
+                className={`min-w-0 flex-1 px-4 pb-12 pt-7 sm:px-7 @6xl/studio:overflow-y-auto @6xl/studio:pb-14 ${
+                  preview ? "@6xl/studio:w-[clamp(390px,33cqw,520px)] @6xl/studio:flex-none" : ""
                 } ${showing === "preview" ? "hidden @6xl/studio:block" : ""}`}
               >
-                <div className={`mx-auto ${preview ? "max-w-[640px]" : "max-w-[760px]"}`}>{children}</div>
+                <div className={`mx-auto ${preview ? "max-w-[560px]" : "max-w-[760px]"}`}>{children}</div>
               </main>
 
               {preview && (

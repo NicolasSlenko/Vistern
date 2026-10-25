@@ -111,7 +111,10 @@ export function StudentShell({
       const stored = JSON.parse(sessionStorage.getItem(expandedStorageKey) || "null")
       if (Array.isArray(stored)) {
         const sections = stored.filter((href): href is string => typeof href === "string" && href in sectionPages)
-        setExpandedSections(sectionPages[activeHref] && !sections.includes(activeHref) ? [...sections, activeHref] : sections)
+        // The section you are in wins; otherwise whichever was last open.
+        // Only ever one, to match the accordion the nav is now.
+        const open = sectionPages[activeHref] ? activeHref : sections[0]
+        setExpandedSections(open ? [open] : [])
       }
     } catch { /* Keep the current section open if saved navigation state is unavailable. */ }
     setRestoredSections(true)
@@ -129,10 +132,11 @@ export function StudentShell({
       window.removeEventListener("popstate", updateCareerSubpage)
     }
   }, [])
+  // One section at a time: opening another closes the last. With several open
+  // the nav outgrew the sidebar and spilled past it, and a list you have to
+  // scroll to read is worse than one more click.
   function toggleSection(href: string) {
-    setExpandedSections((current) => current.includes(href)
-      ? current.filter((entry) => entry !== href)
-      : [...current, href])
+    setExpandedSections((current) => (current.includes(href) ? [] : [href]))
   }
   function closeMenu() {
     setOpen(false)

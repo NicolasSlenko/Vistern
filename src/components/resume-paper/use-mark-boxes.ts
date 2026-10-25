@@ -39,8 +39,18 @@ function boxesOf(element: HTMLElement, origin: DOMRect, scale: number): Box[] {
   ])
 }
 
-export function useMarkBoxes(paper: RefObject<HTMLElement | null>, keys: readonly string[]): MarkBoxes {
-  const [boxes, setBoxes] = useState<MarkBoxes>(new Map())
+export interface Measured {
+  boxes: MarkBoxes
+  /**
+   * How tall the page actually is, in its own units. A resume that runs past
+   * one nominal page is taller than PAGE.height, and the mark layer's viewBox
+   * has to match it exactly or every mark drifts — further the lower it sits.
+   */
+  height: number
+}
+
+export function useMarkBoxes(paper: RefObject<HTMLElement | null>, keys: readonly string[]): Measured {
+  const [measured, setMeasured] = useState<Measured>({ boxes: new Map(), height: PAGE.height })
   // Measuring writes state, which re-renders, which could measure again. The
   // last result is kept so an unchanged measurement stops the loop.
   const last = useRef("")
@@ -60,10 +70,11 @@ export function useMarkBoxes(paper: RefObject<HTMLElement | null>, keys: readonl
       if (element) next.set(key, boxesOf(element, origin, scale))
     }
 
-    const print = JSON.stringify([...next].map(([key, value]) => [key, value.map((box) => box.map(Math.round))]))
+    const height = origin.height / scale
+    const print = JSON.stringify([Math.round(height), [...next].map(([key, value]) => [key, value.map((box) => box.map(Math.round))])])
     if (print === last.current) return
     last.current = print
-    setBoxes(next)
+    setMeasured({ boxes: next, height })
   }, [paper, keys])
 
   useEffect(() => {
@@ -92,5 +103,5 @@ export function useMarkBoxes(paper: RefObject<HTMLElement | null>, keys: readonl
     }
   }, [measure, paper])
 
-  return boxes
+  return measured
 }

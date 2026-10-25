@@ -50,7 +50,7 @@ export function PaperPane({
 
   // The keys to measure. Derived here so the hook re-runs when the set changes.
   const keys = rewrites.map((rewrite) => `${rewrite.section}.${rewrite.entryIndex}.${rewrite.field}.${rewrite.bulletIndex}`)
-  const boxes = useMarkBoxes(paper, keys)
+  const { boxes, height } = useMarkBoxes(paper, keys)
 
   const fit = useCallback(() => {
     const pane = frame.current
@@ -97,9 +97,12 @@ export function PaperPane({
       <div ref={frame} className="min-h-0 flex-1 overflow-auto p-4">
         {/* The page is scaled rather than re-laid-out, so a line never
             rewraps as you zoom and the marks stay exactly where they were. */}
+        {/* Scaling does not change the room an element reserves, so the
+            margin makes up the difference — measured from the page's real
+            height, since a long resume runs past one nominal page. */}
         <div
           className="relative mx-auto origin-top"
-          style={{ width: PAGE.width, scale, marginBottom: `${PAGE.height * (scale - 1)}px` }}
+          style={{ width: PAGE.width, scale, marginBottom: `${height * (scale - 1)}px` }}
         >
           <div ref={paper} className="shadow-[0_1px_2px_rgb(10_24_17/0.08),0_14px_40px_-18px_rgb(10_24_17/0.5)]">
             <ResumePaper resume={resume} />
@@ -107,6 +110,7 @@ export function PaperPane({
           <ResumeMarks
             rewrites={rewrites}
             boxes={boxes}
+            height={height}
             answered={answered}
             open={open}
             onOpen={setOpen}

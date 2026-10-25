@@ -57,18 +57,20 @@ function useEscapeCloses(open: string | null, onOpen: (key: string | null) => vo
 /** What the AI would write instead, and the two ways to answer it. */
 function Tip({
   placed,
+  height,
   describe,
   onAccept,
   onReject,
 }: {
   placed: Placed
+  height: number
   describe: string
   onAccept: () => void
   onReject: () => void
 }) {
   const [left, top, right, bottom] = placed.area
   // Below the mark, unless that would hang off the foot of the page.
-  const below = bottom / PAGE.height < 0.78
+  const below = bottom / height < 0.78
   return (
     <div
       role="tooltip"
@@ -76,8 +78,8 @@ function Tip({
       style={{
         left: `clamp(150px, ${percent((left + right) / 2, PAGE.width)}, calc(100% - 150px))`,
         ...(below
-          ? { top: `calc(${percent(bottom, PAGE.height)} + 8px)` }
-          : { bottom: `calc(${percent(PAGE.height - top, PAGE.height)} + 8px)` }),
+          ? { top: `calc(${percent(bottom, height)} + 8px)` }
+          : { bottom: `calc(${percent(height - top, height)} + 8px)` }),
       }}
     >
       <p className={`label-mono ${placed.rewrite.severity === "fix" ? "text-alert" : "text-caution"}`}>
@@ -112,6 +114,7 @@ function Tip({
 export function ResumeMarks({
   rewrites,
   boxes,
+  height,
   answered,
   open,
   onOpen,
@@ -122,6 +125,8 @@ export function ResumeMarks({
   rewrites: readonly BulletRewrite[]
   /** Where each marked line sits, from useMarkBoxes. */
   boxes: MarkBoxes
+  /** The page's true height in its own units; the viewBox must match it. */
+  height: number
   /** Keys already ticked or crossed; their marks are not drawn. */
   answered: ReadonlySet<string>
   open: string | null
@@ -153,8 +158,12 @@ export function ResumeMarks({
 
   return (
     <>
+      {/* The viewBox is the page's measured size, not the nominal one, and
+          preserveAspectRatio is off: the overlay must map one-to-one onto the
+          paper underneath at any zoom, never letterbox itself to fit. */}
       <svg
-        viewBox={`0 0 ${PAGE.width} ${PAGE.height}`}
+        viewBox={`0 0 ${PAGE.width} ${height}`}
+        preserveAspectRatio="none"
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
       >
@@ -194,9 +203,9 @@ export function ResumeMarks({
           aria-describedby={open === mark.key ? describe : undefined}
           style={{
             left: percent(mark.area[0], PAGE.width),
-            top: percent(mark.area[1], PAGE.height),
+            top: percent(mark.area[1], height),
             width: percent(mark.area[2] - mark.area[0], PAGE.width),
-            height: percent(mark.area[3] - mark.area[1], PAGE.height),
+            height: percent(mark.area[3] - mark.area[1], height),
           }}
           onMouseEnter={() => onOpen(mark.key)}
           onMouseLeave={() => leave(mark.key)}
@@ -208,6 +217,7 @@ export function ResumeMarks({
       {showing && (
         <Tip
           placed={showing}
+          height={height}
           describe={describe}
           onAccept={() => {
             onAccept(showing.rewrite)

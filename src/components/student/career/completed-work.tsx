@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useRef, useState } from "react"
 import { ArrowLeft, ArrowUpRight, BookOpenCheck, Check, CircleCheck, Leaf } from "lucide-react"
-import { GrowthTree } from "../growth-tree"
+import { GrowthGarden, type GardenLeaf } from "@/components/growth/growth-garden"
 import { completedTrackIds, roadmapProgress, roadmapStages, type TrackId } from "@/lib/career/roadmap"
 import { undergradPaths } from "@/lib/career/undergrad-paths"
 import type { CareerActivity, CareerWorkspace } from "@/lib/career/workspace"
@@ -11,11 +11,6 @@ import type { CareerActivity, CareerWorkspace } from "@/lib/career/workspace"
 type CompletedItem =
   | { key: string; type: "track"; title: string; description: string; pathId: TrackId }
   | { key: string; type: "activity"; title: string; description: string; activity: CareerActivity }
-
-const leafPositions = [
-  { x: 52, y: 26 }, { x: 68, y: 31 }, { x: 34, y: 36 }, { x: 72, y: 53 },
-  { x: 27, y: 57 }, { x: 63, y: 66 }, { x: 42, y: 74 }, { x: 44, y: 46 },
-]
 
 function dateLabel(value: string | null) {
   return value
@@ -48,6 +43,19 @@ export function CompletedWork({
     }))
   const items = [...tracks, ...activities]
   const selected = items.find((item) => item.key === selectedKey) || items[0]
+
+  // Oldest first on the tree, so a leaf keeps its place as more is finished —
+  // the opposite order to the list below, which reads newest first.
+  const leaves: GardenLeaf[] = [...items]
+    .reverse()
+    .map((item) => ({
+      id: item.key,
+      title: item.title,
+      tone: item.type === "track" ? "track" : item.activity.kind,
+      label: item.type === "track" ? "Career track" : item.activity.kind,
+      note: item.description,
+      date: item.type === "track" ? null : item.activity.completedAt,
+    }))
   const trackProgress = selected?.type === "track" ? roadmapProgress(workspace, selected.pathId) : null
 
   function selectItem(key: string) {
@@ -70,21 +78,21 @@ export function CompletedWork({
         <div className="career-history-tree-panel">
           <div className="career-history-tree-heading"><span className="career-eyebrow">Growth archive</span><span>{items.length} {items.length === 1 ? "milestone" : "milestones"}</span></div>
           <div className="career-history-tree-art">
-            <GrowthTree progress={items.length ? 100 : 0} decorative />
-            {items.slice(0, leafPositions.length).map((item, index) => (
-              <button
-                key={item.key}
-                type="button"
-                className="career-history-leaf"
-                style={{ left: `${leafPositions[index].x}%`, top: `${leafPositions[index].y}%` }}
-                aria-label={`View ${item.title}`}
-                aria-pressed={selected?.key === item.key}
-                onClick={() => selectItem(item.key)}
-                title={item.title}
-              ><span><Leaf size={17} aria-hidden="true" /></span></button>
-            ))}
+            {/* The same tree as the home page, from the same component, so a
+                leaf is in the same place on both. Selection is driven from
+                here because this page already has a detail panel for it. */}
+            <GrowthGarden
+              leaves={leaves}
+              selected={selected?.key ?? null}
+              onSelect={(key) => key && selectItem(key)}
+            >
+              <p className="text-[13px] leading-snug text-ink-2">
+                {items.length
+                  ? "Each leaf is something you finished. Choose one to see its details."
+                  : "Your first completed milestone grows the first leaf."}
+              </p>
+            </GrowthGarden>
           </div>
-          <p>{items.length ? "The highlighted leaves are completed milestones. Select one to see its details." : "Your first completed milestone will light up a leaf."}</p>
         </div>
         {selected ? (
           <div ref={detailRef} className="career-history-detail" aria-live="polite">

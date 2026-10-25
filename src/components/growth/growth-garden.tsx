@@ -1,30 +1,48 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
-import type { CareerActivity } from "@/lib/career/workspace"
 
 /**
  * The tree: one leaf for every piece of work the student has finished.
  *
- * The old version was a progress bar wearing a tree costume — a single
- * percentage grew it, and no leaf meant anything. Here each leaf *is* one
- * completed activity, and choosing it says which. That makes the picture
+ * The version this replaces was a progress bar wearing a tree costume — a
+ * single percentage grew it, and no leaf stood for anything. Here each leaf
+ * *is* one finished thing, and choosing it says which. That makes the picture
  * worth looking at twice: it is a record, not a gauge, and it answers the
  * question a student actually has, which is "what have I actually done?"
  *
- * The tree art is adapted from Pablo's student-experience prototype.
+ * Home and the completed-work page show the same tree from the same
+ * component, so a leaf is in the same place on both. The page that wants to
+ * drive its own detail panel passes `selected` and `onSelect` and the tree
+ * keeps quiet; the page that just wants a tree lets it answer for itself.
+ *
+ * Tree art adapted from Pablo's student-experience prototype.
  */
+
+/** One finished thing, as a leaf. */
+export interface GardenLeaf {
+  id: string
+  title: string
+  /** Which green it takes. */
+  tone: "project" | "learning" | "exploration" | "practice" | "community" | "preparation" | "track"
+  /** What kind of thing it was: "Project", "Career track". */
+  label: string
+  /** A line of what came of it. */
+  note?: string
+  /** When it was finished. */
+  date?: string | null
+  /** Where to go to see it in full. */
+  href?: string
+}
 
 /** Where a leaf can grow, in the order they fill: up from the sprout, out to the crown. */
 interface Anchor {
-  /** Where it joins its branch. */
   x: number
   y: number
   /** Which way it points, in degrees. */
   angle: number
-  /** How long it is; the crown's are the biggest. */
   length: number
 }
 
@@ -72,9 +90,9 @@ function leafPath(length: number): string {
   return `M0 0 C${length * 0.28} ${-width} ${length * 0.78} ${-width * 0.82} ${length} 0 C${length * 0.78} ${width * 0.82} ${length * 0.28} ${width} 0 0 Z`
 }
 
-/** Each kind of work in its own green, so the tree shows the shape of a student's effort. */
-const KIND_FILL: Record<CareerActivity["kind"], string> = {
+const TONE_FILL: Record<GardenLeaf["tone"], string> = {
   project: "var(--leaf-deep)",
+  track: "var(--leaf-deep)",
   learning: "var(--leaf-light)",
   exploration: "var(--leaf-light)",
   practice: "var(--leaf-mid)",
@@ -82,19 +100,8 @@ const KIND_FILL: Record<CareerActivity["kind"], string> = {
   preparation: "var(--leaf-pale)",
 }
 
-const KIND_NAME: Record<CareerActivity["kind"], string> = {
-  project: "Project",
-  learning: "Learning",
-  exploration: "Exploration",
-  practice: "Practice",
-  community: "Community",
-  preparation: "Preparation",
-}
-
-const when = (date: string | null) =>
-  date
-    ? new Date(date).toLocaleDateString("en-US", { month: "long", year: "numeric" })
-    : null
+const monthYear = (date?: string | null) =>
+  date ? new Date(date).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : null
 
 /** The bare tree: trunk and branches, drawn whatever the student has done. */
 function Wood() {
@@ -117,29 +124,29 @@ function Wood() {
 }
 
 export function GrowthGarden({
-  activities,
+  leaves,
+  selected,
+  onSelect,
+  emptyNote = "Nothing has grown yet. Finish something and the first leaf appears here.",
   className = "",
+  children,
 }: {
-  /** Every activity; the completed ones become leaves. */
-  activities: CareerActivity[]
+  /** Oldest first: a leaf then keeps its place on the tree as more is added. */
+  leaves: GardenLeaf[]
+  /** Set these two to drive the choice from outside; the tree then shows no card of its own. */
+  selected?: string | null
+  onSelect?: (id: string | null) => void
+  emptyNote?: string
   className?: string
+  /** Shown under the tree in place of the summary line. */
+  children?: ReactNode
 }) {
-  // Oldest first, so a leaf keeps its place on the tree as more work is added.
-  const done = useMemo(
-    () =>
-      activities
-        .filter((activity) => activity.status === "completed")
-        .sort((a, b) => (a.completedAt ?? a.updatedAt).localeCompare(b.completedAt ?? b.updatedAt)),
-    [activities],
-  )
-  const [chosen, setChosen] = useState<string | null>(null)
-  const showing = done.find((activity) => activity.id === chosen) ?? null
+  const controlled = onSelect !== undefined
+  const [ownChoice, setOwnChoice] = useState<string | null>(null)
+  const chosen = controlled ? (selected ?? null) : ownChoice
+  const choose = (id: string | null) => (controlled ? onSelect(id) : setOwnChoice(id))
 
-  // Steps ticked off across everything still in progress: the work that has
-  // not yet become a leaf, which is what the line under the tree is about.
-  const stepsInFlight = activities
-    .filter((activity) => activity.status === "active")
-    .reduce((count, activity) => count + activity.steps.filter((step) => step.done).length, 0)
+  const showing = useMemo(() => leaves.find((leaf) => leaf.id === chosen) ?? null, [leaves, chosen])
 
   return (
     <div className={`flex flex-col gap-3 ${className}`}>
@@ -149,8 +156,8 @@ export function GrowthGarden({
           className="w-full"
           role="img"
           aria-label={
-            done.length
-              ? `Your tree, with ${done.length} ${done.length === 1 ? "leaf for the one activity" : `leaves for the ${done.length} activities`} you have finished`
+            leaves.length
+              ? `Your tree, with ${leaves.length} ${leaves.length === 1 ? "leaf for the one thing" : `leaves for the ${leaves.length} things`} you have finished`
               : "Your tree, not yet grown"
           }
         >
@@ -158,19 +165,19 @@ export function GrowthGarden({
           <path className="garden-ground" d="M79 267 C111 269 167 269 201 267" />
           <Wood />
 
-          {done.length === 0 && (
+          {leaves.length === 0 && (
             <g className="garden-seed">
               <path d="M135 267 C132 260 139 256 148 261 C150 269 143 274 135 267Z" />
               <path className="garden-seed-line" d="M137 267 Q141 263 146 262" />
             </g>
           )}
 
-          {done.map((activity, index) => {
+          {leaves.map((leaf, index) => {
             const anchor = anchorFor(index)
-            const open = activity.id === chosen
+            const open = leaf.id === chosen
             return (
               <g
-                key={activity.id}
+                key={leaf.id}
                 className="garden-leaf"
                 data-open={open || undefined}
                 data-quiet={chosen !== null && !open ? "" : undefined}
@@ -178,10 +185,15 @@ export function GrowthGarden({
                 style={{ "--delay": `${Math.min(index, 18) * 70}ms` } as React.CSSProperties}
                 transform={`translate(${anchor.x} ${anchor.y}) rotate(${anchor.angle})`}
               >
-                <path d={leafPath(anchor.length)} fill={KIND_FILL[activity.kind]} />
-                <path className="garden-vein" d={`M${anchor.length * 0.12} 0 L${anchor.length * 0.82} 0`} />
-                {/* The leaf itself is the control: a circle over it keeps the
-                    target a comfortable size however small the leaf is. */}
+                {/* Only the drawing grows under the pointer. The target below
+                    is a sibling and never moves: scaling the two together
+                    slid the target out from under the pointer, which
+                    unhovered it, which shrank it back — a leaf that flickered
+                    as fast as the browser could redraw it. */}
+                <g className="garden-leaf-art">
+                  <path d={leafPath(anchor.length)} fill={TONE_FILL[leaf.tone]} />
+                  <path className="garden-vein" d={`M${anchor.length * 0.12} 0 L${anchor.length * 0.82} 0`} />
+                </g>
                 <circle
                   className="garden-hit"
                   cx={anchor.length * 0.5}
@@ -190,12 +202,12 @@ export function GrowthGarden({
                   tabIndex={0}
                   role="button"
                   aria-pressed={open}
-                  aria-label={`${KIND_NAME[activity.kind]}: ${activity.title}`}
-                  onClick={() => setChosen(open ? null : activity.id)}
+                  aria-label={`${leaf.label}: ${leaf.title}`}
+                  onClick={() => choose(open ? null : leaf.id)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault()
-                      setChosen(open ? null : activity.id)
+                      choose(open ? null : leaf.id)
                     }
                   }}
                 />
@@ -205,37 +217,37 @@ export function GrowthGarden({
         </svg>
       </div>
 
-      {/* What the chosen leaf was. Takes the place of the summary rather than
-          pushing it down, so choosing a leaf never moves the tree. */}
-      <div className="min-h-[76px]">
-        {showing ? (
-          <div className="flex flex-col gap-1.5 rounded-[14px] border border-hairline bg-sheet p-3.5 shadow-card-rest">
-            <div className="flex items-baseline justify-between gap-2">
-              <span className="label-mono text-ink-2">{KIND_NAME[showing.kind]}</span>
-              {when(showing.completedAt) && <span className="text-[12px] text-ink-3">{when(showing.completedAt)}</span>}
+      {children ?? (
+        // Held to a minimum height so choosing a leaf never shifts the tree.
+        <div className="min-h-[76px]">
+          {showing ? (
+            <div className="flex flex-col gap-1.5 rounded-[14px] border border-hairline bg-sheet p-3.5 shadow-card-rest">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="label-mono text-ink-2">{showing.label}</span>
+                {monthYear(showing.date) && <span className="text-[12px] text-ink-3">{monthYear(showing.date)}</span>}
+              </div>
+              <p className="text-[15px] font-medium leading-snug tracking-[-0.01em] text-ink">{showing.title}</p>
+              {showing.note && <p className="line-clamp-3 text-[13px] leading-snug text-ink-2">{showing.note}</p>}
+              {showing.href && (
+                <Link
+                  href={showing.href}
+                  className="mt-0.5 inline-flex items-center gap-1 self-start text-[13px] font-medium text-brand hover:underline"
+                >
+                  Open it
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </Link>
+              )}
             </div>
-            <p className="text-[15px] font-medium leading-snug tracking-[-0.01em] text-ink">{showing.title}</p>
-            {showing.reflection && <p className="line-clamp-3 text-[13px] leading-snug text-ink-2">{showing.reflection}</p>}
-            <Link
-              href={`/career?activity=${showing.id}`}
-              className="mt-0.5 inline-flex items-center gap-1 self-start text-[13px] font-medium text-brand hover:underline"
-            >
-              Open it
-              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </Link>
-          </div>
-        ) : done.length === 0 ? (
-          <p className="text-[13px] leading-snug text-ink-2">
-            Nothing has grown yet. Finish an activity and the first leaf appears here.
-          </p>
-        ) : (
-          <p className="text-[13px] leading-snug text-ink-2">
-            {done.length} {done.length === 1 ? "leaf, one for the activity" : "leaves, one for each activity"} you have finished.
-            {stepsInFlight > 0 && ` ${stepsInFlight} more ${stepsInFlight === 1 ? "step is" : "steps are"} ticked off work still going.`}{" "}
-            <span className="text-ink-3">Choose one to see what it was.</span>
-          </p>
-        )}
-      </div>
+          ) : leaves.length === 0 ? (
+            <p className="text-[13px] leading-snug text-ink-2">{emptyNote}</p>
+          ) : (
+            <p className="text-[13px] leading-snug text-ink-2">
+              {leaves.length} {leaves.length === 1 ? "leaf, one for the thing" : "leaves, one for each thing"} you have finished.{" "}
+              <span className="text-ink-3">Choose one to see what it was.</span>
+            </p>
+          )}
+        </div>
+      )}
     </div>
   )
 }
