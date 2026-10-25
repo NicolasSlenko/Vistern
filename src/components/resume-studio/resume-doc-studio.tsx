@@ -8,7 +8,7 @@ import type { Resume } from "@/app/api/parse/resumeSchema"
 import type { BulletRewrite } from "@/lib/resume-suggestions"
 import type { ModeOption } from "./mode-tabs"
 import { pill } from "./pills"
-import { PreviewPane } from "./preview-pane"
+import { PaperPane } from "@/components/resume-paper/paper-pane"
 import { ProfileForm, SkillsForm } from "./profile-form"
 import { SectionForm } from "./section-form"
 import { SectionNav } from "./section-nav"
@@ -197,7 +197,19 @@ export function ResumeDocStudio({ id }: { id: string }) {
           />
         )
       }
-      preview={<PreviewPane submission={doc?.s3Key ? { id: doc.id, fileName: doc.fileName, s3Key: doc.s3Key, uploadedAt: doc.updatedAt, score: doc.score } : null} />}
+      // The page itself, with the AI's marks drawn on the lines they are
+      // about. This is the student's own resume rendered as HTML rather than
+      // the uploaded PDF, because a mark has to sit exactly on its line and a
+      // DOM node can be measured exactly.
+      preview={
+        <PaperPane
+          resume={content}
+          rewrites={review.live}
+          answered={review.answered}
+          onAccept={(rewrite) => review.accept(rewrite, edit)}
+          onReject={review.reject}
+        />
+      }
     >
       {loading || !content ? (
         <LoadingForm />
@@ -247,7 +259,7 @@ function LoadingForm() {
 
 function NotFound() {
   return (
-    <div className="zip-scope desk desk-bright flex min-h-[calc(100vh-82px)] items-center justify-center p-6">
+    <div className="zip-scope desk desk-bright flex min-h-[calc(100vh-var(--chrome-top,82px))] items-center justify-center p-6">
       <div className="paper-frame w-full max-w-[520px]">
         <div className="paper flex flex-col items-center gap-4 px-6 py-12 text-center sm:px-12">
           <span className="label-mono inline-flex h-[28px] items-center rounded-full bg-fill px-3 text-ink-2">Not here</span>

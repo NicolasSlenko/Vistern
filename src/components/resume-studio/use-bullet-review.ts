@@ -131,5 +131,5 @@ export function useBulletReview(resume: Resume | null, { scope, resumeDocumentId
     return bySection
   }, [open])
 
-  return { all, live, open, counts, asking, loaded, ask, accept, reject, forEntry }
+  return { all, live, open, counts, asking, loaded, ask, accept, reject, forEntry, answered }
 }

@@ -7,9 +7,9 @@ import { pill } from "@/components/resume-studio/pills"
 export default function CommunityError({ reset }: { reset: () => void }) {
   return (
     <StudentShell onboarding>
-      <div className="zip-scope desk desk-bright min-h-[calc(100vh-82px)] p-2 pb-10 sm:p-5 xl:p-6">
+      <div className="zip-scope desk desk-bright min-h-[calc(100vh-var(--chrome-top,82px))] p-2 pb-10 sm:p-5 xl:p-6">
         <div className="paper-frame">
-          <div className="paper flex min-h-[calc(100vh-150px)] flex-col">
+          <div className="paper flex min-h-[calc(100vh-var(--chrome-top,82px)-68px)] flex-col">
             <div className="flex flex-1 items-center px-4 py-9 sm:px-8 sm:py-12">
               <div role="alert" className="mx-auto flex w-full max-w-[1080px] flex-col items-start gap-4">
                 <p className="label-mono text-alert">Community</p>

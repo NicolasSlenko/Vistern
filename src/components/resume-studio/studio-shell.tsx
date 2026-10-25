@@ -54,7 +54,7 @@ export function StudioShell<Id extends string>({
   return (
     <div className="@container/studio zip-scope">
       <div
-        className={`desk desk-bright flex min-h-screen flex-col p-2 sm:p-5 @6xl/studio:h-[calc(100vh-82px)] @6xl/studio:min-h-0 @6xl/studio:overflow-clip @6xl/studio:p-6 ${
+        className={`desk desk-bright flex min-h-screen flex-col p-2 sm:p-5 @6xl/studio:h-[calc(100vh-var(--chrome-top,82px))] @6xl/studio:min-h-0 @6xl/studio:overflow-clip @6xl/studio:p-6 ${
           preview ? "pb-24 sm:pb-24" : "pb-6"
         }`}
       >

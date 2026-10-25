@@ -254,9 +254,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="zip-scope desk desk-bright min-h-[calc(100vh-82px)] p-2 pb-10 sm:p-5 xl:p-6">
+    <div className="zip-scope desk desk-bright min-h-[calc(100vh-var(--chrome-top,82px))] p-2 pb-10 sm:p-5 xl:p-6">
       <div className="paper-frame">
-        <div className="paper flex min-h-[calc(100vh-150px)] flex-col">
+        <div className="paper flex min-h-[calc(100vh-var(--chrome-top,82px)-68px)] flex-col">
           <header className="flex min-h-[72px] flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-hairline px-4 py-[13px] sm:px-6">
             <h1 className="text-[17px] font-medium tracking-[-0.02em] text-ink sm:text-[18px]">Settings</h1>
           </header>

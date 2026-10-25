@@ -13,6 +13,7 @@ import type { StudentProfile } from "@/lib/student-profile"
 import { formatActivityDate, homeActivities, studentDate, workspaceSchema, type CareerWorkspace } from "@/lib/career/workspace"
 import { careerGrowthProgress } from "@/lib/career/roadmap"
 import { calculateResumeScoreDetailed } from "@/lib/resumeScoring"
+import { GrowthGarden } from "./growth-garden"
 
 /**
  * Home: what to do next, and how the work so far is adding up.
@@ -120,19 +121,10 @@ export function HomeOverview({
     ? [...calculateResumeScoreDetailed(resume).breakdown].sort((a, b) => a.combinedScore - b.combinedScore)[0]
     : null
 
-  const counts = [
-    { label: "Projects", value: completed.filter((activity) => activity.kind === "project").length },
-    {
-      label: "Learning",
-      value: completed.filter((activity) => ["learning", "exploration", "practice"].includes(activity.kind)).length,
-    },
-    { label: "Community", value: completed.filter((activity) => activity.kind === "community").length },
-  ]
-
   return (
-    <div className="zip-scope desk desk-bright min-h-[calc(100vh-82px)] p-2 pb-10 sm:p-5 xl:p-6">
+    <div className="zip-scope desk desk-bright min-h-[calc(100vh-var(--chrome-top,82px))] p-2 pb-10 sm:p-5 xl:p-6">
       <div className="paper-frame">
-        <div className="paper flex min-h-[calc(100vh-150px)] flex-col">
+        <div className="paper flex min-h-[calc(100vh-var(--chrome-top,82px)-68px)] flex-col">
           <div className="flex-1 px-4 py-9 sm:px-8 sm:py-12">
             <div className="mx-auto flex max-w-[1080px] flex-col gap-9">
               {/* What to do next. The one thing the page is for, so it gets
@@ -229,7 +221,8 @@ export function HomeOverview({
                   )}
                 </Panel>
 
-                {/* Growth. */}
+                {/* Growth, as the tree: a leaf for every activity finished,
+                    and each one says which when it's chosen. */}
                 <Panel title="Growth" icon={Compass} href="/career?view=history" action="Completed work">
                   <p className="flex items-baseline gap-2">
                     <span className="font-serif text-[48px] leading-[0.85] tracking-[-0.045em] tabular-nums text-ink">
@@ -237,22 +230,7 @@ export function HomeOverview({
                     </span>
                     <span className="label-mono text-ink-2">{completed.length === 1 ? "activity done" : "activities done"}</span>
                   </p>
-                  {completed.length ? (
-                    <dl className="flex flex-col">
-                      {counts.map((count) => (
-                        <div key={count.label} className="flex items-baseline justify-between gap-2 border-b border-hairline py-[7px] last:border-b-0">
-                          <dt className="check-leader min-w-0 flex-1 text-[13px] text-ink-2">
-                            <span>{count.label}</span>
-                          </dt>
-                          <dd className="shrink-0 text-[13px] tabular-nums text-ink">{count.value}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                  ) : (
-                    <p className="text-[13px] leading-snug text-ink-2">
-                      As you finish activities and write down what you learned, they add up here.
-                    </p>
-                  )}
+                  <GrowthGarden activities={workspace.activities} className="-mt-1" />
                   {growth > 0 && <p className="text-[12px] text-ink-3">{growth}% along your roadmap</p>}
                 </Panel>
 

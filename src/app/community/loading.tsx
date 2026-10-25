@@ -4,9 +4,9 @@ import { StudentShell } from "@/components/student/student-shell"
 export default function Loading() {
   return (
     <StudentShell>
-      <div className="zip-scope desk desk-bright min-h-[calc(100vh-82px)] p-2 pb-10 sm:p-5 xl:p-6">
+      <div className="zip-scope desk desk-bright min-h-[calc(100vh-var(--chrome-top,82px))] p-2 pb-10 sm:p-5 xl:p-6">
         <div className="paper-frame">
-          <div className="paper flex min-h-[calc(100vh-150px)] flex-col" role="status" aria-busy="true">
+          <div className="paper flex min-h-[calc(100vh-var(--chrome-top,82px)-68px)] flex-col" role="status" aria-busy="true">
             <header className="flex min-h-[72px] flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-hairline px-4 py-[13px] sm:px-6">
               <span className="h-4 w-36 rounded-full bg-fill" />
               <span className="h-10 w-[150px] rounded-full bg-fill" />

@@ -9,6 +9,12 @@
    bar and the headings. */
 
 .student-app {
+  /* How much vertical room the chrome takes above a page. The floating
+     topbar reserves 82px on narrow screens; on wide ones it is gone and
+     the page runs to the top. Pages size themselves against this rather
+     than a hard-coded 82px. */
+  --chrome-top: 82px;
+
   --background: var(--color-paper);
   --foreground: var(--color-ink);
   --card: var(--color-sheet);
@@ -102,13 +108,17 @@
   color: var(--color-ink);
 }
 
-/* The topbar no longer carries the controls, so it can be hidden on wide
-   screens — it only held the mobile menu toggle. */
+/* The topbar no longer carries the controls, so on wide screens it is gone
+   entirely — it only held the mobile menu toggle, and the sidebar is
+   already on screen there. The 82px it used to reserve goes with it. */
 @media (min-width: 1150px) {
-  .student-topbar {
+  .student-workspace {
+    --chrome-top: 0px;
+  }
+  .student-workspace .student-topbar {
     display: none;
   }
-  .student-main {
+  .student-workspace .student-main {
     padding-top: 0;
   }
 }
@@ -122,6 +132,26 @@
 .student-brand > span {
   background: var(--color-fill);
   color: var(--color-brand);
+}
+
+/* The nav reads in Newsreader, as the page titles do — it is a list of
+   places, which is closer to prose than to a control. The size is nudged up
+   because the serif runs smaller than Geist at the same point size. */
+.student-sidebar nav a,
+.student-nav-disclosure > span,
+.student-nav-disclosure,
+.student-subnav a,
+.student-mobile-nav a,
+.student-mobile-subnav a,
+.student-account-nav > * {
+  font-family: var(--font-newsreader), Georgia, serif;
+  font-size: 16px;
+  font-weight: 450;
+  letter-spacing: -0.012em;
+}
+.student-subnav a,
+.student-mobile-subnav a {
+  font-size: 15px;
 }
 
 .student-nav-disclosure[aria-current],
@@ -202,6 +232,73 @@
   color: var(--color-ink);
 }
 
+/* ---- Buttons ---------------------------------------------------------- */
+
+/* The older pages call their buttons .student-button / .student-secondary.
+   Rather than rewrite every call site, those classes are re-cut here as the
+   theme's pill buttons, so "Add an activity" and its kin match the ones on
+   the resume pages without touching the markup. */
+.student-app .student-button {
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: #fff;
+  background: none;
+  background-image: var(--brand-gradient);
+  box-shadow: var(--brand-halo);
+  transition:
+    filter 150ms,
+    box-shadow 200ms,
+    scale 120ms ease-out;
+}
+.student-app .student-button:hover {
+  background-image: var(--brand-gradient);
+  filter: brightness(1.08);
+  box-shadow: var(--brand-halo);
+}
+.student-app .student-button:active {
+  filter: brightness(0.93);
+  scale: 0.97;
+}
+.student-app .student-button:disabled {
+  filter: saturate(0.6);
+  opacity: 0.6;
+}
+
+/* The quiet one: white, its edge drawn by a shadow rather than a border, so
+   it sits level with the brand pill rather than a pixel taller. */
+.student-app .student-button.student-secondary {
+  color: var(--color-ink);
+  background: none;
+  background-image: linear-gradient(180deg, #ffffff, #f6f8f6);
+  box-shadow:
+    inset 0 0 0 1px #e4e9e5,
+    0 1px 2px rgb(10 24 17 / 0.05),
+    0 3px 8px -3px rgb(10 24 17 / 0.14);
+}
+.student-app .student-button.student-secondary:hover {
+  background-image: linear-gradient(180deg, #ffffff, #f1f5f2);
+  filter: none;
+}
+.dark .student-app .student-button {
+  color: #0f1a14;
+}
+.dark .student-app .student-button.student-secondary {
+  color: var(--color-ink);
+  background-image: linear-gradient(180deg, #2a332e, #222a25);
+  box-shadow:
+    inset 0 0 0 1px rgb(160 200 175 / 0.14),
+    0 3px 8px -3px rgb(0 0 0 / 0.5);
+}
+.dark .student-app .student-button.student-secondary:hover {
+  background-image: linear-gradient(180deg, #313b35, #28312b);
+}
+
 /* ---- Tool pages ------------------------------------------------------- */
 
 /* A tool page that hasn't been rebuilt as a sheet still reads as part of the
@@ -243,7 +340,7 @@
     linear-gradient(170deg, var(--color-sky-high), var(--color-sky-low));
   background-attachment: fixed;
   background-size: cover;
-  padding: 82px 24px 24px;
+  padding: var(--chrome-top) 24px 24px;
   min-height: 100vh;
 }
 .dark .student-workspace .student-main:has(> .career-page),
@@ -253,7 +350,7 @@
 @media (max-width: 1150px) {
   .student-workspace .student-main:has(> .career-page),
   .student-workspace .student-main:has(> .student-tool-page) {
-    padding: 82px 10px 10px;
+    padding: var(--chrome-top) 10px 10px;
   }
 }
 
@@ -261,7 +358,7 @@
 .student-main > .student-tool-page {
   width: 100%;
   max-width: none;
-  min-height: calc(100vh - 150px);
+  min-height: calc(100vh - var(--chrome-top) - 48px);
   padding: 34px 40px 56px;
   border-radius: 28px;
   background: var(--color-sheet);

@@ -8,6 +8,8 @@
 @import "./styles/zip-glass.css";
 @import "./styles/zip-sheet.css";
 @import "./styles/zip-studio.css";
+@import "./styles/zip-paper-marks.css";
+@import "./styles/zip-garden.css";
 
 @theme inline {
   --color-background: var(--background);
