@@ -9,6 +9,7 @@ import type { BulletRewrite } from "@/lib/resume-suggestions"
 import type { ModeOption } from "./mode-tabs"
 import { pill } from "./pills"
 import { PaperPane } from "@/components/resume-paper/paper-pane"
+import { PreviewPane } from "./preview-pane"
 import { ProfileForm, SkillsForm } from "./profile-form"
 import { SectionForm } from "./section-form"
 import { SectionNav } from "./section-nav"
@@ -208,6 +209,11 @@ export function ResumeDocStudio({ id }: { id: string }) {
           answered={review.answered}
           onAccept={(rewrite) => review.accept(rewrite, edit)}
           onReject={review.reject}
+          original={
+            doc?.s3Key ? (
+              <PreviewPane submission={{ id: doc.id, fileName: doc.fileName, s3Key: doc.s3Key, uploadedAt: doc.updatedAt, score: doc.score }} />
+            ) : undefined
+          }
         />
       }
     >

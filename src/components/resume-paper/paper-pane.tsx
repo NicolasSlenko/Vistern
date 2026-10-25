@@ -26,6 +26,7 @@ export function PaperPane({
   answered,
   onAccept,
   onReject,
+  original,
 }: {
   resume: Resume | null
   /** The rewrites that still match the page. */
@@ -34,6 +35,8 @@ export function PaperPane({
   answered: ReadonlySet<string>
   onAccept: (rewrite: BulletRewrite) => void
   onReject: (rewrite: BulletRewrite) => void
+  /** The file as uploaded, to check our reading of it against. */
+  original?: React.ReactNode
 }) {
   const paper = useRef<HTMLDivElement>(null)
   const frame = useRef<HTMLDivElement>(null)
@@ -41,6 +44,9 @@ export function PaperPane({
   const [zoom, setZoom] = useState<number | null>(null)
   const [fitted, setFitted] = useState(1)
   const [open, setOpen] = useState<string | null>(null)
+  // What we read from the file is a reconstruction, and it can be wrong. The
+  // uploaded page stays one click away so a student can check it.
+  const [showing, setShowing] = useState<"marked" | "original">("marked")
 
   // The keys to measure. Derived here so the hook re-runs when the set changes.
   const keys = rewrites.map((rewrite) => `${rewrite.section}.${rewrite.entryIndex}.${rewrite.field}.${rewrite.bulletIndex}`)
@@ -77,6 +83,15 @@ export function PaperPane({
     )
   }
 
+  if (original && showing === "original") {
+    return (
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        {original}
+        <ViewSwitch showing={showing} onChoose={setShowing} />
+      </div>
+    )
+  }
+
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
       <div ref={frame} className="min-h-0 flex-1 overflow-auto p-4">
@@ -101,7 +116,8 @@ export function PaperPane({
         </div>
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center">
+      <div className="pointer-events-none absolute inset-x-0 bottom-3 flex flex-wrap items-center justify-center gap-2 px-3">
+        {original && <ViewSwitch showing={showing} onChoose={setShowing} floating={false} />}
         <div className="glass-float pointer-events-auto flex items-center gap-1 rounded-full p-1">
           <button
             type="button"
@@ -132,6 +148,41 @@ export function PaperPane({
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+/** Our reading of the resume, or the file the student actually uploaded. */
+function ViewSwitch({
+  showing,
+  onChoose,
+  floating = true,
+}: {
+  showing: "marked" | "original"
+  onChoose: (view: "marked" | "original") => void
+  floating?: boolean
+}) {
+  return (
+    <div
+      role="group"
+      aria-label="What to show"
+      className={`glass-float pointer-events-auto flex items-center gap-1 rounded-full p-1 ${
+        floating ? "absolute bottom-3 left-1/2 -translate-x-1/2" : ""
+      }`}
+    >
+      {(["marked", "original"] as const).map((view) => (
+        <button
+          key={view}
+          type="button"
+          aria-pressed={showing === view}
+          onClick={() => onChoose(view)}
+          className={`inline-flex h-8 items-center rounded-full px-3 text-[13px] font-medium transition-colors ${
+            showing === view ? "bg-ink text-sheet" : "text-ink-2 hover:text-ink"
+          }`}
+        >
+          {view === "marked" ? "Marked up" : "Original"}
+        </button>
+      ))}
     </div>
   )
 }
