@@ -15,6 +15,7 @@
     "test:resume": "tsx --test tests/resume-processing.test.ts",
     "test:parse": "tsx --test tests/resume-normalize.test.ts",
     "test:merge": "tsx --test tests/profile-merge.test.ts",
+    "test:score": "tsx --test tests/resume-score.test.ts",
     "preview:student": "node scripts/student-preview.mjs",
     "preview:studio": "node scripts/studio-preview.mjs",
     "test:career": "tsx --test tests/career-*.test.ts"

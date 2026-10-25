@@ -70,17 +70,32 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const body = (await request.json()) as { content?: unknown; fileName?: string; targetRole?: string | null; isStarred?: boolean }
     const update: Database["public"]["Tables"]["resume_documents"]["Update"] = { updated_at: new Date().toISOString() }
 
+    const supabase = await createClerkSupabaseServerClient()
+
     if (body.content !== undefined) {
       const content = normalizeProfileData(body.content)
+      // The AI's reading has to be loaded and blended in here too. Scoring
+      // without it on save meant an edit silently overwrote the blended
+      // score the review had just written, so the same resume showed a
+      // different number depending on which route touched it last.
+      const { data: feedbackRow } = await supabase
+        .from("resume_feedback")
+        .select("result")
+        .eq("clerk_user_id", userId)
+        .eq("resume_document_id", id)
+        .eq("feedback_type", "xyz")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
       update.structured_content = content as unknown as Json
-      update.score = Math.round(calculateResumeScoreDetailed(content).totalScore)
+      update.score = Math.round(calculateResumeScoreDetailed(content, feedbackRow?.result).totalScore)
       update.status = "ready"
     }
     if (body.fileName !== undefined) update.file_name = body.fileName
     if (body.targetRole !== undefined) update.target_role = body.targetRole
     if (body.isStarred !== undefined) update.is_starred = body.isStarred
 
-    const supabase = await createClerkSupabaseServerClient()
     const { data, error } = await supabase
       .from("resume_documents")
       .update(update)

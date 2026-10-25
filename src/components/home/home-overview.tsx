@@ -13,6 +13,7 @@ import type { StudentProfile } from "@/lib/student-profile"
 import { formatActivityDate, homeActivities, studentDate, workspaceSchema, type CareerWorkspace } from "@/lib/career/workspace"
 import { careerGrowthProgress } from "@/lib/career/roadmap"
 import { calculateResumeScoreDetailed } from "@/lib/resumeScoring"
+import { craftReport } from "@/lib/resume/craft"
 import { GrowthGarden, type GardenLeaf } from "@/components/growth/growth-garden"
 
 /**
@@ -107,6 +108,7 @@ export function HomeOverview({
   jobs = [],
   jobsUnavailable = false,
   firstName,
+  xyzFeedback,
 }: {
   profile: StudentProfile | null
   resume: Resume | null
@@ -114,6 +116,8 @@ export function HomeOverview({
   jobs?: SavedJob[]
   jobsUnavailable?: boolean
   firstName?: string | null
+  /** The AI's reading, so the score here matches the one on the resume pages. */
+  xyzFeedback?: unknown
 }) {
   const today = studentDate()
   const { active, dates, primary, attention } = homeActivities(workspace.activities, today)
@@ -124,12 +128,14 @@ export function HomeOverview({
   const hasProjects = profile?.backgroundAreas.includes("projects") || Boolean(resume?.projects?.length)
   const growth = careerGrowthProgress(workspace)
 
-  // The score is worked out here rather than fetched: the resume is already
-  // on the server, and the number is the point of the panel.
-  const score = resume ? Math.round(calculateResumeScoreDetailed(resume).totalScore) : null
-  const weakest = resume
-    ? [...calculateResumeScoreDetailed(resume).breakdown].sort((a, b) => a.combinedScore - b.combinedScore)[0]
-    : null
+  // Scored once, from the same function and the same AI reading the resume
+  // pages use. Home used to recompute this itself without the AI blend, and
+  // against the master profile rather than the current resume, so it showed
+  // a different number from the shelf for what looked like the same thing.
+  const scored = resume ? calculateResumeScoreDetailed(resume, xyzFeedback) : null
+  const score = scored ? Math.round(scored.totalScore) : null
+  const weakest = scored ? [...scored.breakdown].filter((part) => part.weight > 0).sort((a, b) => a.combinedScore - b.combinedScore)[0] : null
+  const craft = resume ? craftReport(resume) : null
 
   // Oldest first, so a leaf keeps its place on the tree as more work is added.
   const growthLeaves: GardenLeaf[] = [...completed]
@@ -223,6 +229,18 @@ export function HomeOverview({
                       <div className="relative h-[3px] rounded-full bg-rule">
                         <div style={{ width: `${score}%` }} className="absolute inset-y-0 left-0 rounded-full bg-ink" />
                       </div>
+                      {/* The number says how much is here; the checks say how
+                          well it is made. Two different questions, so they are
+                          answered separately rather than averaged into one. */}
+                      {craft && (
+                        <p className="label-mono flex items-center gap-1.5 text-ink-2">
+                          <span
+                            aria-hidden="true"
+                            className={`h-[6px] w-[6px] rounded-full ${craft.clear === craft.total ? "bg-brand" : "bg-caution"}`}
+                          />
+                          {craft.clear} of {craft.total} checks clear
+                        </p>
+                      )}
                       <p className="text-[13px] leading-snug text-ink-2">
                         {weakest ? (
                           <>

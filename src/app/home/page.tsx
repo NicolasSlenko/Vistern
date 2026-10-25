@@ -7,11 +7,11 @@ import { loadHomeWork } from "@/lib/career/load-workspace"
 import { HomeOverview } from "@/components/home/home-overview"
 
 export default async function HomePage() {
-  const [{ profile, resume }, work, user] = await Promise.all([loadStudent(), loadHomeWork(), currentUser()])
+  const [{ profile, resume, xyzFeedback }, work, user] = await Promise.all([loadStudent(), loadHomeWork(), currentUser()])
   if (studentEntryPath(profile, Boolean(resume)) === "/onboarding") redirect("/onboarding")
   return (
     <StudentShell>
-      <HomeOverview profile={profile} resume={resume} firstName={user?.firstName ?? null} {...work} />
+      <HomeOverview profile={profile} resume={resume} xyzFeedback={xyzFeedback} firstName={user?.firstName ?? null} {...work} />
     </StudentShell>
   )
 }

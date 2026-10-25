@@ -24,6 +24,8 @@ import {
  * - Coursework: 15%
  */
 
+import { analyzeImpact } from "./resume/impact"
+
 export interface ScoreBreakdown {
   category: string
   qualityScore: number
@@ -37,6 +39,8 @@ export interface ResumeScoreResult {
   totalScore: number
   breakdown: ScoreBreakdown[]
   insights: ActionableInsight[]
+  /** How much of the resume describes results rather than duties. */
+  impact: ReturnType<typeof analyzeImpact>
   analysis: {
     projects: ReturnType<typeof analyzeProjectQuality>
     experience: ReturnType<typeof analyzeExperienceQuality>
@@ -47,13 +51,31 @@ export interface ResumeScoreResult {
   }
 }
 
+/**
+ * What the substance score is made of.
+ *
+ * Two deliberate zeros:
+ *
+ * GPA is not something a resume can be improved on. Scoring it penalises
+ * students for a past they cannot change, and tells them nothing to do
+ * about it. It is shown, not scored.
+ *
+ * Coursework is the easiest line on a resume to pad and the least
+ * predictive of anything — listing a module is not evidence of being able
+ * to do the work. It survives as a completeness hint in the craft checks.
+ *
+ * The weight they gave up goes to Impact: the share of bullets that name a
+ * result rather than a duty. That is the one axis here a student can move
+ * this afternoon, so it is the one worth scoring.
+ */
 export const WEIGHTS = {
-  projects: 25,
-  experience: 25,
-  skills: 15,
-  links: 10,
-  gpa: 10,
-  coursework: 15,
+  projects: 35,
+  experience: 30,
+  impact: 15,
+  skills: 12,
+  links: 8,
+  gpa: 0,
+  coursework: 0,
 }
 
 /**
@@ -139,19 +161,12 @@ export function calculateResumeScoreDetailed(
   const gpaCombined = gpaAnalysis.score // GPA is threshold-based
   const courseworkCombined = combineScores(courseworkAnalysis.qualityScore, courseworkAnalysis.quantityScore)
 
-  // Determine if UF
-  const schoolName = resume.education?.[0]?.school?.toLowerCase() || ""
-  const isUF = schoolName.includes("university of florida") || schoolName === "uf"
-
-  // Dynamically adjust weights based on university
-  const currentWeights = isUF ? WEIGHTS : {
-    projects: 30,
-    experience: 30,
-    skills: 20,
-    links: 10,
-    gpa: 10,
-    coursework: 0
-  }
+  // One weighting for everyone. It used to differ by university so that UF
+  // students could be scored on coursework; now that coursework is worth
+  // nothing to anybody, two sets of weights would only mean two students
+  // with the same resume seeing different numbers.
+  const currentWeights = WEIGHTS
+  const impactAnalysis = analyzeImpact(resume)
 
   // Build breakdown
   const breakdown: ScoreBreakdown[] = [
@@ -170,6 +185,16 @@ export function calculateResumeScoreDetailed(
       combinedScore: experienceCombined,
       weight: currentWeights.experience,
       contribution: Math.round(experienceCombined * currentWeights.experience / 100)
+    },
+    {
+      // The share of bullets that name a result. Quality and quantity are
+      // the same reading here: there is only one thing being measured.
+      category: 'Impact',
+      qualityScore: impactAnalysis.score,
+      quantityScore: impactAnalysis.score,
+      combinedScore: impactAnalysis.score,
+      weight: currentWeights.impact,
+      contribution: Math.round(impactAnalysis.score * currentWeights.impact / 100)
     },
     {
       category: 'Skills',
@@ -219,6 +244,7 @@ export function calculateResumeScoreDetailed(
     totalScore,
     breakdown,
     insights,
+    impact: impactAnalysis,
     analysis: {
       projects: projectAnalysis,
       experience: experienceAnalysis,
