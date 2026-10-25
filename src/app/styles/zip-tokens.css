@@ -1,0 +1,133 @@
+/* The "paper" theme: one white sheet floating over a sky, in a frosted frame.
+   Adapted from resumezip (MIT, © 2025 Ian Hoang — https://github.com/ian-hoang/resumezip),
+   re-pitched onto Vistern's green and given a dark mode of its own.
+
+   These tokens live alongside the shadcn ones already in globals.css rather
+   than replacing them: a page opts in by using bg-sheet, text-ink, .paper and
+   friends. Nothing here renames an existing token, so untouched pages are
+   unaffected.
+
+   `@theme` (not `@theme inline`) is deliberate: the utilities it generates
+   read var(--color-ink) rather than baking the hex in, so the .dark block at
+   the foot of this file can re-point every one of them at once. */
+
+@theme {
+  /* Surfaces */
+  --color-paper: #f3f5f2; /* the page behind the sheet, where no sky shows */
+  --color-sheet: #ffffff; /* paper, inputs, cards */
+  --color-fill: #f1f4f1; /* grey tracks, chips, the quiet background of a row */
+  --color-fill-line: #e7ece8; /* the hairline round a fill */
+
+  /* Text */
+  --color-ink: #141a17; /* text and primary buttons: near-black, a touch green */
+  --color-ink-2: #576159; /* secondary text (5.6:1 on sheet) */
+  --color-ink-3: #6b746d; /* quiet text: dates, counts, notes (4.7:1 on sheet) */
+
+  /* Lines */
+  --color-rule: #dbe0db; /* hairlines */
+  --color-rule-strong: #c6cec8; /* input underlines, outlined buttons */
+  --color-hairline: #e9ede9; /* lines between the sheet's parts, and round cards */
+
+  /* Meaning. Vistern green stands where resumezip used blue. */
+  --color-brand: #246347;
+  --color-brand-soft: #b6d8c3;
+  --color-alert: #b42318; /* must-fix findings (6.6:1 on white) */
+  --color-caution: #b7791f; /* worth-a-look findings */
+
+  /* The sky the sheet floats on, painted rather than photographed so it
+     themes with the rest (see .desk in zip-glass.css). */
+  --color-sky-high: #a4dcbe; /* the light at the top left */
+  --color-sky-low: #35936a; /* the body of the sky */
+  --color-sky-warm: #dcefc9; /* where the sun catches it */
+  --color-sky-deep: #116345; /* the far corner, for the sheet to cast onto */
+}
+
+@theme inline {
+  /* Newsreader for titles, Geist for everything read or pressed, Geist Mono
+     for label-mono. The first two are loaded by next/font in app/layout.tsx. */
+  --font-serif: var(--font-newsreader), Georgia, "Times New Roman", serif;
+}
+
+@theme {
+  /* Fast start, soft stop: for what slides or draws into place. */
+  --ease-glide: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* rounded-panel: the corners of a menu, or of a panel made like one.
+     rounded-row: a row inside one, the panel's corner less its 6px padding,
+     so the two corners run side by side. */
+  --radius-panel: 20px;
+  --radius-row: 14px;
+
+  /* An entry's card on the sheet: resting on it, open, and picked up. Three
+     layers each, so one eases into the next. An open card's shadow falls 44px
+     below it; keep whatever holds a card from clipping that. */
+  --shadow-card-rest: 0 1px 2px rgb(17 24 20 / 0.04), 0 2px 6px -2px rgb(17 24 20 / 0.04), 0 16px 36px -8px rgb(17 24 20 / 0);
+  --shadow-card-open: 0 1px 2px rgb(17 24 20 / 0.05), 0 4px 10px -2px rgb(17 24 20 / 0.06), 0 16px 36px -8px rgb(17 24 20 / 0.12);
+  --shadow-card-lifted: 0 2px 4px rgb(17 24 20 / 0.06), 0 8px 18px -4px rgb(17 24 20 / 0.08), 0 24px 48px -10px rgb(17 24 20 / 0.18);
+}
+
+/* Dark. Outside @layer theme, so it beats the values above whatever the
+   source order. The sheet lifts off the page rather than sinking into it, so
+   it goes lighter than the paper, not darker. */
+.dark {
+  --color-paper: #0b0e0c;
+  --color-sheet: #141a17;
+  --color-fill: #1b2220;
+  --color-fill-line: #232b28;
+
+  --color-ink: #e8efea;
+  --color-ink-2: #a6b1aa;
+  --color-ink-3: #8a9690;
+
+  --color-rule: #2b3531;
+  --color-rule-strong: #3b4642;
+  --color-hairline: #222b27;
+
+  --color-brand: #8fd2a4;
+  --color-brand-soft: #2f5641;
+  --color-alert: #f0837a;
+  --color-caution: #e5b55a;
+
+  --color-sky-high: #16302a;
+  --color-sky-low: #0f241f;
+  --color-sky-warm: #1d3a2c;
+  --color-sky-deep: #0a1713;
+
+  /* Shadows don't read on a dark page, so the cards lean on depth of colour
+     and a lit top edge instead; what's left is just enough to separate them. */
+  --shadow-card-rest: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 6px -2px rgb(0 0 0 / 0.3), 0 16px 36px -8px rgb(0 0 0 / 0);
+  --shadow-card-open: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 10px -2px rgb(0 0 0 / 0.4), 0 16px 36px -8px rgb(0 0 0 / 0.5);
+  --shadow-card-lifted: 0 2px 4px rgb(0 0 0 / 0.5), 0 8px 18px -4px rgb(0 0 0 / 0.5), 0 24px 48px -10px rgb(0 0 0 / 0.6);
+}
+
+/* Small monospace caps, the theme's one label style: for facts about things
+   ("/ 100", "3 ENTRIES") and eyebrows over titles. Buttons and links say
+   their words in sentence case instead. */
+@utility label-mono {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Fine diagonal hatching for a quiet note, over its background colour. */
+@utility bg-hatch {
+  background-image: repeating-linear-gradient(135deg, color-mix(in oklab, var(--color-ink) 6%, transparent) 0 1px, transparent 1px 7px);
+}
+
+/* No scroll bar, in every browser: Safari before 18.2 ignores scrollbar-width,
+   which is all Tailwind's own scrollbar-none sets. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* A fade in and no more, for a panel's contents as they're switched. */
+@keyframes zip-fade-in {
+  from {
+    opacity: 0;
+  }
+}

@@ -2,6 +2,28 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Response Style — Caveman Mode (ALWAYS ACTIVE)
+
+Terse. Technical substance stays. Fluff dies.
+
+**Active every response. No revert. Off only if user says "stop caveman" or "normal mode".**
+
+### Rules
+
+Drop: articles (a/an/the), filler (just/really/basically/actually/simply), pleasantries (sure/certainly/of course/happy to), hedging.
+Fragments OK. Short synonyms (big not extensive, fix not "implement a solution for"). Abbreviate common terms (DB/auth/config/req/res/fn/impl). Use arrows for causality (X -> Y). One word when one word enough.
+
+Technical terms stay exact. Code blocks unchanged. Errors quoted exact.
+
+Pattern: `[thing] [action] [reason]. [next step].`
+
+Not: "Sure! I'd be happy to help you with that. The issue you're experiencing is likely caused by..."
+Yes: "Bug in auth middleware. Token expiry check use < not <=. Fix:"
+
+### Auto-Clarity Exception
+
+Drop caveman temporarily for: security warnings, irreversible action confirmations, multi-step sequences where fragment order risks misread, user asks to clarify or repeats question. Resume caveman after.
+
 ## Commands
 
 ```bash
@@ -69,6 +91,55 @@ Uses `gpt-4.1-mini`. Output is Zod-validated — if the schema changes, update b
 ### Course Matching (`src/lib/courseMatching.ts`)
 
 Fuzzy matching via Levenshtein distance against the UF course catalog. Courses are grouped by CS discipline. Only relevant for UF students (gated by preferences questionnaire).
+
+## Design System — the "paper" theme
+
+Adapted from [resumezip](https://github.com/ian-hoang/resumezip) (MIT) — see `NOTICE.md`. It is **additive**: it introduces its own tokens next to the existing shadcn ones rather than renaming them, so a page opts in.
+
+Stylesheets, imported at the top of `src/app/globals.css`:
+
+| File | Holds |
+| --- | --- |
+| `src/app/styles/zip-tokens.css` | Colour, radius, shadow and easing tokens, light and dark; `label-mono`, `bg-hatch`, `no-scrollbar` |
+| `src/app/styles/zip-glass.css` | `.glass` and its tints, and `.desk` — the painted sky |
+| `src/app/styles/zip-sheet.css` | `.paper-frame`, `.paper`, the segmented control, `brand-button` / `white-button` / `ink-button` / `lift-button` |
+| `src/app/styles/zip-studio.css` | Studio-only: the score odometer, dotted leaders, the `ai-ask` pill. All scoped under `.zip-scope` |
+
+Vocabulary: `bg-paper bg-sheet bg-fill` · `text-ink text-ink-2 text-ink-3` · `border-hairline border-rule border-rule-strong` · `text-brand` (Vistern green, standing where resumezip used blue) · `text-alert text-caution` · `shadow-card-rest|open|lifted` · `font-serif` (Newsreader, page titles only) · `label-mono`.
+
+**Dark mode** works by re-declaring the `--color-*` tokens under `.dark`, outside `@layer theme`. Use `@theme` (not `@theme inline`) for anything that must follow the theme.
+
+**Breakpoints in the studio are container queries** (`@6xl/studio:`), not viewport ones: the studio sits inside the student shell's 224px sidebar, so a viewport breakpoint misjudges the room it actually has.
+
+`src/components/student/student-theme.css` re-points the `--student-*` and shadcn variables that the older pages read at these tokens, so pages that have not been rebuilt still take the palette. It also gives `.career-page` and `.student-tool-page` the sheet-over-sky treatment with `:has()`.
+
+### Resume studio
+
+`src/components/resume-studio/` — `studio-shell.tsx` is the frame (desk → `paper-frame` → `paper` → top bar over two or three columns); `profile-studio.tsx` and `resume-doc-studio.tsx` are the two things that use it.
+
+**The master profile and resume documents are deliberately separate.**
+
+- `/profile` → `student_profiles` + `profile_items`. One record of what the student has actually done. Two columns, no page preview — there is no single document for it to be.
+- `/resumes` → `resume_documents`. Many: one per kind of role. `/resumes/[id]` is three columns — the uploaded file on the right, its wording in the middle, the AI's rewrites on the left. Editing a resume never writes back to the profile.
+
+### Line-level AI suggestions
+
+`POST /api/analyze/bullets` returns a replacement for each weak bullet, tagged with `section · entryIndex · field · bulletIndex` and the bullet's original words. Cached in `resume_feedback` under `feedback_type = 'bullets'`.
+
+`src/lib/resume-suggestions.ts` matches a rewrite back to the line it is about and drops any whose text has changed since — better no suggestion than one applied to the wrong words. `useBulletReview` (`src/components/resume-studio/use-bullet-review.ts`) holds the answers; `bullet-list.tsx` draws each bullet with its suggestion, a tick and a cross.
+
+This is separate from `/api/analyze/xyz-batch`, which scores whole entries and plans a career.
+
+## Preview harnesses
+
+Neither needs Clerk, Supabase, S3 or OpenAI — esbuild swaps those modules for adapters.
+
+```bash
+npm run preview:student   # the onboarding/home prototype, :4190
+npm run preview:studio    # the resume studio, shelf and master profile, :4192
+```
+
+`preview:studio` has switches for the three views, for dark mode, and for "wide", which lays the studio out at 1512px and scales it down — the container queries make that an honest picture of the three-column layout.
 
 ## Environment Variables
 

@@ -10,6 +10,8 @@ import {
   Sprout,
 } from "lucide-react"
 import "./public-home.css"
+// The paper theme, loaded after so its variables and chrome win.
+import "./public-home-theme.css"
 
 const steps = [
   {

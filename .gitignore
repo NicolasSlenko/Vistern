@@ -53,7 +53,8 @@ data/resume-data.json
 /.clerk/
 .claude/
 # Local meeting preview build
-.student-preview/
+.student-preview
+.studio-preview/
 .codex-build/
 /supabase/.temp/
 .agents/

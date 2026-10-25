@@ -1,6 +1,14 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* The paper theme (styles/zip-*.css): tokens, glass, the sheet and the
+   studio. Additive — it introduces its own tokens rather than renaming the
+   shadcn ones below, so a page opts in by using them. */
+@import "./styles/zip-tokens.css";
+@import "./styles/zip-glass.css";
+@import "./styles/zip-sheet.css";
+@import "./styles/zip-studio.css";
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

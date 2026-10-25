@@ -14,6 +14,7 @@
     "test:student": "tsx --test tests/student-profile*.test.ts",
     "test:resume": "tsx --test tests/resume-processing.test.ts",
     "preview:student": "node scripts/student-preview.mjs",
+    "preview:studio": "node scripts/studio-preview.mjs",
     "test:career": "tsx --test tests/career-*.test.ts"
   },
   "dependencies": {

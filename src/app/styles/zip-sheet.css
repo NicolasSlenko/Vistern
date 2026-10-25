@@ -1,0 +1,254 @@
+/* The white sheet a studio page is on, and the controls drawn on it.
+   Adapted from resumezip (MIT, © 2025 Ian Hoang).
+
+   One sheet of paper over the sky, in a frosted frame. What's on the sheet is
+   calm (white, cool greys, ink and the one green); the sky round it brings
+   the colour. */
+
+@layer components {
+  /* The frame round the sheet: a band of frosted glass with a lit rim. Its
+     frost is on ::before, so the frame isn't the backdrop root of the glass
+     inside the sheet, which would blur the whole screen. */
+  .paper-frame {
+    position: relative;
+    isolation: isolate;
+    border-radius: 36px;
+    /* A 1px rim, and 12px of frost inside it. */
+    padding: 13px;
+  }
+  /* The rim is drawn here, over the frost, not on the frame: the frame's own
+     shadow would be under it. */
+  .paper-frame::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    background: rgb(255 255 255 / 0.26);
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.8),
+      inset 0 2px 0 rgb(255 255 255 / 0.88);
+    -webkit-backdrop-filter: blur(1.5px) saturate(1.3) brightness(1.06);
+    backdrop-filter: blur(1.5px) saturate(1.3) brightness(1.06);
+  }
+  .dark .paper-frame::before {
+    background: rgb(160 200 175 / 0.07);
+    box-shadow:
+      inset 0 0 0 1px rgb(160 200 175 / 0.14),
+      inset 0 2px 0 rgb(160 200 175 / 0.18);
+  }
+
+  /* The sheet itself. */
+  .paper {
+    border-radius: 28px;
+    background: var(--color-sheet);
+    box-shadow:
+      0 1px 2px rgb(10 24 17 / 0.05),
+      0 10px 24px -14px rgb(10 24 17 / 0.22);
+  }
+  .dark .paper {
+    box-shadow:
+      0 1px 2px rgb(0 0 0 / 0.5),
+      0 10px 30px -12px rgb(0 0 0 / 0.6);
+  }
+
+  /* Phones have little room to spare for sky: a thinner frame, nearer the edge. */
+  @media (max-width: 39.99rem) {
+    .paper-frame {
+      border-radius: 26px;
+      padding: 7px;
+    }
+    .paper {
+      border-radius: 21px;
+    }
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .paper-frame::before {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      background: rgb(255 255 255 / 0.78);
+    }
+  }
+
+  /* A row of choices on a grey track, the chosen one on a white pill that
+     slides to the next. The pill is a separate element laid over the track
+     (use-thumb.ts). */
+  .segment-track {
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    border-radius: 999px;
+    background: var(--color-fill);
+    box-shadow: inset 0 0 0 1px var(--color-fill-line);
+  }
+  .segment-thumb {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: -1;
+    border-radius: 999px;
+    background: var(--color-sheet);
+    box-shadow:
+      0 0 0 0.5px rgb(10 24 17 / 0.04),
+      0 1px 2px rgb(10 24 17 / 0.06),
+      0 2px 6px -1px rgb(10 24 17 / 0.1);
+    transition:
+      translate 300ms var(--ease-glide),
+      width 300ms var(--ease-glide);
+  }
+  .dark .segment-thumb {
+    background: #26302b;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.5);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .segment-thumb {
+      transition: none;
+    }
+  }
+
+  /* The main action's green, lighter at its top, and the halo of its own
+     colour round it: brand-button's and brand-fill's, below. */
+  :root {
+    --brand-gradient: linear-gradient(#36815d, #1f5a3f);
+    --brand-halo: inset 0 1px 0 rgb(255 255 255 / 0.22), 0 0 0 4px rgb(36 99 71 / 0.14), 0 6px 14px -5px rgb(26 77 54 / 0.5);
+  }
+  .dark {
+    --brand-gradient: linear-gradient(#9ddfb2, #6fbd8a);
+    --brand-halo: inset 0 1px 0 rgb(255 255 255 / 0.25), 0 0 0 4px rgb(143 210 164 / 0.14), 0 6px 14px -5px rgb(0 0 0 / 0.6);
+  }
+}
+
+/* The main action on the sheet: a green pill, lighter at its top, in a soft
+   halo of its own colour. A shade brighter under the pointer, darker as it's
+   pressed, which sinks it a little. */
+@utility brand-button {
+  position: relative;
+  color: #fff;
+  background-image: var(--brand-gradient);
+  box-shadow: var(--brand-halo);
+  transition:
+    filter 150ms,
+    box-shadow 200ms,
+    scale 120ms ease-out;
+  &:hover:not(:disabled) {
+    filter: brightness(1.08);
+  }
+  &:active:not(:disabled) {
+    filter: brightness(0.93);
+    scale: 0.97;
+  }
+  &:focus-visible {
+    background-image: linear-gradient(rgb(10 24 17 / 0.16), rgb(10 24 17 / 0.16)), var(--brand-gradient);
+  }
+  &:disabled {
+    filter: saturate(0.6);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &:active:not(:disabled) {
+      scale: none;
+    }
+  }
+}
+.dark .brand-button {
+  color: #0d1a13;
+}
+
+/* brand-button's fill and halo alone, for a pill whose halves are buttons of their own. */
+@utility brand-fill {
+  background-image: var(--brand-gradient);
+  box-shadow: var(--brand-halo);
+}
+
+/* Any other button standing on the sheet: white, greying a little toward its
+   foot, with a hairline edge and a soft shadow. */
+@utility white-button {
+  color: var(--color-ink);
+  background-image: linear-gradient(180deg, #ffffff, #f6f8f6);
+  box-shadow:
+    inset 0 0 0 1px #e4e9e5,
+    0 1px 2px rgb(10 24 17 / 0.04),
+    0 3px 8px -3px rgb(10 24 17 / 0.1);
+  transition:
+    box-shadow 200ms,
+    background-color 150ms,
+    scale 120ms ease-out;
+  &:hover:not(:disabled) {
+    box-shadow:
+      inset 0 0 0 1px #d0d8d2,
+      0 1px 2px rgb(10 24 17 / 0.05),
+      0 4px 10px -3px rgb(10 24 17 / 0.14);
+  }
+  &:active:not(:disabled) {
+    scale: 0.98;
+  }
+  &[aria-expanded="true"] {
+    box-shadow:
+      inset 0 0 0 1px #d0d8d2,
+      0 1px 2px rgb(10 24 17 / 0.05);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &:active:not(:disabled) {
+      scale: none;
+    }
+  }
+}
+.dark .white-button {
+  background-image: linear-gradient(180deg, #202926, #1a211e);
+  box-shadow:
+    inset 0 0 0 1px #313b36,
+    0 1px 2px rgb(0 0 0 / 0.4);
+}
+.dark .white-button:hover:not(:disabled) {
+  box-shadow:
+    inset 0 0 0 1px #404c46,
+    0 4px 10px -3px rgb(0 0 0 / 0.5);
+}
+
+/* The ink action: a shade lighter under the pointer, darker as it's pressed,
+   which sinks it a little. Its transitions are its own, so a button using it
+   shouldn't set transition-* or bg-* itself. */
+@utility ink-button {
+  background-color: var(--color-ink);
+  color: var(--color-sheet);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1);
+  transition:
+    background-color 150ms,
+    box-shadow 200ms,
+    translate 200ms var(--ease-glide),
+    scale 120ms ease-out;
+  &:hover:not(:disabled) {
+    background-color: color-mix(in oklab, var(--color-ink) 88%, var(--color-sheet));
+  }
+  &:active:not(:disabled) {
+    background-color: var(--color-ink);
+    scale: 0.97;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &:active:not(:disabled) {
+      scale: none;
+    }
+  }
+}
+
+/* A button that stands on its own rises a pixel under the pointer, with a
+   shadow under it, and settles as it's pressed. */
+@utility lift-button {
+  &:hover:not(:disabled) {
+    translate: 0 -1px;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.12),
+      0 10px 22px -10px rgb(10 24 17 / 0.6);
+  }
+  &:active:not(:disabled) {
+    translate: 0 0;
+    box-shadow: 0 2px 6px -2px rgb(10 24 17 / 0.45);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &:hover:not(:disabled),
+    &:active:not(:disabled) {
+      translate: none;
+    }
+  }
+}

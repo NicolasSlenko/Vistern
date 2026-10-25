@@ -2002,53 +2002,46 @@ export default function DashboardPage() {
   // Show loading state
   if (isResumeLoading) {
     return (
-      <div className="student-tool-page">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-10">
-            <div className="skeleton-loader h-10 w-72 mb-3" />
-            <div className="skeleton-loader h-4 w-48" />
-          </div>
-          <div className="skeleton-loader h-12 w-full max-w-2xl mx-auto mb-8" />
+      <FeedbackSheet>
+        <div aria-busy="true" className="flex flex-col gap-8">
+          <div className="h-12 w-full max-w-2xl rounded-full bg-fill" />
           <div className="grid gap-6 md:grid-cols-2">
-            <div className="skeleton-loader h-64" />
-            <div className="skeleton-loader h-64" />
+            <div className="h-64 rounded-[18px] bg-fill" />
+            <div className="h-64 rounded-[18px] bg-fill" />
           </div>
+          <span className="sr-only">Loading your feedback…</span>
         </div>
-      </div>
+      </FeedbackSheet>
     )
   }
 
   // Show message if no resume data
   if (!resumeData) {
     return (
-      <div className="student-tool-page">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-10">
-            <h1>Resume feedback</h1>
-          </div>
-
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-6">
-              <FileText className="h-10 w-10 text-primary animate-pulse-subtle" />
-            </div>
-            <h2 className="text-xl font-semibold mb-2">Add a resume to get feedback</h2>
-            <p className="text-muted-foreground text-sm mb-6 text-center max-w-md">Review your resume, see what is working, and find concrete ways to improve it.</p>
-            <Button asChild size="lg" className="rounded-xl px-8">
-              <Link href="/upload">Upload Resume</Link>
-            </Button>
-          </div>
+      <FeedbackSheet>
+        <div className="flex flex-col items-start gap-4 py-10">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-fill text-brand">
+            <FileText className="h-[18px] w-[18px]" aria-hidden="true" />
+          </span>
+          <h2 className="font-serif text-[34px] leading-[1.05] tracking-[-0.03em] text-ink sm:text-[40px]">
+            Nothing to read <em className="text-brand">yet</em>
+          </h2>
+          <p className="max-w-[52ch] text-[15px] leading-relaxed text-ink-2">
+            Upload a resume and this page will show what is working, what is thin, and where the next point of score is.
+          </p>
+          <Link
+            href="/upload"
+            className="brand-button mt-1 inline-flex h-11 items-center rounded-full px-5 text-[15px] font-medium tracking-[-0.01em]"
+          >
+            Upload a resume
+          </Link>
         </div>
-      </div>
+      </FeedbackSheet>
     )
   }
 
   return (
-    <div className="student-tool-page">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-10">
-          <h1>Resume feedback</h1>
-        </div>
-
+    <FeedbackSheet>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
           <TabsList className="grid w-full max-w-2xl grid-cols-4">
             <TabsTrigger value="overall" className="gap-1 px-1 text-xs sm:gap-2 sm:px-4 sm:text-sm">
@@ -2246,6 +2239,38 @@ export default function DashboardPage() {
             </Accordion>
           </TabsContent>
         </Tabs>
+    </FeedbackSheet>
+  )
+}
+
+/**
+ * The sheet this page is drawn on: the paper theme's desk, frame and sheet,
+ * with a top bar that leads on to the two places the feedback is acted on.
+ *
+ * The analytics inside are unchanged — they read the shadcn tokens, which
+ * components/student/student-theme.css re-points at the paper palette, so
+ * they take the new colours without being rewritten.
+ */
+function FeedbackSheet({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="zip-scope desk desk-bright min-h-[calc(100vh-82px)] p-2 pb-10 sm:p-5 xl:p-6">
+      <div className="paper-frame">
+        <div className="paper flex min-h-[calc(100vh-150px)] flex-col">
+          <header className="flex min-h-[72px] flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-hairline px-4 py-[13px] sm:px-6">
+            <h1 className="text-[17px] font-medium tracking-[-0.02em] text-ink sm:text-[18px]">Resume feedback</h1>
+            <div className="flex items-center gap-2.5">
+              <Link href="/profile" className="white-button inline-flex h-10 items-center rounded-full px-4 text-[15px] font-medium tracking-[-0.01em]">
+                Master profile
+              </Link>
+              <Link href="/resumes" className="brand-button inline-flex h-10 items-center rounded-full px-5 text-[15px] font-medium tracking-[-0.01em]">
+                My resumes
+              </Link>
+            </div>
+          </header>
+          <div className="flex-1 px-4 py-9 sm:px-8 sm:py-12">
+            <div className="mx-auto w-full max-w-[1080px]">{children}</div>
+          </div>
+        </div>
       </div>
     </div>
   )

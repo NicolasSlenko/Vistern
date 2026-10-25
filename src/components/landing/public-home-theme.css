@@ -1,0 +1,151 @@
+/* The paper theme on the public page. Loaded after public-home.css, so
+   these win.
+
+   The landing page keeps its layout; what changes is the voice. Its own
+   variables are re-pointed at the theme's tokens, the headlines take
+   Newsreader, the header becomes glass, and the hero sits on the same
+   painted sky the signed-in app does — so the first screen a student sees
+   and the first screen after they sign in are plainly the same product. */
+
+.public-home {
+  --public-ink: var(--color-ink);
+  --public-muted: var(--color-ink-2);
+  --public-green: var(--color-brand);
+  --public-line: var(--color-hairline);
+  background: var(--color-paper);
+}
+
+/* Headlines in the serif, as every page title in the app is. */
+.public-home :is(h1, h2) {
+  font-family: var(--font-newsreader), Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.035em;
+}
+.public-home h1 em,
+.public-home h2 em {
+  color: var(--color-brand);
+}
+.public-home :is(h3, .public-brand) {
+  letter-spacing: -0.03em;
+}
+
+/* The eyebrows are the theme's one label style. */
+.public-home :is(.public-eyebrow, .public-preview-label, .public-preview-kicker, .public-section-heading > span, .public-context-copy > span) {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* The header floats as glass over whatever scrolls under it. */
+.public-home .public-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid color-mix(in oklab, var(--color-hairline) 70%, transparent);
+  background: color-mix(in oklab, var(--color-sheet) 78%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  backdrop-filter: blur(20px) saturate(1.5);
+}
+
+/* The hero on the sky, with the sheet's own cards floating over it. */
+.public-home .public-hero {
+  position: relative;
+  isolation: isolate;
+  border-radius: 28px;
+  padding-inline: 40px;
+  margin-top: 18px;
+  overflow: clip;
+}
+.public-home .public-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background-color: var(--color-sky-low);
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.06), rgb(255 255 255 / 0.06)),
+    radial-gradient(120% 85% at 78% 6%, var(--color-sky-warm), transparent 60%),
+    radial-gradient(140% 100% at 12% 0%, var(--color-sky-high), transparent 62%),
+    radial-gradient(130% 110% at 50% 115%, var(--color-sky-deep), transparent 70%),
+    linear-gradient(170deg, var(--color-sky-high), var(--color-sky-low));
+  background-size: cover;
+}
+/* A fine grid of dots over the sky, as the app's desk carries. */
+.public-home .public-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect x='1' y='1' width='2' height='2' fill='%23fff' fill-opacity='.3'/%3E%3C/svg%3E");
+  background-size: 4px 4px;
+}
+@media (max-width: 720px) {
+  .public-home .public-hero {
+    border-radius: 20px;
+    padding-inline: 20px;
+  }
+}
+
+/* The mocked-up plan is a sheet, like the real one. */
+.public-home .public-preview {
+  border: 0;
+  border-radius: 24px;
+  background: var(--color-sheet);
+  box-shadow:
+    0 1px 2px rgb(10 24 17 / 0.06),
+    0 18px 44px -20px rgb(10 24 17 / 0.45),
+    0 0 0 12px rgb(255 255 255 / 0.26);
+}
+.public-home .public-floating-note {
+  border: 0;
+  border-radius: 16px;
+  background: color-mix(in oklab, var(--color-sheet) 86%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.6),
+    0 10px 28px -14px rgb(10 24 17 / 0.4);
+}
+
+/* Buttons take the theme's two looks. */
+.public-home .public-button {
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  background-image: var(--brand-gradient);
+  box-shadow: var(--brand-halo);
+  transition:
+    filter 150ms,
+    scale 120ms ease-out;
+}
+.public-home .public-button:hover {
+  filter: brightness(1.08);
+}
+.public-home .public-button:active {
+  scale: 0.97;
+}
+.public-home .public-button-light {
+  background-image: linear-gradient(180deg, #ffffff, #f6f8f6);
+  color: var(--color-ink);
+  box-shadow:
+    inset 0 0 0 1px #e4e9e5,
+    0 3px 8px -3px rgb(10 24 17 / 0.14);
+}
+
+/* Cards on the page: the theme's hairline and resting shadow. */
+.public-home :is(.public-step, .public-context-art) {
+  border: 1px solid var(--color-hairline);
+  border-radius: 18px;
+  background: var(--color-sheet);
+  box-shadow: var(--shadow-card-rest);
+}
+
+.public-home a:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--color-brand) 55%, transparent);
+  outline-offset: 3px;
+}

@@ -18,12 +18,10 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
     return children
   if (pathname === "/onboarding")
     return <ResumeProvider>{children}</ResumeProvider>
-  if (
-    ["/profile", "/dashboard", "/upload", "/match", "/settings"].includes(
-      pathname,
-    )
-  )
-    return ["/profile", "/dashboard", "/upload", "/match"].includes(pathname)
+  const toolPages = ["/profile", "/dashboard", "/upload", "/match", "/settings", "/resumes"]
+  const needsResume = ["/profile", "/dashboard", "/upload", "/match", "/resumes"]
+  if (toolPages.includes(pathname) || pathname.startsWith("/resumes/"))
+    return needsResume.includes(pathname) || pathname.startsWith("/resumes/")
       ? <ResumeProvider><StudentShell>{children}</StudentShell></ResumeProvider>
       : <StudentShell>{children}</StudentShell>
   return (

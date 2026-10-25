@@ -24,6 +24,8 @@ import {
 } from "lucide-react"
 import { careerNavigationEvent, navigateCareer } from "@/lib/career/navigation"
 import "./student.css"
+// The paper theme, loaded after so its variables and chrome win.
+import "./student-theme.css"
 
 // Clerk's account widget needs the browser session; keep its server placeholder stable.
 const UserButton = dynamic(
@@ -44,7 +46,8 @@ const links = [
   { href: "/jobs", label: "Jobs", icon: Search },
 ]
 const resumePages = [
-  { href: "/profile", label: "My resume" },
+  { href: "/profile", label: "Master profile" },
+  { href: "/resumes", label: "My resumes" },
   { href: "/dashboard", label: "Resume feedback" },
   { href: "/upload", label: "Upload resume" },
 ]
@@ -84,7 +87,7 @@ export function StudentShell({
   activeSubpage?: string
 }) {
   const pathname = usePathname()
-  const activeHref = resumePages.some((page) => page.href === pathname)
+  const activeHref = resumePages.some((page) => page.href === pathname) || pathname.startsWith("/resumes/")
     ? "/profile"
     : pathname === "/match"
       ? "/jobs"
