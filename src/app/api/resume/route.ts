@@ -115,7 +115,13 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return Response.json({ success: false, error: "Check your resume details and try again." }, { status: 400 });
     }
+    // `resume` is what the master profile becomes — after the student has
+    // said which of this upload's changes to take. `document` is the file as
+    // it actually reads, which is stored against the resume untouched; they
+    // differ whenever a proposed change was declined.
     const resume = normalizeProfileData(parsed.data);
+    const documentParsed = payload?.document ? ResumeSchema.safeParse(payload.document) : null;
+    const document = documentParsed?.success ? normalizeProfileData(documentParsed.data) : resume;
     const supabase = await createClerkSupabaseServerClient();
     const requestedS3Key = typeof payload?.s3Key === "string" ? payload.s3Key : null;
     let latestQuery = supabase.from("resume_documents")
@@ -143,7 +149,8 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
     if (feedbackLookupError) throw feedbackLookupError;
     const xyzFeedback = feedbackRow?.result;
-    const score = calculateResumeScoreDetailed(resume, xyzFeedback).totalScore;
+    // The document is scored on what it says, not on what the profile holds.
+    const score = calculateResumeScoreDetailed(document, xyzFeedback).totalScore;
 
     // Keep uploaded bytes in S3; store the structured document and current selection in Supabase.
     const { error: unsetCurrentError } = await supabase
@@ -157,7 +164,7 @@ export async function POST(request: NextRequest) {
     const { error: updateDocumentError } = await supabase
         .from("resume_documents")
         .update({
-          structured_content: resume as unknown as Json,
+          structured_content: document as unknown as Json,
           score,
           file_name: latest.file_name,
           content_type: contentTypeFor(latest.file_name || ""),

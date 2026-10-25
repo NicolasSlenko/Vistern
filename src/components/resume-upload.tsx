@@ -8,6 +8,8 @@ import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { ResumeVerification } from "@/components/resume-verification"
+import { MergeReview } from "@/components/upload/merge-review"
+import { applyChanges, proposeChanges, type ProposedChange } from "@/lib/profile/merge"
 import { useResume } from "@/contexts/resume-context"
 import { pill } from "@/components/resume-studio/pills"
 import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs"
@@ -57,6 +59,8 @@ export function ResumeUpload({ onComplete, onBusyChange }: ResumeUploadProps = {
   const [parseResult, setParseResult] = useState<ParseResult | null>(null)
   const [isParsing, setIsParsing] = useState(false)
   const [showVerification, setShowVerification] = useState(false)
+  // Set while the student decides what from this upload goes to their profile.
+  const [pending, setPending] = useState<{ upload: Resume; profile: Resume; changes: ProposedChange[] } | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [processingMessage, setProcessingMessage] = useState("Processing...")
   useEffect(() => {
@@ -208,8 +212,40 @@ export function ResumeUpload({ onComplete, onBusyChange }: ResumeUploadProps = {
     setErrorMessage("")
   }
 
+  /**
+   * Between confirming what we read and saving it: if there is already a
+   * profile, work out what this upload would change about it and ask.
+   *
+   * Skipped on a first upload, where there is nothing to reconcile, and
+   * skipped when the file says nothing new — asking about a re-upload of the
+   * same resume would be noise.
+   */
   const handleVerificationConfirm = async (data: Resume) => {
     setShowVerification(false)
+    try {
+      const response = await fetch("/api/profile")
+      const result = await response.json()
+      const profile: Resume | null = result?.success ? result.data : null
+      const changes = proposeChanges(profile, data)
+      if (profile && changes.length > 0) {
+        setPending({ upload: data, profile, changes })
+        return
+      }
+    } catch {
+      // If the profile can't be read we save the upload as it is rather than
+      // blocking on a comparison we couldn't make.
+    }
+    await saveResume(data, data)
+  }
+
+  /**
+   * @param document What the resume document itself says — always the upload,
+   *   untouched, because that is the file the student sent.
+   * @param profile What the master profile should become.
+   */
+  const saveResume = async (document: Resume, profile: Resume) => {
+    const data = profile
+    setPending(null)
     setIsProcessing(true)
     setProcessingMessage("Saving resume data...")
 
@@ -217,7 +253,7 @@ export function ResumeUpload({ onComplete, onBusyChange }: ResumeUploadProps = {
       const saveResponse = await fetch("/api/resume", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resume: data, s3Key: uploadedFile?.filename }),
+        body: JSON.stringify({ resume: data, document, s3Key: uploadedFile?.filename }),
       })
       const saveResult = await saveResponse.json()
 
@@ -380,6 +416,16 @@ export function ResumeUpload({ onComplete, onBusyChange }: ResumeUploadProps = {
             onCancel={handleVerificationCancel}
             open={showVerification}
           />
+        )}
+        {pending && (
+          <div className="rounded-[18px] border border-hairline bg-sheet p-5 shadow-card-rest sm:p-6">
+            <MergeReview
+              changes={pending.changes}
+              onApply={(accepted) => saveResume(pending.upload, applyChanges(pending.profile, pending.changes, accepted))}
+              // Declining still saves the resume; only the profile is left alone.
+              onSkip={() => saveResume(pending.upload, pending.profile)}
+            />
+          </div>
         )}
       </SignedIn>
     </div>
