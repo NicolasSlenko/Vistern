@@ -13,7 +13,7 @@ export async function DELETE() {
 
     // Remove the user's relational data before deleting their identity.
     const supabase = await createClerkSupabaseServerClient()
-    for (const table of ["career_workspaces", "application_events", "saved_jobs", "resume_feedback", "resume_documents", "profile_items", "profile_import_proposals", "student_profiles", "user_preferences", "user_settings", "daily_usage", "course_progress", "legacy_import_state"] as const) {
+    for (const table of ["career_workspaces", "application_events", "saved_jobs", "resume_feedback", "resume_documents", "profile_items", "student_profiles", "user_preferences", "user_settings", "daily_usage", "course_progress", "legacy_import_state"] as const) {
       const { error } = await supabase.from(table as "application_events").delete().eq("clerk_user_id", userId)
       if (error) throw error
     }

@@ -4,7 +4,7 @@ import { getJsonFromS3 } from "@/lib/aws/s3";
 import ResumeSchema, { getResumeObject, type Resume } from "@/app/api/parse/resumeSchema";
 import { calculateResumeScoreDetailed, getScoreBreakdown } from "@/lib/resumeScoring";
 import { createClerkSupabaseServerClient } from "@/lib/supabase/server";
-import { profileItemsFromResume, normalizeProfileData } from "@/lib/profile/profile-data";
+import { normalizeProfileData } from "@/lib/profile/profile-data";
 import type { Json } from "@/lib/supabase/database.types";
 import { getOrCreateProfileId } from "@/lib/supabase/resume-documents";
 
@@ -176,51 +176,9 @@ export async function POST(request: NextRequest) {
         .eq("clerk_user_id", userId);
     if (updateDocumentError) throw updateDocumentError;
 
-    const { data: alreadyProposed, error: proposalLookupError } = await supabase
-      .from("profile_import_proposals")
-      .select("id")
-      .eq("source_resume_document_id", documentId)
-      .eq("clerk_user_id", userId)
-      .limit(1);
-    if (proposalLookupError) throw proposalLookupError;
-
-    // When the upload was reconciled against the profile before saving, the
-    // student has already said what to take and the caller has written it.
-    // Queuing proposals as well would ask the same questions twice.
-    const reconciled = payload?.reconciled === true;
-    if (!reconciled && !alreadyProposed?.length) {
-      const items = profileItemsFromResume(resume);
-      const { data: existingItems, error: itemsLookupError } = await supabase
-        .from("profile_items")
-        .select("id, item_type, identity_key")
-        .eq("profile_id", profileId)
-        .eq("clerk_user_id", userId)
-        .neq("verification_status", "archived");
-      if (itemsLookupError) throw itemsLookupError;
-
-      const targetIds = new Map((existingItems ?? []).map((item) => [`${item.item_type}:${item.identity_key}`, item.id]));
-      const proposals = items.map((item) => ({
-        profile_id: profileId!,
-        clerk_user_id: userId,
-        source_resume_document_id: documentId!,
-        item_type: item.item_type,
-        target_profile_item_id: targetIds.get(`${item.item_type}:${item.identity_key}`) ?? null,
-        proposed_data: {
-          title: item.title,
-          content: item.content,
-          identity_key: item.identity_key,
-          sort_order: item.sort_order,
-        } as Json,
-      }));
-      if (proposals.length) {
-        const { error: proposalInsertError } = await supabase.from("profile_import_proposals").insert(proposals);
-        if (proposalInsertError) throw proposalInsertError;
-      }
-    }
-
     return Response.json({
       success: true,
-      message: reconciled ? "Resume saved." : "Resume saved. Review profile suggestions before adding them to your master profile.",
+      message: "Resume saved.",
       score,
     });
   } catch (error) {
