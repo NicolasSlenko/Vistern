@@ -10,6 +10,7 @@ import type { ModeOption } from "./mode-tabs"
 import { pill } from "./pills"
 import { PaperPane } from "@/components/resume-paper/paper-pane"
 import { PreviewPane } from "./preview-pane"
+import { SyncToProfile } from "./sync-to-profile"
 import { ProfileForm, SkillsForm } from "./profile-form"
 import { SectionForm } from "./section-form"
 import { SectionNav } from "./section-nav"
@@ -158,6 +159,7 @@ export function ResumeDocStudio({ id }: { id: string }) {
           >
             <Star className="h-[17px] w-[17px]" fill={doc?.isStarred ? "currentColor" : "none"} aria-hidden="true" />
           </button>
+          <SyncToProfile resume={content} />
           <button
             type="button"
             onClick={review.ask}

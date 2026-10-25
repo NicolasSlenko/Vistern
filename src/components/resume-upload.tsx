@@ -250,10 +250,25 @@ export function ResumeUpload({ onComplete, onBusyChange }: ResumeUploadProps = {
     setProcessingMessage("Saving resume data...")
 
     try {
+      // The profile first, and on its own route: /api/resume stores the
+      // document and only ever *proposes* profile changes, which is the
+      // wrong half of the job once the student has already decided.
+      const profileResponse = await fetch("/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+      const profileResult = await profileResponse.json()
+      if (!profileResponse.ok || !profileResult.success) {
+        throw new Error("Failed to save your profile")
+      }
+
       const saveResponse = await fetch("/api/resume", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resume: data, document, s3Key: uploadedFile?.filename }),
+        // Already reconciled above, so the route must not queue proposals
+        // the student would have to answer a second time.
+        body: JSON.stringify({ resume: data, document, reconciled: true, s3Key: uploadedFile?.filename }),
       })
       const saveResult = await saveResponse.json()
 

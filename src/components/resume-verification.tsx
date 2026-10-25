@@ -73,6 +73,41 @@ function ChipGroup({ label, values }: { label: string; values: string[] }) {
   )
 }
 
+/**
+ * The bullets of an entry, read-only.
+ *
+ * These are the substance of a resume and the lines the AI goes on to
+ * rewrite, so hiding them behind the edit toggle made "does this look
+ * right?" a question nobody could actually answer.
+ */
+function BulletReadout({ label, values }: { label: string; values?: string[] | null }) {
+  const lines = (values ?? []).map((line) => line.trim()).filter(Boolean)
+  return (
+    <div className="flex min-w-0 flex-col gap-1.5 sm:col-span-2">
+      <span className="label-mono text-ink-2">
+        {label}
+        {lines.length > 0 && <span className="text-ink-3"> · {lines.length}</span>}
+      </span>
+      {lines.length === 0 ? (
+        <p className="text-[15px] text-ink">
+          <Blank />
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-1">
+          {lines.map((line, idx) => (
+            <li key={idx} className="relative pl-[14px] text-[15px] leading-relaxed wrap-anywhere text-ink">
+              <span aria-hidden="true" className="absolute left-0 top-0 text-ink-3">
+                •
+              </span>
+              {line}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 /** Joins the parts of a date range or an address, dropping whatever is missing. */
 const joined = (parts: (string | undefined | null)[], separator: string) =>
   parts.map((part) => (part ?? "").trim()).filter(Boolean).join(separator)
@@ -392,6 +427,9 @@ export function ResumeVerification({ parsedData, onConfirm, onCancel, open }: Re
                               <Readout label="Field of study" value={edu.field} />
                               <Readout label="Dates" value={joined([edu.start_date, edu.end_date], " – ")} />
                               <Readout label="GPA" value={gpa > 0 ? gpa.toFixed(2) : ""} />
+                            {edu.achievements && edu.achievements.length > 0 && (
+                              <BulletReadout label="Coursework and honours" values={edu.achievements} />
+                            )}
                             </>
                           )}
                         </div>
@@ -465,6 +503,16 @@ export function ResumeVerification({ parsedData, onConfirm, onCancel, open }: Re
                               <Readout label="Position" value={exp.position} />
                               <Readout label="Start date" value={exp.start_date} />
                               <Readout label="End date" value={exp.end_date} />
+                              {exp.location?.trim() && <Readout label="Location" value={exp.location} className="sm:col-span-2" />}
+                              <BulletReadout label="Bullets" values={exp.responsibilities} />
+                              {exp.achievements && exp.achievements.length > 0 && (
+                                <BulletReadout label="Achievements" values={exp.achievements} />
+                              )}
+                              {exp.technologies && exp.technologies.length > 0 && (
+                                <div className="sm:col-span-2">
+                                  <ChipGroup label="Tech stack" values={exp.technologies} />
+                                </div>
+                              )}
                             </>
                           )}
                         </div>
@@ -543,6 +591,13 @@ export function ResumeVerification({ parsedData, onConfirm, onCancel, open }: Re
                               <ChipGroup label="Tech stack" values={project.technologies} />
                             ) : (
                               <Readout label="Tech stack" value="" />
+                            )}
+                            {project.description?.trim() && (
+                              <Readout label="Description" value={project.description} className="sm:col-span-2" />
+                            )}
+                            <BulletReadout label="Bullets" values={project.highlights} />
+                            {joined([project.link, project.github], " · ") && (
+                              <Readout label="Links" value={joined([project.link, project.github], " · ")} className="sm:col-span-2" />
                             )}
                           </>
                         )}

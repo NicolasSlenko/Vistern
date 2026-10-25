@@ -184,7 +184,11 @@ export async function POST(request: NextRequest) {
       .limit(1);
     if (proposalLookupError) throw proposalLookupError;
 
-    if (!alreadyProposed?.length) {
+    // When the upload was reconciled against the profile before saving, the
+    // student has already said what to take and the caller has written it.
+    // Queuing proposals as well would ask the same questions twice.
+    const reconciled = payload?.reconciled === true;
+    if (!reconciled && !alreadyProposed?.length) {
       const items = profileItemsFromResume(resume);
       const { data: existingItems, error: itemsLookupError } = await supabase
         .from("profile_items")
@@ -214,7 +218,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return Response.json({ success: true, message: "Resume saved. Review profile suggestions before adding them to your master profile.", score });
+    return Response.json({
+      success: true,
+      message: reconciled ? "Resume saved." : "Resume saved. Review profile suggestions before adding them to your master profile.",
+      score,
+    });
   } catch (error) {
     console.error("Error saving resume data:", error);
     return Response.json({ success: false, error: "Failed to save resume data", message: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });

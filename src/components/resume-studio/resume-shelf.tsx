@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { FileText, Star, Upload, UserRound } from "lucide-react"
+import { FileText, Loader2, Star, Trash2, Upload, UserRound } from "lucide-react"
+import { toast } from "sonner"
 import { pill } from "./pills"
 
 /**
@@ -54,6 +55,27 @@ function PageThumb({ score }: { score: number }) {
 export function ResumeShelf() {
   const [resumes, setResumes] = useState<ResumeRow[]>([])
   const [loading, setLoading] = useState(true)
+  // The resume waiting on a yes. Deleting is easy to do by accident on a
+  // grid of similar-looking pages, so it asks first and names the one it means.
+  const [deleting, setDeleting] = useState<ResumeRow | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  const remove = async () => {
+    if (!deleting) return
+    setBusy(true)
+    try {
+      const response = await fetch(`/api/resume-documents/${deleting.id}`, { method: "DELETE" })
+      const result = await response.json()
+      if (!response.ok || !result.success) throw new Error(result.error || "Couldn't delete that resume")
+      setResumes((current) => current.filter((row) => row.id !== deleting.id))
+      toast.success(`Deleted ${deleting.fileName}`)
+      setDeleting(null)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Couldn't delete that resume")
+    } finally {
+      setBusy(false)
+    }
+  }
 
   useEffect(() => {
     let live = true
@@ -126,7 +148,16 @@ export function ResumeShelf() {
               ) : (
                 <ul className="grid grid-cols-2 gap-x-5 gap-y-7 sm:grid-cols-3 lg:grid-cols-4">
                   {resumes.map((resume) => (
-                    <li key={resume.id}>
+                    <li key={resume.id} className="group/card relative">
+                      <button
+                        type="button"
+                        onClick={() => setDeleting(resume)}
+                        aria-label={`Delete ${resume.fileName}`}
+                        title="Delete"
+                        className="absolute right-1.5 top-1.5 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-sheet/90 text-ink-3 opacity-0 shadow-card-rest backdrop-blur transition-[opacity,color] hover:text-alert focus-visible:opacity-100 group-hover/card:opacity-100"
+                      >
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                      </button>
                       <Link
                         href={`/resumes/${resume.id}`}
                         className="group/page flex flex-col gap-2.5 rounded-[12px] focus-visible:outline-none"
@@ -153,6 +184,43 @@ export function ResumeShelf() {
           </div>
         </div>
       </div>
+
+      {deleting && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-resume-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/25 p-4 backdrop-blur-sm"
+          onMouseDown={(event) => event.target === event.currentTarget && !busy && setDeleting(null)}
+          onKeyDown={(event) => event.key === "Escape" && !busy && setDeleting(null)}
+        >
+          <div className="paper-frame w-full max-w-[440px]">
+            <div className="paper flex flex-col gap-3 p-6">
+              <h2 id="delete-resume-title" className="font-serif text-[26px] leading-tight tracking-[-0.025em] text-ink">
+                Delete this resume?
+              </h2>
+              <p className="text-[15px] leading-relaxed text-ink-2">
+                <span className="font-medium text-ink">{deleting.fileName}</span> will be removed from your shelf. Your master profile
+                keeps everything you have brought across from it.
+              </p>
+              <div className="mt-2 flex items-center gap-2.5">
+                <button type="button" onClick={remove} disabled={busy} className={pill("danger", "h-10 px-4 text-[15px] font-medium")}>
+                  {busy && <Loader2 className="animate-spin" aria-hidden="true" />}
+                  Delete
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeleting(null)}
+                  disabled={busy}
+                  className={pill("white", "h-10 px-4 text-[15px] font-medium")}
+                >
+                  Keep it
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
