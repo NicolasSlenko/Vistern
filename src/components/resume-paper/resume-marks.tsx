@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useId, useMemo } from "react"
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { Check, X } from "lucide-react"
 import { rewriteKey, type BulletRewrite, type Severity } from "@/lib/resume-suggestions"
 import { bracket, seedOf, underline, type Box } from "./rough"
@@ -59,12 +59,18 @@ function Tip({
   placed,
   height,
   describe,
+  pinned,
+  onHold,
+  onLeave,
   onAccept,
   onReject,
 }: {
   placed: Placed
   height: number
   describe: string
+  pinned: boolean
+  onHold: () => void
+  onLeave: () => void
   onAccept: () => void
   onReject: () => void
 }) {
@@ -73,8 +79,12 @@ function Tip({
   const below = bottom / height < 0.78
   return (
     <div
-      role="tooltip"
+      role={pinned ? "dialog" : "tooltip"}
+      aria-label={pinned ? "Suggested rewrite" : undefined}
       className="paper-tip"
+      data-pinned={pinned || undefined}
+      onMouseEnter={onHold}
+      onMouseLeave={onLeave}
       style={{
         left: `clamp(150px, ${percent((left + right) / 2, PAGE.width)}, calc(100% - 150px))`,
         ...(below
@@ -135,7 +145,48 @@ export function ResumeMarks({
   onReject: (rewrite: BulletRewrite) => void
 }) {
   const describe = useId()
-  useEscapeCloses(open, onOpen)
+
+  /**
+   * A card opened by hovering closes when you leave; one opened by clicking
+   * stays until it is dismissed. Without that, moving the pointer off the
+   * line to reach the tick crossed the gap between them and shut the card
+   * before it could be answered.
+   */
+  const [pinned, setPinned] = useState(false)
+  // Hovering still needs a moment's grace to cross that gap, so the close is
+  // deferred and cancelled if the pointer lands on the card.
+  const closing = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hold = useCallback(() => {
+    if (closing.current) clearTimeout(closing.current)
+    closing.current = null
+  }, [])
+  const closeSoon = useCallback(
+    (key: string) => {
+      if (pinned) return
+      hold()
+      closing.current = setTimeout(() => open === key && onOpen(null), 180)
+    },
+    [pinned, open, onOpen, hold],
+  )
+  useEffect(() => () => hold(), [hold])
+
+  const dismiss = useCallback(() => {
+    setPinned(false)
+    onOpen(null)
+  }, [onOpen])
+  useEscapeCloses(open, dismiss)
+
+  // A click anywhere else puts a pinned card away, as any other popover does.
+  useEffect(() => {
+    if (!pinned) return
+    const onDown = (event: MouseEvent) => {
+      const target = event.target as Element | null
+      if (target?.closest(".paper-tip, .paper-hit")) return
+      dismiss()
+    }
+    document.addEventListener("mousedown", onDown)
+    return () => document.removeEventListener("mousedown", onDown)
+  }, [pinned, dismiss])
 
   // In reading order, so the pen goes down the page and Tab follows it.
   const placed = useMemo<Placed[]>(
@@ -152,9 +203,6 @@ export function ResumeMarks({
   )
 
   const showing = placed.find((mark) => mark.key === open)
-  const leave = (key: string) => {
-    if (open === key) onOpen(null)
-  }
 
   return (
     <>
@@ -207,10 +255,18 @@ export function ResumeMarks({
             width: percent(mark.area[2] - mark.area[0], PAGE.width),
             height: percent(mark.area[3] - mark.area[1], height),
           }}
-          onMouseEnter={() => onOpen(mark.key)}
-          onMouseLeave={() => leave(mark.key)}
-          onFocus={() => onOpen(mark.key)}
-          onClick={() => onOpen(open === mark.key ? null : mark.key)}
+          onMouseEnter={() => {
+            hold()
+            if (!pinned) onOpen(mark.key)
+          }}
+          onMouseLeave={() => closeSoon(mark.key)}
+          onFocus={() => !pinned && onOpen(mark.key)}
+          onClick={() => {
+            hold()
+            if (pinned && open === mark.key) return dismiss()
+            setPinned(true)
+            onOpen(mark.key)
+          }}
         />
       ))}
 
@@ -219,13 +275,16 @@ export function ResumeMarks({
           placed={showing}
           height={height}
           describe={describe}
+          pinned={pinned}
+          onHold={hold}
+          onLeave={() => closeSoon(showing.key)}
           onAccept={() => {
             onAccept(showing.rewrite)
-            onOpen(null)
+            dismiss()
           }}
           onReject={() => {
             onReject(showing.rewrite)
-            onOpen(null)
+            dismiss()
           }}
         />
       )}

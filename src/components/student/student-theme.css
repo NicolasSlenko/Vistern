@@ -299,6 +299,75 @@
   background-image: linear-gradient(180deg, #313b35, #28312b);
 }
 
+/* ---- Quiet links ------------------------------------------------------ */
+
+/* The inline "Add to my plan", "Browse all data and AI projects", "Back to
+   my plan" links. They were 12px bold accent with !important, which read
+   like shouting next to the theme's buttons. One treatment for all of them:
+   the same size and weight as a text link elsewhere, with the arrow nudging
+   forward on hover so it still feels like a way through. */
+.student-app :is(
+    .career-plan-suggestion button,
+    .career-plan-suggestions > a,
+    .career-plan-work-heading > a,
+    .career-plan-work-empty a,
+    .career-plan-history-link,
+    .career-history-back,
+    .career-history-open,
+    .career-history-empty a,
+    .student-text-link
+  ) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-brand) !important;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  cursor: pointer;
+}
+.student-app :is(
+    .career-plan-suggestion button,
+    .career-plan-suggestions > a,
+    .career-plan-work-heading > a,
+    .career-plan-work-empty a,
+    .career-plan-history-link,
+    .career-history-back,
+    .career-history-open,
+    .career-history-empty a,
+    .student-text-link
+  ):hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.student-app :is(
+    .career-plan-suggestion button,
+    .career-plan-suggestions > a,
+    .career-plan-work-heading > a,
+    .career-plan-history-link,
+    .career-history-open
+  ) svg {
+  transition: translate 150ms var(--ease-glide, cubic-bezier(0.2, 0.8, 0.2, 1));
+}
+.student-app :is(
+    .career-plan-suggestion button,
+    .career-plan-suggestions > a,
+    .career-plan-work-heading > a,
+    .career-plan-history-link,
+    .career-history-open
+  ):hover svg {
+  translate: 2px 0;
+}
+/* The one that goes back leads with its arrow, so it nudges the other way. */
+.student-app .career-history-back:hover svg {
+  translate: -2px 0;
+}
+
 /* ---- Tool pages ------------------------------------------------------- */
 
 /* A tool page that hasn't been rebuilt as a sheet still reads as part of the
