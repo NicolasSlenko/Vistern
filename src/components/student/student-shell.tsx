@@ -180,16 +180,12 @@ export function StudentShell({
               })}
             </nav>
             <div className="student-account-nav">
-              <Link href="/settings">
-                <Settings size={17} />
-                Settings
-              </Link>
+              <ThemeToggle />
+              <UserButton />
+              <SignOutButton redirectUrl="/">
+                <button type="button">Sign out</button>
+              </SignOutButton>
             </div>
-            <Link className="student-sidebar-bottom" href="/student-profile" aria-current={pathname === "/student-profile" ? "page" : undefined}>
-              <UserRound size={19} />
-              <span>Student profile</span>
-              <ChevronRight size={16} />
-            </Link>
           </aside>
           <header className="student-topbar">
             <button
@@ -203,7 +199,6 @@ export function StudentShell({
               {open ? <X size={21} /> : <Menu size={21} />}
               <span>Menu</span>
             </button>
-            <AccountControls />
           </header>
           {open && (
             <nav

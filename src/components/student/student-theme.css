@@ -70,6 +70,49 @@
   border-right: 1px solid var(--color-hairline);
 }
 
+/* Account controls at the foot of the sidebar: theme toggle, user button,
+   sign-out. Laid out as a column, each full-width, since the topbar no
+   longer holds them. */
+.student-account-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-hairline);
+}
+.student-account-nav > * {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 13px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--color-ink-2);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  transition: background 120ms, color 120ms;
+}
+.student-account-nav > *:hover {
+  background: var(--color-fill);
+  color: var(--color-ink);
+}
+
+/* The topbar no longer carries the controls, so it can be hidden on wide
+   screens — it only held the mobile menu toggle. */
+@media (min-width: 1150px) {
+  .student-topbar {
+    display: none;
+  }
+  .student-main {
+    padding-top: 0;
+  }
+}
+
 .student-brand {
   font-family: var(--font-newsreader), Georgia, serif;
   font-weight: 500;
