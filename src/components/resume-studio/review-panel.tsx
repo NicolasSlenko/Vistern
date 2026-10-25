@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useId, useMemo, useState } from "react"
-import { RotateCcw, Target } from "lucide-react"
+import { Check, RotateCcw, Target } from "lucide-react"
 import type { Resume } from "@/app/api/parse/resumeSchema"
 import { calculateResumeScoreDetailed } from "@/lib/resumeScoring"
 import {
@@ -17,6 +17,7 @@ import {
   type XyzFeedback,
 } from "./review-notes"
 import type { SectionRef } from "./sections"
+import { useDismissedNotes } from "./use-dismissed-notes"
 
 /**
  * What the AI found, in the left column. The score at the top with its
@@ -52,28 +53,53 @@ function Dot({ tier }: { tier: Tier }) {
   return <span aria-hidden="true" className={`block h-[7px] w-[7px] shrink-0 rounded-full ${TIER_DOT[tier]}`} />
 }
 
-function Note({ note, opened, onOpen, onGo }: { note: ReviewNote; opened: boolean; onOpen: () => void; onGo: () => void }) {
+function Note({
+  note,
+  opened,
+  onOpen,
+  onGo,
+  onDone,
+}: {
+  note: ReviewNote
+  opened: boolean
+  onOpen: () => void
+  onGo: () => void
+  onDone: () => void
+}) {
   const details = useId()
   return (
-    <li className="flex flex-col border-t border-rule first:border-t-0">
-      <button
-        type="button"
-        aria-expanded={opened}
-        aria-controls={opened ? details : undefined}
-        onClick={() => {
-          onOpen()
-          onGo()
-        }}
-        className="flex items-start gap-2.5 px-0.5 py-3 text-left transition-colors hover:bg-ink/[0.02] focus-visible:outline-offset-[-2px]"
-      >
-        <span className="mt-[7px]">
-          <Dot tier={note.tier} />
-        </span>
-        <span className="flex min-w-0 flex-col gap-0.5">
-          {note.entryName && <span className="label-mono text-ink-3">{note.entryName}</span>}
-          <span className="text-sm leading-snug text-ink">{note.text}</span>
-        </span>
-      </button>
+    <li className="group/note flex flex-col border-t border-rule first:border-t-0">
+      <div className="flex items-start gap-1">
+        <button
+          type="button"
+          aria-expanded={opened}
+          aria-controls={opened ? details : undefined}
+          onClick={() => {
+            onOpen()
+            onGo()
+          }}
+          className="flex min-w-0 flex-1 items-start gap-2.5 px-0.5 py-3 text-left transition-colors hover:bg-ink/[0.02] focus-visible:outline-offset-[-2px]"
+        >
+          <span className="mt-[7px]">
+            <Dot tier={note.tier} />
+          </span>
+          <span className="flex min-w-0 flex-col gap-0.5">
+            {note.entryName && <span className="label-mono text-ink-3">{note.entryName}</span>}
+            <span className="text-sm leading-snug text-ink">{note.text}</span>
+          </span>
+        </button>
+        {/* Ticking a note puts it away. A review can return dozens at once,
+            and a list that never shrinks stops being read. */}
+        <button
+          type="button"
+          onClick={onDone}
+          aria-label={`Done: ${note.text}`}
+          title="Mark as done"
+          className="mt-[9px] inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-3 opacity-0 transition-[opacity,color,background] hover:bg-brand/10 hover:text-brand focus-visible:opacity-100 group-hover/note:opacity-100"
+        >
+          <Check className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
       {opened && note.why && (
         <div id={details} className="flex flex-col gap-2.5 pb-3.5 pl-[19px] pr-0.5">
           <p className="text-[13px] leading-snug text-ink-2">{note.why}</p>
@@ -130,6 +156,10 @@ export function ReviewPanel({
   asking,
   onAsk,
   onGoTo,
+  notes,
+  hidden = 0,
+  onDone,
+  onRestore,
 }: {
   resume: Resume | null
   feedback: XyzFeedback | null
@@ -137,10 +167,18 @@ export function ReviewPanel({
   onAsk: () => void
   /** Opens the section a note points at, and the card inside it. */
   onGoTo: (section: SectionRef, entryIndex?: number) => void
+  /**
+   * The notes still worth showing. Held by the studio rather than here, so
+   * the dots on the cards and the counts in the section list agree with
+   * this list — a note ticked off should disappear from all three.
+   */
+  notes: ReviewNote[]
+  hidden?: number
+  onDone: (note: ReviewNote) => void
+  onRestore: () => void
 }) {
   const heading = useId()
   const [chosen, setChosen] = useState<string | null>(null)
-  const notes = useMemo(() => reviewNotes(resume, feedback), [resume, feedback])
   const goals = useMemo(() => careerGoals(feedback), [feedback])
 
   if (asking) {
@@ -237,6 +275,7 @@ export function ReviewPanel({
                   opened={note.id === opened}
                   onOpen={() => setChosen(note.id)}
                   onGo={() => note.section && onGoTo(note.section, note.entryIndex)}
+                  onDone={() => onDone(note)}
                 />
               ))}
             </ul>
@@ -264,6 +303,13 @@ export function ReviewPanel({
             ))}
           </ul>
         </section>
+      )}
+
+      {/* Ticking a note off is not meant to be a one-way door. */}
+      {hidden > 0 && (
+        <button type="button" onClick={onRestore} className="self-start text-[13px] text-ink-3 hover:text-ink">
+          {hidden} marked done · show {hidden === 1 ? "it" : "them"} again
+        </button>
       )}
 
       {/* The notes are of the resume as it was: for what's been rewritten since, the AI can be asked again. */}

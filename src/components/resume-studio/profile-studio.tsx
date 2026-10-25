@@ -15,6 +15,7 @@ import { SectionForm } from "./section-form"
 import { SectionNav } from "./section-nav"
 import { LIST_SECTIONS, type ListSection, type SectionRef } from "./sections"
 import { SaveNote, StudioShell, StudioTitle } from "./studio-shell"
+import { useDismissedNotes } from "./use-dismissed-notes"
 import { useAutosave } from "./use-autosave"
 
 /**
@@ -112,7 +113,10 @@ export function ProfileStudio() {
     }
   }
 
-  const notes = reviewNotes(profile, feedback)
+  // Ticked-off notes disappear from the panel, the section counts and the
+  // dots on the cards together, because they are all the same list.
+  const allNotes = reviewNotes(profile, feedback)
+  const { open: notes, hidden, dismiss, restore } = useDismissedNotes(allNotes)
   const modes: ModeOption<Mode>[] = [
     { id: "write", label: "Write", icon: PenLine },
     { id: "review", label: "Review", icon: Sparkles, badge: notes.length || undefined },
@@ -152,7 +156,17 @@ export function ProfileStudio() {
         mode === "write" ? (
           <SectionNav resume={profile} active={section} onSelect={open} notesBySection={notesBySection(notes)} />
         ) : (
-          <ReviewPanel resume={profile} feedback={feedback} asking={asking} onAsk={askAi} onGoTo={goTo} />
+          <ReviewPanel
+            resume={profile}
+            feedback={feedback}
+            asking={asking}
+            onAsk={askAi}
+            onGoTo={goTo}
+            notes={notes}
+            hidden={hidden}
+            onDone={dismiss}
+            onRestore={restore}
+          />
         )
       }
     >
@@ -177,6 +191,7 @@ export function ProfileStudio() {
               entries={(profile[section as ListSection] ?? []) as Record<string, unknown>[]}
               flagged={flaggedEntries(notes, section)}
               notesFor={(entryIndex) => notes.filter((note) => note.section === section && note.entryIndex === entryIndex)}
+              onNoteDone={(note) => dismiss(note)}
               onChange={(entries) => edit({ ...profile, [section]: entries } as Resume)}
             />
           )}

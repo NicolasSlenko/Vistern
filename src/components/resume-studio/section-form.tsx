@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDown, Plus, Trash2 } from "lucide-react"
+import { Check, ChevronDown, Plus, Trash2 } from "lucide-react"
 import type { BulletRewrite } from "@/lib/resume-suggestions"
 import { BulletList } from "./bullet-list"
 import { Field, ProseField, SectionHeading, TagsField } from "./fields"
@@ -9,6 +9,15 @@ import { pill } from "./pills"
 import type { FieldSpec, ListSectionSpec } from "./sections"
 
 type Entry = Record<string, unknown>
+
+/** A review note as a card needs it: enough to show, and an identity to put away. */
+export interface EntryNote {
+  id: string
+  tier: string
+  text: string
+  why?: string
+  section?: string
+}
 
 /** The AI's rewrites for one entry, by "field.line", with whether each has been answered. */
 export type EntryRewrites = Map<string, { rewrite: BulletRewrite; answered: boolean }>
@@ -129,6 +138,7 @@ function EntryCard({
   rewrites,
   suggestions,
   notes,
+  onNoteDone,
 }: {
   spec: ListSectionSpec
   entry: Entry
@@ -141,7 +151,9 @@ function EntryCard({
   rewrites?: EntryRewrites
   suggestions?: SuggestionHandlers
   /** The review's notes about this entry, shown inside the card when it opens. */
-  notes?: { id: string; tier: string; text: string; why?: string }[]
+  notes?: EntryNote[]
+  /** Ticking one off here puts it away everywhere. */
+  onNoteDone?: (note: EntryNote) => void
 }) {
   const [confirming, setConfirming] = useState(false)
   const name = asText(entry[spec.titleKey]).trim()
@@ -243,15 +255,26 @@ function EntryCard({
             {notes && notes.length > 0 && (
               <ul className="flex flex-col gap-2 rounded-[12px] bg-fill/70 p-3">
                 {notes.map((note) => (
-                  <li key={note.id} className="flex gap-2.5">
+                  <li key={note.id} className="group/entrynote flex items-start gap-2.5">
                     <span
                       aria-hidden="true"
                       className={`mt-[6px] h-[7px] w-[7px] shrink-0 rounded-full ${note.tier === "fix" ? "bg-alert" : "bg-caution"}`}
                     />
-                    <span className="flex min-w-0 flex-col gap-0.5">
+                    <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                       <span className="text-[14px] leading-snug text-ink">{note.text}</span>
                       {note.why && <span className="text-[13px] leading-snug text-ink-2">{note.why}</span>}
                     </span>
+                    {onNoteDone && (
+                      <button
+                        type="button"
+                        onClick={() => onNoteDone(note)}
+                        aria-label={`Done: ${note.text}`}
+                        title="Mark as done"
+                        className="-mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-3 opacity-0 transition-[opacity,color,background] hover:bg-brand/10 hover:text-brand focus-visible:opacity-100 group-hover/entrynote:opacity-100"
+                      >
+                        <Check className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -279,6 +302,7 @@ export function SectionForm({
   rewritesFor,
   suggestions,
   notesFor,
+  onNoteDone,
 }: {
   spec: ListSectionSpec
   entries: Entry[]
@@ -287,7 +311,8 @@ export function SectionForm({
   rewritesFor?: (entryIndex: number) => EntryRewrites
   suggestions?: SuggestionHandlers
   /** The review's notes about one entry, shown inside its card. */
-  notesFor?: (entryIndex: number) => { id: string; tier: string; text: string; why?: string }[]
+  notesFor?: (entryIndex: number) => EntryNote[]
+  onNoteDone?: (note: EntryNote) => void
 }) {
   const [open, setOpen] = useState<number | null>(entries.length === 1 ? 0 : null)
 
@@ -329,6 +354,7 @@ export function SectionForm({
             rewrites={rewritesFor?.(index)}
             suggestions={suggestions}
             notes={notesFor?.(index)}
+            onNoteDone={onNoteDone}
           />
         ))}
 
