@@ -33,6 +33,7 @@ import { ActionableInsights } from "@/components/actionable-insights"
 import { calculateResumeScoreDetailed, getScoreStatus, getScoreBreakdown, type ResumeScoreResult } from "@/lib/resumeScoring"
 import { useSignInLogger } from "@/hooks/use-signin-logger"
 import { XYZInlineFeedback, getXYZScoreColor } from "@/components/xyz-inline-feedback"
+import { AiProviderPicker } from "@/components/ai-provider-picker"
 
 // Mock data - replace with actual resume data later
 const mockStudentData = {
@@ -2045,8 +2046,9 @@ export default function DashboardPage() {
   return (
     <div className="student-tool-page">
       <div className="mx-auto max-w-6xl">
-        <div className="mb-10">
+        <div className="mb-10 flex items-end justify-between gap-4">
           <h1>Resume feedback</h1>
+          <AiProviderPicker />
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">

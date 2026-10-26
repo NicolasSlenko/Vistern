@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
+import { AiProviderPicker } from "@/components/ai-provider-picker"
 import {
   User,
   Palette,
@@ -337,6 +338,11 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* AI Model */}
+              <AiProviderPicker variant="full" />
+
+              <Separator />
+
               {/* AI Feedback */}
               <ToggleRow
                 label="AI Feedback"

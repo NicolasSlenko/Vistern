@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
+import { AiProviderPicker } from "@/components/ai-provider-picker"
 import {
   ChevronLeft, ChevronRight, Briefcase, FileText, Send, CheckCircle2,
   XCircle, TrendingUp, Loader2, RefreshCw, ExternalLink, MapPin, Building2,
@@ -570,9 +571,12 @@ export default function MatchPage() {
                 )}
               </div>
             </div>
-            <Button size="sm" variant="outline" className="rounded-lg shrink-0 gap-1.5" onClick={() => setShowPrefs(true)}>
-              <Settings2 className="h-3.5 w-3.5" /> Preferences
-            </Button>
+            <div className="flex shrink-0 items-center gap-2">
+              <AiProviderPicker />
+              <Button size="sm" variant="outline" className="rounded-lg shrink-0 gap-1.5" onClick={() => setShowPrefs(true)}>
+                <Settings2 className="h-3.5 w-3.5" /> Preferences
+              </Button>
+            </div>
           </motion.div>
 
           {/* ── Main Grid ───────────────────────────────────────────── */}
