@@ -10,7 +10,11 @@ export async function getChosenAiProvider(userId: string): Promise<AiProvider | 
     .select("ai_provider")
     .eq("clerk_user_id", userId)
     .maybeSingle()
-  if (error) throw error
+  if (error) {
+    // e.g. the ai_provider migration isn't applied yet; AI features keep working on the default.
+    console.error("Couldn't read the user's AI provider, using the default:", error.message)
+    return null
+  }
 
   const chosen = data?.ai_provider
   if (!isAiProvider(chosen)) return null
