@@ -1,6 +1,6 @@
-import { OpenAI } from "openai"
+import { embed, generateObject, type AiProvider } from "@/lib/ai"
+import { resolveAiProvider } from "@/lib/ai/resolve"
 import { z } from "zod"
-import { zodTextFormat } from "openai/helpers/zod.mjs"
 import { type NextResponse as NR, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { getCurrentResumeData, getUserPreferences } from "@/lib/supabase/user-data"
@@ -8,7 +8,6 @@ import { searchSimilarDocuments } from "@/lib/vectorSearch"
 import { checkAndIncrementLimit } from "@/lib/usageLimits"
 import type { Resume } from "@/app/api/parse/resumeSchema"
 
-const MODEL = "gpt-4.1-mini"
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000
 const liveJobsCache = new Map<string, CachedLiveJobs>()
 
@@ -94,7 +93,7 @@ function buildResumeSummary(resume: Resume): string {
 }
 
 async function analyzeJobFit(
-  client: OpenAI,
+  provider: AiProvider,
   resumeSummary: string,
   job: AdzunaJob,
   degreeLevel: string[] = []
@@ -102,12 +101,9 @@ async function analyzeJobFit(
   const degreeLine = degreeLevel.length && !degreeLevel.includes("No Preference")
     ? `\nCANDIDATE DEGREE LEVEL: ${degreeLevel.join(", ")} — factor this into the education alignment score.`
     : ""
-  const result = await client.responses.parse({
-    model: MODEL,
-    input: [
-      {
-        role: "system",
-        content: `You are a strict, honest technical recruiter. Score how well this candidate matches the job.${degreeLine}
+  const result = await generateObject({
+    provider,
+    system: `You are a strict, honest technical recruiter. Score how well this candidate matches the job.${degreeLine}
 
 SCORING CALIBRATION — do not inflate scores:
 - 80-100: Near-perfect fit. Candidate has nearly all required skills AND relevant experience.
@@ -118,10 +114,7 @@ SCORING CALIBRATION — do not inflate scores:
 
 Most candidates score 40-65. A score above 75 is rare and must be fully justified.
 Always identify at least 2 concrete gaps even for strong candidates. Be specific — name exact missing tools, frameworks, or experience types.`,
-      },
-      {
-        role: "user",
-        content: `Evaluate this candidate for the job below.
+    prompt: `Evaluate this candidate for the job below.
 
 === CANDIDATE RESUME ===
 ${resumeSummary}
@@ -130,12 +123,11 @@ ${resumeSummary}
 Title: ${job.title}
 Company: ${job.company.display_name}
 ${job.description.slice(0, 900)}`,
-      },
-    ],
-    text: { format: zodTextFormat(CompareResultSchema, "job_match") },
+    schema: CompareResultSchema,
+    name: "job_match",
     temperature: 0.2,
   })
-  return result.output_parsed!
+  return result.data!
 }
 
 async function adzunaSearch(
@@ -363,23 +355,21 @@ export async function POST(): Promise<NR> {
     }
 
     const resumeSummary = buildResumeSummary(resume)
-    const client = new OpenAI()
 
     // Stage 1: embed the resume and jobs in one request, then rank the top 10.
     const jobTexts = allJobs.map(j =>
       `${j.title} at ${j.company.display_name}. ${j.description.slice(0, 600)}`.replace(/\n/g, " ")
     )
-    const embeddingRes = await client.embeddings.create({
-      model: "text-embedding-3-small",
-      input: [resumeSummary.replace(/\n/g, " "), ...jobTexts],
-    })
-    const resumeVector = embeddingRes.data[0].embedding
-    const jobDocs = allJobs.map((job, i) => ({ id: job.id, vector: embeddingRes.data[i + 1].embedding, job }))
+    const vectors = await embed([resumeSummary.replace(/\n/g, " "), ...jobTexts])
+    const resumeVector = vectors[0]
+    const jobDocs = allJobs.map((job, i) => ({ id: job.id, vector: vectors[i + 1], job }))
     const topMatches = searchSimilarDocuments(resumeVector, jobDocs, 10)
 
-    // Stage 2: run LLM analysis on top 10 in parallel — strengths/gaps inform the final score
+    // Stage 2: run LLM analysis on top 10 in parallel — strengths/gaps inform the final score.
+    // Resolved once, so the 10 calls count as a single paid request.
+    const { provider } = await resolveAiProvider(userId)
     const analysisResults = await Promise.allSettled(
-      topMatches.map(m => analyzeJobFit(client, resumeSummary, m.job, prefs.degreeLevel || []))
+      topMatches.map(m => analyzeJobFit(provider, resumeSummary, m.job, prefs.degreeLevel || []))
     )
 
     const liveJobs: LiveJob[] = topMatches.map((match, i) => {
@@ -420,7 +410,7 @@ export async function POST(): Promise<NR> {
 
     const result: CachedLiveJobs = { jobs: liveJobs, cachedAt: Date.now() }
     liveJobsCache.set(userId, result)
-    return NextResponse.json({ success: true, data: result })
+    return NextResponse.json({ success: true, data: result, aiProvider: provider })
   } catch (error) {
     console.error("match-live error:", error)
     const message = error instanceof Error ? error.message : "Failed to fetch live jobs"

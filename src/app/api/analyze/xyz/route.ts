@@ -1,6 +1,6 @@
-import { OpenAI } from "openai";
+import { generateObject } from "@/lib/ai";
+import { resolveAiProvider } from "@/lib/ai/resolve";
 import { z } from "zod";
-import { zodTextFormat } from "openai/helpers/zod.mjs";
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
@@ -9,8 +9,6 @@ const FeedbackSchema = z.object({
     xyz_analysis: z.string().describe("Explanation of how well the description follows 'Accomplished [X] as measured by [Y], by doing [Z]'"),
     improvements: z.array(z.string()).describe("Specific, rewritten examples or bullet points improving the description using the XYZ formula"),
 });
-
-const MODEL = "gpt-4.1-mini"; // Use consistent model identifier
 
 export async function POST(request: NextRequest) {
     try {
@@ -25,8 +23,6 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ text: "No text provided", score: 0, xyz_analysis: "N/A", improvements: [] });
         }
 
-        const client = new OpenAI();
-
         const prompt = `
       Analyze the following ${type} description for a resume.
       Criteria:
@@ -39,19 +35,17 @@ export async function POST(request: NextRequest) {
       Provide a score (0-100), an analysis of its adherence to the XYZ formula, and 2-3 specific rewritten versions that improve it.
     `;
 
-        const result = await client.responses.parse({
-            model: MODEL,
-            input: [
-                { role: "system", content: "You are an expert resume consultant focusing on Google's XYZ formula." },
-                { role: "user", content: prompt }
-            ],
-            text: {
-                format: zodTextFormat(FeedbackSchema, "feedback")
-            },
+        const { provider } = await resolveAiProvider(userId);
+        const result = await generateObject({
+            provider,
+            system: "You are an expert resume consultant focusing on Google's XYZ formula.",
+            prompt,
+            schema: FeedbackSchema,
+            name: "feedback",
             temperature: 0.3,
         });
 
-        return NextResponse.json({ success: true, data: result.output_parsed });
+        return NextResponse.json({ success: true, data: result.data, aiProvider: provider });
 
     } catch (error) {
         console.error("Error generating feedback:", error);
