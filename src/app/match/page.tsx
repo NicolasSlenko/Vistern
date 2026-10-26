@@ -57,6 +57,9 @@ const BUCKET_META: Record<JobBucket, { label: string; next?: JobBucket }> = {
 }
 const BUCKETS = Object.keys(BUCKET_META) as JobBucket[]
 
+/** Window name shared by the pre-opened tab and the form that posts the LaTeX into it. */
+const OVERLEAF_TAB = "vistern-overleaf"
+
 // ─── Shared pieces ───────────────────────────────────────────────────────────
 
 /** A panel on the sheet: a hairline card under a small monospace heading. */
@@ -258,11 +261,21 @@ export default function MatchPage() {
     }
   }
 
+  // Browsers only let a page open a tab during the click itself, and the LaTeX
+  // takes seconds to generate, so open the Overleaf tab first and fill it later.
+  const openOverleafTab = () => {
+    const tab = window.open("", OVERLEAF_TAB)
+    tab?.document.write("<p style=\"font-family:sans-serif\">Preparing your resume for Overleaf…</p>")
+    return tab
+  }
+
   const tailorResume = async (job: LiveJob, action: "overleaf" | "download") => {
+    const overleafTab = action === "overleaf" ? openOverleafTab() : null
     setTailoringAction({ idx: currentJobIdx, action })
     try {
       await generateTailoredLatex(job.title, job.description, job.company, action)
     } catch (err) {
+      overleafTab?.close()
       toast.error(err instanceof Error ? err.message : "Failed to generate resume")
     } finally {
       setTailoringAction(null)
@@ -270,10 +283,12 @@ export default function MatchPage() {
   }
 
   const tailorFromAnalyzer = async (action: "overleaf" | "download") => {
+    const overleafTab = action === "overleaf" ? openOverleafTab() : null
     setTailoringAnalyzer(action)
     try {
       await generateTailoredLatex("", jobDescription, "", action)
     } catch (err) {
+      overleafTab?.close()
       toast.error(err instanceof Error ? err.message : "Failed to generate resume")
     } finally {
       setTailoringAnalyzer(null)
@@ -354,7 +369,7 @@ export default function MatchPage() {
     <>
       <PrefsModal open={showPrefs} onClose={() => setShowPrefs(false)} currentPrefs={prefs}
         onSaved={(newPrefs) => { setPrefs(newPrefs); fetchLiveJobs() }} />
-      <form ref={overleafFormRef} action="https://www.overleaf.com/docs" method="POST" target="_blank" className="hidden">
+      <form ref={overleafFormRef} action="https://www.overleaf.com/docs" method="POST" target={OVERLEAF_TAB} className="hidden">
         <input ref={overleafInputRef} type="hidden" name="snip_uri" defaultValue="" />
       </form>
 

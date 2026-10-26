@@ -371,6 +371,12 @@ export async function POST(): Promise<NR> {
     const analysisResults = await Promise.allSettled(
       topMatches.map(m => analyzeJobFit(provider, resumeSummary, m.job, prefs.degreeLevel || []))
     )
+    // A failed analysis falls back to the similarity score below; log why so it isn't silent.
+    analysisResults.forEach((result, i) => {
+      if (result.status === "rejected") {
+        console.error(`match-live: fit analysis failed for "${topMatches[i].job.title}":`, result.reason)
+      }
+    })
 
     const liveJobs: LiveJob[] = topMatches.map((match, i) => {
       const ar = analysisResults[i]
