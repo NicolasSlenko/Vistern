@@ -66,9 +66,17 @@ Defined with Zod in `src/app/api/parse/resumeSchema.ts`. The `Resume` type is in
 
 Blends quality (60%) and quantity (40%) scores per category. Category weights differ for UF vs non-UF students (coursework is UF-only at 15%). Quality scores come from `src/lib/qualityAnalysis.ts` which uses heuristic analysis per section. The scoring runs entirely client-side.
 
+### AI Provider Layer (`src/lib/ai/index.ts`)
+
+All AI calls go through `generateObject` (Zod-validated JSON), `generateText`, and `embed`. Never construct an OpenAI/Anthropic client in a route. Providers: `hipergator` (UF LiteLLM proxy, `gemma-4-31b-it`, free), `openai` (`gpt-6-luna`) and `claude` (`claude-haiku-5-5`, via `@anthropic-ai/sdk`); the paid two use their cheapest current model.
+
+Each user picks a provider (Settings, or the `AiProviderPicker` quick switch), stored in `user_settings.ai_provider`; `AI_PROVIDER` is the default for everyone else. Routes call `resolveAiProvider(userId)` from `src/lib/ai/resolve.ts` **once per request, after any cache hit**, and pass the result as `provider`. A paid provider uses one `paidAi` daily request (`PAID_AI_DAILY_LIMIT`); over the limit the request falls back to HiPerGator.
+
+`embed` ignores the user's choice and uses the default provider's embedding model (Claude has none). Claude and OpenAI reasoning models (GPT-5+) don't get `temperature`. Every call logs tokens and estimated cost; prices live in `MODEL_PRICING`.
+
 ### XYZ Feedback Model
 
-Uses `gpt-4.1-mini`. Output is Zod-validated — if the schema changes, update both the Zod schema in the route and the `XyzFeedback` type used in context. Feedback is cached in S3; to force regeneration, delete `xyz-feedback.json` for that user.
+Uses the configured AI provider. Output is Zod-validated — if the schema changes, update both the Zod schema in the route and the `XyzFeedback` type used in context. Feedback is cached in S3; to force regeneration, delete `xyz-feedback.json` for that user.
 
 ### Course Matching (`src/lib/courseMatching.ts`)
 
@@ -77,7 +85,7 @@ Fuzzy matching via Levenshtein distance against the UF course catalog. Courses a
 ## Environment Variables
 
 See `.env.example`. Required at runtime:
-- `OPENAI_API_KEY` — GPT calls
+- `HIPERGATOR_API_KEY` (+ `HIPERGATOR_EMBEDDING_MODEL`) for the default provider; `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` are optional and enable those choices in the model picker
 - `AWS_BUCKET_NAME`, `AWS_BUCKET_REGION`, `IAM_AWS_ACCESS_KEY`, `IAM_AWS_SECRET_ACCESS_KEY` — S3
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` — Clerk auth
 

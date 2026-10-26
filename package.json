@@ -17,6 +17,7 @@
     "test:career": "tsx --test tests/career-*.test.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.2.0",
     "@aws-sdk/client-s3": "^3.931.0",
     "@aws-sdk/s3-request-presigner": "^3.997.0",
     "@clerk/nextjs": "^6.35.0",

@@ -5,21 +5,25 @@ import {
   markLegacyDatasetImported,
 } from "@/lib/supabase/legacy-import";
 
-export type LimitKey = "analyzeMatch" | "tailorResume";
+export type LimitKey = "analyzeMatch" | "tailorResume" | "paidAi";
 
 interface DailyCount {
   date: string;
   count: number;
 }
 
+// Legacy S3 shape; paidAi postdates it, so old records never have it.
 interface UsageData {
   analyzeMatch: DailyCount;
   tailorResume: DailyCount;
+  paidAi?: DailyCount;
 }
 
 const LIMITS: Record<LimitKey, number> = {
   analyzeMatch: 10,
   tailorResume: 10,
+  // Requests per day on paid AI providers (OpenAI / Claude); HiPerGator is unlimited.
+  paidAi: Number(process.env.PAID_AI_DAILY_LIMIT) || 20,
 };
 
 function isOwner(userId: string): boolean {
@@ -81,6 +85,7 @@ export async function getUsageSummary(userId: string) {
     return {
       analyzeMatch: { used: 0, limit: 999, remaining: 999 },
       tailorResume: { used: 0, limit: 999, remaining: 999 },
+      paidAi: { used: 0, limit: 999, remaining: 999 },
       isOwner: true,
     };
   }
@@ -107,6 +112,11 @@ export async function getUsageSummary(userId: string) {
       used: usedByFeature.tailorResume ?? 0,
       limit: LIMITS.tailorResume,
       remaining: Math.max(0, LIMITS.tailorResume - (usedByFeature.tailorResume ?? 0)),
+    },
+    paidAi: {
+      used: usedByFeature.paidAi ?? 0,
+      limit: LIMITS.paidAi,
+      remaining: Math.max(0, LIMITS.paidAi - (usedByFeature.paidAi ?? 0)),
     },
     isOwner: false,
   };
