@@ -116,11 +116,23 @@ function logUsage(label: string, model: string, usage: AiUsage | null) {
   console.log(`[ai] ${label} ${model}: ${usage.inputTokens} in / ${usage.outputTokens} out, ${price}`)
 }
 
+// Open models in JSON mode can occasionally loop on whitespace instead of closing the
+// object. A full resume needs ~2k output tokens, so cap HiPerGator well above that and
+// fail fast rather than letting one request hang for the SDK's 10-minute default.
+const HIPERGATOR_MAX_OUTPUT_TOKENS = 8000
+const HIPERGATOR_TIMEOUT_MS = 120_000
+
+function outputCap(provider: AiProvider) {
+  return provider === "hipergator" ? { max_tokens: HIPERGATOR_MAX_OUTPUT_TOKENS } : {}
+}
+
 function openAiCompatibleClient(provider: "hipergator" | "openai") {
   if (provider === "hipergator") {
     return new OpenAI({
       apiKey: process.env.HIPERGATOR_API_KEY,
       baseURL: process.env.HIPERGATOR_BASE_URL || process.env.LITELLM_BASE_URL || "https://api.ai.it.ufl.edu/v1",
+      timeout: HIPERGATOR_TIMEOUT_MS,
+      maxRetries: 1,
     })
   }
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
@@ -206,6 +218,7 @@ export async function generateObject<T extends z.ZodTypeAny>(
     messages: chatMessages(options),
     response_format: responseFormat,
     ...(acceptsTemperature(provider) ? { temperature: options.temperature } : {}),
+    ...outputCap(provider),
   })
 
   const usage = completion.usage
@@ -231,6 +244,7 @@ export async function generateText(options: GenerateOptions): Promise<string> {
     model,
     messages: chatMessages(options),
     ...(acceptsTemperature(provider) ? { temperature: options.temperature } : {}),
+    ...outputCap(provider),
   })
   if (completion.usage) {
     logUsage("text", model, {
