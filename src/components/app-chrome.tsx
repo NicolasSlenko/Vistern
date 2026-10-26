@@ -16,8 +16,6 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/jobs/")
   )
     return children
-  if (pathname === "/resume" || pathname.startsWith("/resume/"))
-    return <StudentShell>{children}</StudentShell>
   if (pathname === "/onboarding")
     return <ResumeProvider>{children}</ResumeProvider>
   const toolPages = ["/profile", "/dashboard", "/upload", "/match", "/settings", "/resumes"]

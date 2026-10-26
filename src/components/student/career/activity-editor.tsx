@@ -242,7 +242,7 @@ export function ActivityEditor({
         </span>
       </div>
       {status === "completed" && (
-        <Link className="student-text-link" href="/resume">
+        <Link className="student-text-link" href="/profile">
           Review your resume
         </Link>
       )}
