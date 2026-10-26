@@ -33,7 +33,7 @@ export default async function StudentProfilePage() {
             <h2>{resume?.basics.name || "Your student story"}</h2>
             <p>{school || "Add your school in your resume"}{profile?.year ? ` · ${yearLabels[profile.year]}` : ""}</p>
           </div>
-          <Link href="/profile">Open my resume <ArrowRight size={16} /></Link>
+          <Link href="/resume">Open my resume <ArrowRight size={16} /></Link>
         </div>
 
         <div className="student-profile-grid">
@@ -49,13 +49,13 @@ export default async function StudentProfilePage() {
             <div className="student-profile-panel-heading"><FolderKanban size={20} /><h2>Resume evidence</h2></div>
             <div className="student-profile-evidence">{evidence.map(({ label, count, icon: Icon }) => <div key={label}><Icon size={17} /><strong>{count}</strong><span>{label}</span></div>)}</div>
             <p className="student-profile-muted">These counts come from your current resume. Check each item in the resume editor before using it in a tailored version.</p>
-            <Link href="/profile">Review resume evidence <ArrowRight size={15} /></Link>
+            <Link href="/resume">Review resume evidence <ArrowRight size={15} /></Link>
           </section>
         </div>
         <section className="student-profile-panel student-profile-skills">
           <div className="student-profile-panel-heading"><BriefcaseBusiness size={20} /><h2>Skills on your resume</h2></div>
           {skills.length ? <div className="student-profile-tags">{skills.map((skill, index) => <span key={`${skill}-${index}`}>{skill}</span>)}</div> : <p className="student-profile-muted">Skills you verify in your resume will appear here.</p>}
-          <Link href="/profile">Update skills <ArrowRight size={15} /></Link>
+          <Link href="/resume">Update skills <ArrowRight size={15} /></Link>
         </section>
       </div>
     </StudentShell>

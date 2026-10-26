@@ -14,6 +14,7 @@ import {
 import { pill } from "@/components/resume-studio/pills"
 import { Breakdown, FitNotes, Score, fitLabel, type FitAnalysis } from "@/components/match/fit"
 import { PrefsModal } from "@/components/match/prefs-modal"
+import { AiProviderPicker } from "@/components/ai-provider-picker"
 import { useResume } from "@/contexts/resume-context"
 import type { LiveJob } from "@/app/api/match-live/route"
 import type { SavedJob, JobBucket } from "@/app/api/job-board/route"
@@ -303,7 +304,10 @@ export default function MatchPage() {
         <div className="paper flex min-h-[calc(100vh-var(--chrome-top,82px)-68px)] flex-col">
           <header className="flex min-h-[72px] flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-hairline px-4 py-[13px] sm:px-6">
             <h1 className="text-[17px] font-medium tracking-[-0.02em] text-ink sm:text-[18px]">Job matches</h1>
-            <div className="flex items-center gap-2.5">{actions}</div>
+            <div className="flex items-center gap-2.5">
+              <AiProviderPicker />
+              {actions}
+            </div>
           </header>
           <div className="flex-1 px-4 py-9 sm:px-8 sm:py-12">
             <div className="mx-auto flex max-w-[1080px] flex-col gap-9">{children}</div>

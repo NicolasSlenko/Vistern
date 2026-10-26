@@ -572,6 +572,7 @@ export type Database = {
       }
       user_settings: {
         Row: {
+          ai_provider: string | null
           clerk_user_id: string
           created_at: string
           data_sharing: boolean
@@ -579,6 +580,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ai_provider?: string | null
           clerk_user_id: string
           created_at?: string
           data_sharing?: boolean
@@ -586,6 +588,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ai_provider?: string | null
           clerk_user_id?: string
           created_at?: string
           data_sharing?: boolean

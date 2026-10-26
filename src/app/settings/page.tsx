@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog"
 import { Field } from "@/components/resume-studio/fields"
 import { pill } from "@/components/resume-studio/pills"
+import { AiProviderPicker } from "@/components/ai-provider-picker"
 import { cn } from "@/lib/utils"
 import { Save, Loader2, AlertTriangle, Trash2, UserX, Check } from "lucide-react"
 import { toast } from "sonner"
@@ -327,6 +328,8 @@ export default function SettingsPage() {
                 </Panel>
 
                 <Panel title="Preferences">
+                  <AiProviderPicker variant="full" />
+                  <hr className="border-t border-hairline" />
                   <ToggleRow
                     label="AI feedback"
                     description="Show AI-written suggestions for your resume on the dashboard."

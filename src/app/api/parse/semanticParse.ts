@@ -1,20 +1,12 @@
-import { OpenAI } from "openai";
+import { generateObject, type AiProvider } from "@/lib/ai";
 import ResumeSchema, { type Resume } from "./resumeSchema";
 import { normalizeParsedResume } from "@/lib/parse/normalize";
 import { z } from "zod";
-import { zodTextFormat } from "openai/helpers/zod.mjs";
 
 const ResultSchema = z.object({
   details: ResumeSchema.omit({ gamification: true }),
   missing: z.array(z.string())
 })
-
-const modelPricing = {
-  "gpt-4.1-mini": { input: .4, output: 1.6 },
-  "gpt-5-nano": { input: .05, output: .4 },
-  "gpt-5-mini": { input: .25, output: 2.0 }
-}
-const MODEL = "gpt-4.1-mini"
 
 
 const SYSTEM_PROMPT = `
@@ -66,36 +58,20 @@ Return:
 }
 `
 
-export const extractWithChatGPT = async (content: string) => {
+export const extractWithChatGPT = async (content: string, provider: AiProvider) => {
   if (!content.trim()) throw new Error("Resume text is empty")
   try {
-    const client = new OpenAI()
-    const result = await client.responses.parse({
-      model: MODEL,
-      input: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: `Extract the following resume: ${content}` },
-      ],
-      text: {
-        format: zodTextFormat(ResultSchema, "results")
-      },
+    const result = await generateObject({
+      provider,
+      system: SYSTEM_PROMPT,
+      prompt: `Extract the following resume: ${content}`,
+      schema: ResultSchema,
+      name: "results",
       temperature: 0,
     })
 
-    if (result.usage) {
-      const { input_tokens, output_tokens, total_tokens } = result.usage
-
-      console.log(`Total tokens generated: ${total_tokens}`)
-
-      const inputCost = (input_tokens / 1_000_000) * modelPricing[MODEL]["input"]
-      const outputCost = (output_tokens / 1_000_000) * modelPricing[MODEL]["output"]
-      const price = inputCost + outputCost
-
-      console.log(`Input tokens: ${input_tokens}, Output tokens: ${output_tokens}`)
-      console.log(`Total price of API call: $${price.toFixed(6)}`)
-    }
-
-    const parsed = result.output_parsed
+    // Token usage and cost are logged by the AI layer.
+    const parsed = result.data
     if (!parsed?.details) return parsed
 
     return { ...parsed, details: normalizeParsedResume(parsed.details as Resume) }

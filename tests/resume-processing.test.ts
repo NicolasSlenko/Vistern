@@ -62,7 +62,7 @@ test("empty, invalid, and unsupported files fail before semantic parsing", async
 })
 
 test("the AI parser rejects empty input without making a provider request", async () => {
-  await assert.rejects(extractWithChatGPT("  \n"), /Resume text is empty/)
+  await assert.rejects(extractWithChatGPT("  \n", "hipergator"), /Resume text is empty/)
 })
 
 test("confirmed profile merges preserve existing work without mutating inputs", () => {

@@ -33,6 +33,7 @@ import { ActionableInsights } from "@/components/actionable-insights"
 import { calculateResumeScoreDetailed, getScoreStatus, getScoreBreakdown, type ResumeScoreResult } from "@/lib/resumeScoring"
 import { useSignInLogger } from "@/hooks/use-signin-logger"
 import { XYZInlineFeedback, getXYZScoreColor } from "@/components/xyz-inline-feedback"
+import { AiProviderPicker } from "@/components/ai-provider-picker"
 
 // Mock data - replace with actual resume data later
 const mockStudentData = {
@@ -2259,6 +2260,7 @@ function FeedbackSheet({ children }: { children: React.ReactNode }) {
           <header className="flex min-h-[72px] flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-hairline px-4 py-[13px] sm:px-6">
             <h1 className="text-[17px] font-medium tracking-[-0.02em] text-ink sm:text-[18px]">Resume feedback</h1>
             <div className="flex items-center gap-2.5">
+              <AiProviderPicker />
               <Link href="/profile" className="white-button inline-flex h-10 items-center rounded-full px-4 text-[15px] font-medium tracking-[-0.01em]">
                 Master profile
               </Link>

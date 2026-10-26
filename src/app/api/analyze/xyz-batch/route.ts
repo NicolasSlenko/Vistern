@@ -1,6 +1,6 @@
-import { OpenAI } from "openai";
+import { generateObject } from "@/lib/ai";
+import { resolveAiProvider } from "@/lib/ai/resolve";
 import { z } from "zod";
-import { zodTextFormat } from "openai/helpers/zod.mjs";
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import type { Resume } from "@/app/api/parse/resumeSchema";
@@ -62,8 +62,6 @@ const BatchResultSchema = z.object({
     actionableInsights: z.array(InsightSchema).describe("Actionable insights: 5-8 resume tweaks + 8-12 career goals distributed across remaining academic years"),
 });
 
-const MODEL = "gpt-4.1-mini";
-
 export async function POST(request: NextRequest) {
     try {
         const { userId } = await auth();
@@ -76,8 +74,6 @@ export async function POST(request: NextRequest) {
         if (!resumeData) {
             return NextResponse.json({ error: "No resume data provided" }, { status: 400 });
         }
-
-        const client = new OpenAI();
 
         // Build a concise summary of all items to analyze
         const projectItems = (resumeData.projects || []).map((p, i) => {
@@ -191,19 +187,17 @@ ${projectItems.length > 0 ? "=== PROJECTS ===\n" + projectItems.join("\n\n") : "
 ${experienceItems.length > 0 ? "=== EXPERIENCE ===\n" + experienceItems.join("\n\n") : ""}
 `;
 
-        const result = await client.responses.parse({
-            model: MODEL,
-            input: [
-                { role: "system", content: "You are an expert resume consultant. Analyze each item for XYZ formula adherence, then synthesize findings into actionable insights. Be specific — reference actual content from the resume." },
-                { role: "user", content: prompt }
-            ],
-            text: {
-                format: zodTextFormat(BatchResultSchema, "batch_feedback")
-            },
+        const { provider } = await resolveAiProvider(userId);
+        const result = await generateObject({
+            provider,
+            system: "You are an expert resume consultant. Analyze each item for XYZ formula adherence, then synthesize findings into actionable insights. Be specific — reference actual content from the resume.",
+            prompt,
+            schema: BatchResultSchema,
+            name: "batch_feedback",
             temperature: 0.3,
         });
 
-        const feedbackData = result.output_parsed;
+        const feedbackData = result.data;
 
         // Transform to index-keyed maps for easy lookup
         const indexed = {
@@ -223,7 +217,7 @@ ${experienceItems.length > 0 ? "=== EXPERIENCE ===\n" + experienceItems.join("\n
 
         await saveFeedback(userId, indexed, resumeData);
 
-        return NextResponse.json({ success: true, data: indexed });
+        return NextResponse.json({ success: true, data: indexed, aiProvider: provider });
 
     } catch (error) {
         console.error("Error in batch XYZ analysis:", error);
