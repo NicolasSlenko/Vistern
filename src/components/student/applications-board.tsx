@@ -2,7 +2,20 @@
 
 import Link from "next/link"
 import { useState } from "react"
-import { ArrowRight, BriefcaseBusiness, LayoutGrid, List, Search } from "lucide-react"
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core"
+import { ArrowRight, BriefcaseBusiness, GripVertical, LayoutGrid, List, Search, Trash2 } from "lucide-react"
 import type { JobBucket, SavedJob } from "@/app/api/job-board/route"
 import { pill, SEGMENT, SEGMENTS } from "@/components/resume-studio/pills"
 import { useThumb } from "@/components/resume-studio/use-thumb"
@@ -51,13 +64,197 @@ function Notice({
   )
 }
 
+const stageLabel = (bucket: JobBucket) => stages.find((stage) => stage.id === bucket)?.label ?? bucket
+
+// Buttons and links inside a draggable card must not start a drag.
+const noDrag = { onPointerDown: (event: React.PointerEvent) => event.stopPropagation() }
+
+/** One saved role. The same face is used on the board, in the list and under the pointer while dragging. */
+function JobCard({
+  job,
+  onRemove,
+  removing,
+  showStage,
+  dragging,
+}: {
+  job: SavedJob
+  onRemove?: (id: string) => void
+  removing?: boolean
+  showStage?: boolean
+  dragging?: boolean
+}) {
+  const [confirming, setConfirming] = useState(false)
+  const applyUrl = safeApplyUrl(job.applyUrl)
+  return (
+    <article
+      className={`group flex flex-col gap-2.5 rounded-[14px] border bg-sheet p-3.5 shadow-card-rest transition-colors duration-150 ${
+        dragging ? "border-rule-strong shadow-lg" : "border-hairline hover:border-rule"
+      }`}
+    >
+      <div className="flex items-start gap-2.5">
+        <span
+          aria-hidden="true"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-fill text-[12px] font-medium text-brand"
+        >
+          {job.company.slice(0, 1).toUpperCase()}
+        </span>
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <h3 className="text-[14px] font-medium leading-snug tracking-[-0.01em] text-ink">{job.title}</h3>
+          <p className="truncate text-[12px] text-ink-2">
+            {job.company}{job.location ? ` · ${job.location}` : ""}
+          </p>
+        </div>
+        {onRemove && !confirming && (
+          <button
+            type="button"
+            {...noDrag}
+            onClick={() => setConfirming(true)}
+            aria-label={`Remove ${job.title} at ${job.company}`}
+            className="-mr-1 -mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-3 opacity-100 transition-colors duration-150 hover:bg-fill hover:text-alert sm:opacity-0 sm:focus-visible:opacity-100 sm:group-hover:opacity-100"
+          >
+            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+        )}
+      </div>
+
+      {confirming && onRemove ? (
+        <div role="group" aria-label="Confirm removal" className="flex items-center justify-between gap-2 border-t border-hairline pt-2.5">
+          <span className="whitespace-nowrap text-[12px] text-ink-2">Remove role?</span>
+          <span className="flex items-center gap-1.5">
+            <button
+              type="button"
+              {...noDrag}
+              onClick={() => setConfirming(false)}
+              className="h-7 rounded-full px-3 text-[12px] font-medium text-ink-2 transition-colors duration-150 hover:bg-fill hover:text-ink"
+            >
+              Keep
+            </button>
+            <button
+              type="button"
+              {...noDrag}
+              disabled={removing}
+              onClick={() => onRemove(job.id)}
+              className="h-7 rounded-full bg-alert px-3 text-[12px] font-medium text-white transition-[filter] duration-150 hover:brightness-110 disabled:opacity-50"
+            >
+              Remove
+            </button>
+          </span>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-hairline pt-2.5 text-[12px]">
+          {showStage && (
+            <span className="rounded-full bg-fill px-2 py-0.5 font-medium text-ink-2">{stageLabel(job.bucket)}</span>
+          )}
+          {job.matchScore > 0 && (
+            <span className="rounded-full bg-fill px-2 py-0.5 font-medium tabular-nums text-brand">
+              {Math.round(job.matchScore)}% match
+            </span>
+          )}
+          <span className="text-ink-3">Saved {when(job.savedAt)}</span>
+          {applyUrl && (
+            <a
+              href={applyUrl}
+              {...noDrag}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-auto inline-flex items-center gap-1 font-medium text-brand underline-offset-4 hover:underline"
+            >
+              Listing <ArrowRight className="h-3 w-3" aria-hidden="true" />
+            </a>
+          )}
+        </div>
+      )}
+    </article>
+  )
+}
+
+function DraggableJob({ job, disabled, ...rest }: { job: SavedJob; disabled: boolean; onRemove: (id: string) => void; removing: boolean }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: job.id, disabled })
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      aria-label={`${job.title} at ${job.company}. Press space to pick up, arrow keys to move between stages.`}
+      className={`relative touch-manipulation rounded-[14px] outline-none focus-visible:ring-2 focus-visible:ring-brand/50 ${
+        disabled ? "" : "cursor-grab active:cursor-grabbing"
+      } ${isDragging ? "opacity-40" : ""}`}
+    >
+      <GripVertical
+        aria-hidden="true"
+        className="pointer-events-none absolute left-0.5 top-1/2 hidden h-3.5 w-3.5 -translate-y-1/2 text-ink-3 opacity-0 transition-opacity group-hover:opacity-60 sm:block"
+      />
+      <JobCard job={job} {...rest} />
+    </div>
+  )
+}
+
+function StageColumn({ stage, count, children }: { stage: { id: JobBucket; label: string }; count: number; children: React.ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id: stage.id })
+  return (
+    <section className="flex w-[268px] shrink-0 flex-col gap-3" aria-label={`${stage.label}, ${count} ${count === 1 ? "role" : "roles"}`}>
+      <header className="flex items-baseline justify-between gap-2 border-b border-hairline pb-2">
+        <h2 className="label-mono text-ink-2">{stage.label}</h2>
+        <span className="text-[13px] tabular-nums text-ink-3">{count}</span>
+      </header>
+      <div
+        ref={setNodeRef}
+        className={`flex min-h-[120px] flex-col gap-2.5 rounded-[16px] p-1.5 transition-colors duration-150 ${
+          isOver ? "bg-fill outline outline-1 outline-dashed outline-rule-strong" : "bg-transparent"
+        }`}
+      >
+        {children}
+      </div>
+    </section>
+  )
+}
+
 export function ApplicationsBoard({ initialJobs }: { initialJobs: SavedJob[] | null }) {
   const [jobs, setJobs] = useState(initialJobs || [])
   const [view, setView] = useState<"board" | "table">("board")
   const [savingId, setSavingId] = useState<string | null>(null)
   const [error, setError] = useState("")
+  const [removingId, setRemovingId] = useState<string | null>(null)
+  const [activeId, setActiveId] = useState<string | null>(null)
   const inProgress = jobs.filter((job) => ["applied", "interviewing"].includes(job.bucket)).length
   const thumb = useThumb(view)
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
+    useSensor(KeyboardSensor),
+  )
+  const activeJob = jobs.find((job) => job.id === activeId) ?? null
+
+  function onDragStart(event: DragStartEvent) {
+    setActiveId(String(event.active.id))
+  }
+
+  function onDragEnd(event: DragEndEvent) {
+    setActiveId(null)
+    const id = String(event.active.id)
+    const target = event.over?.id as JobBucket | undefined
+    const job = jobs.find((item) => item.id === id)
+    if (job && target && stages.some((stage) => stage.id === target) && job.bucket !== target) moveJob(id, target)
+  }
+
+  async function removeJob(id: string) {
+    if (removingId) return
+    const previous = jobs
+    setRemovingId(id)
+    setError("")
+    setJobs((current) => current.filter((job) => job.id !== id))
+    try {
+      const response = await fetch(`/api/job-board?id=${encodeURIComponent(id)}`, { method: "DELETE" })
+      const result = response.ok ? await response.json() : null
+      if (!result?.success) throw new Error("The role could not be removed. Try again.")
+      setJobs(result.data)
+    } catch (reason) {
+      setJobs(previous)
+      setError(reason instanceof Error ? reason.message : "The role could not be removed.")
+    } finally {
+      setRemovingId(null)
+    }
+  }
 
   async function moveJob(id: string, bucket: JobBucket) {
     if (savingId) return
@@ -90,63 +287,6 @@ export function ApplicationsBoard({ initialJobs }: { initialJobs: SavedJob[] | n
     { label: "Offers", value: jobs.filter((job) => job.bucket === "offer").length },
   ]
 
-  const card = (job: SavedJob) => {
-    const applyUrl = safeApplyUrl(job.applyUrl)
-    return (
-      <article
-        key={job.id}
-        className="flex flex-col gap-3 rounded-[18px] border border-hairline bg-sheet p-4 shadow-card-rest transition-colors duration-150 hover:border-rule"
-      >
-        <div className="flex items-start gap-3">
-          <span
-            aria-hidden="true"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-fill text-[14px] font-medium text-brand"
-          >
-            {job.company.slice(0, 1).toUpperCase()}
-          </span>
-          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <h3 className="text-[15px] font-medium leading-snug tracking-[-0.01em] text-ink">{job.title}</h3>
-            <p className="truncate text-[13px] text-ink-2">
-              {job.company}{job.location ? ` · ${job.location}` : ""}
-            </p>
-            <p className="text-[12px] text-ink-3">Saved {when(job.savedAt)}</p>
-          </div>
-          {job.matchScore > 0 && (
-            <p className="flex shrink-0 items-baseline gap-1">
-              <span className="font-serif text-[32px] leading-[0.9] tracking-[-0.04em] tabular-nums text-ink">
-                {Math.round(job.matchScore)}
-              </span>
-              <span className="label-mono text-ink-3">match</span>
-            </p>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-hairline pt-3">
-          <label className="flex items-center gap-2">
-            <span className="label-mono text-ink-3">Stage</span>
-            <select
-              value={job.bucket}
-              disabled={savingId === job.id}
-              onChange={(event) => moveJob(job.id, event.target.value as JobBucket)}
-              className="h-8 rounded-full border border-rule-strong bg-sheet px-2.5 text-[13px] text-ink transition-colors duration-150 hover:bg-fill disabled:opacity-50"
-            >
-              {stages.map((stage) => <option key={stage.id} value={stage.id}>{stage.label}</option>)}
-            </select>
-          </label>
-          {applyUrl && (
-            <a
-              href={applyUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-[13px] font-medium text-brand underline-offset-4 hover:underline"
-            >
-              Employer listing <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </a>
-          )}
-        </div>
-      </article>
-    )
-  }
-
   return (
     <div className="zip-scope desk desk-bright min-h-[calc(100vh-var(--chrome-top,82px))] p-2 pb-10 sm:p-5 xl:p-6">
       <div className="paper-frame">
@@ -165,7 +305,7 @@ export function ApplicationsBoard({ initialJobs }: { initialJobs: SavedJob[] | n
             <div className="mx-auto flex max-w-[1080px] flex-col gap-9">
               <div className="flex flex-col gap-2">
                 <p className="label-mono text-ink-2">Jobs</p>
-                <p className="max-w-[58ch] font-serif text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
+                <p className="max-w-[58ch] font-serif text-[26px] leading-[1.1] tracking-[-0.03em] text-ink sm:text-[30px]">
                   Saved roles and <em className="text-brand">where each one stands</em>
                 </p>
               </div>
@@ -174,10 +314,10 @@ export function ApplicationsBoard({ initialJobs }: { initialJobs: SavedJob[] | n
                 {summary.map((item) => (
                   <div
                     key={item.label}
-                    className="flex flex-col gap-2 rounded-[18px] border border-hairline bg-sheet p-5 shadow-card-rest"
+                    className="flex flex-col gap-1.5 rounded-[14px] border border-hairline bg-sheet px-4 py-3.5 shadow-card-rest"
                   >
                     <dt className="label-mono text-ink-2">{item.label}</dt>
-                    <dd className="font-serif text-[32px] leading-[0.9] tracking-[-0.04em] tabular-nums text-ink">
+                    <dd className="font-serif text-[26px] leading-[0.95] tracking-[-0.04em] tabular-nums text-ink">
                       {item.value}
                     </dd>
                   </div>
@@ -193,7 +333,7 @@ export function ApplicationsBoard({ initialJobs }: { initialJobs: SavedJob[] | n
               ) : jobs.length === 0 ? (
                 <Notice title="Keep your search in one place">
                   <p className="max-w-[52ch] text-[15px] leading-relaxed text-ink-2">
-                    Save a role from the job board to start tracking it here. You can move it through the stages as your application
+                    Save a role from the job board to start tracking it here. Drag it through the stages as your application
                     progresses.
                   </p>
                   <div className="flex flex-wrap items-center gap-3 pt-1">
@@ -250,31 +390,50 @@ export function ApplicationsBoard({ initialJobs }: { initialJobs: SavedJob[] | n
                       aria-label="Application board"
                       className="overflow-x-auto pb-2 focus-visible:outline-none"
                     >
-                      <div className="flex min-w-max items-start gap-4">
-                        {stages.map((stage) => {
-                          const items = jobs.filter((job) => job.bucket === stage.id)
-                          return (
-                            <section key={stage.id} className="flex w-[274px] shrink-0 flex-col gap-3">
-                              <header className="flex items-baseline justify-between gap-2 border-b border-hairline pb-2">
-                                <h2 className="label-mono text-ink-2">{stage.label}</h2>
-                                <span className="text-[13px] tabular-nums text-ink-3">{items.length}</span>
-                              </header>
-                              <div className="flex flex-col gap-3">
-                                {items.length ? items.map(card) : (
-                                  <p className="rounded-[12px] border border-dashed border-rule px-3 py-7 text-center text-[13px] text-ink-3">
-                                    No roles here yet
+                      <DndContext
+                        sensors={sensors}
+                        onDragStart={onDragStart}
+                        onDragEnd={onDragEnd}
+                        onDragCancel={() => setActiveId(null)}
+                      >
+                        <div className="flex min-w-max items-start gap-4">
+                          {stages.map((stage) => {
+                            const items = jobs.filter((job) => job.bucket === stage.id)
+                            return (
+                              <StageColumn key={stage.id} stage={stage} count={items.length}>
+                                {items.map((job) => (
+                                  <DraggableJob
+                                    key={job.id}
+                                    job={job}
+                                    disabled={savingId !== null}
+                                    onRemove={removeJob}
+                                    removing={removingId === job.id}
+                                  />
+                                ))}
+                                {items.length === 0 && (
+                                  <p className="rounded-[12px] border border-dashed border-rule px-3 py-6 text-center text-[13px] text-ink-3">
+                                    Drop a role here
                                   </p>
                                 )}
-                              </div>
-                            </section>
-                          )
-                        })}
-                      </div>
+                              </StageColumn>
+                            )
+                          })}
+                        </div>
+                        <DragOverlay dropAnimation={{ duration: 160 }}>
+                          {activeJob ? (
+                            <div className="w-[268px] cursor-grabbing rotate-1">
+                              <JobCard job={activeJob} dragging />
+                            </div>
+                          ) : null}
+                        </DragOverlay>
+                      </DndContext>
                     </div>
                   ) : (
                     <section className="flex flex-col gap-3">
                       <h2 className="sr-only">All saved roles</h2>
-                      {jobs.map(card)}
+                      {jobs.map((job) => (
+                        <JobCard key={job.id} job={job} showStage onRemove={removeJob} removing={removingId === job.id} />
+                      ))}
                     </section>
                   )}
                 </div>
