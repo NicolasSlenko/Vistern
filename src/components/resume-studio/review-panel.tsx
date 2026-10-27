@@ -17,7 +17,6 @@ import {
   type XyzFeedback,
 } from "./review-notes"
 import type { SectionRef } from "./sections"
-import { useDismissedNotes } from "./use-dismissed-notes"
 
 /**
  * What the AI found, in the left column. The score at the top with its
@@ -225,15 +224,28 @@ export function ReviewPanel({
         <h2 id={heading} className="label-mono text-ink-2">
           AI review
         </h2>
-        <p className="font-serif text-[30px] leading-[1.02] tracking-[-0.03em] text-ink">
-          What a recruiter <em className="text-brand">notices</em>
-        </p>
-        <p className="text-[13px] leading-snug text-ink-2">
-          An AI reads every bullet the way a recruiter skims it, scores each role and project, and says what to rewrite.
-        </p>
-        <button type="button" onClick={onAsk} className="ai-ask glass mt-1">
-          Get AI notes
-        </button>
+        {hidden > 0 ? (
+          <>
+            <p className="font-serif text-[30px] leading-[1.02] tracking-[-0.03em] text-ink">
+              All notes <em className="text-brand">marked done.</em>
+            </p>
+            <button type="button" onClick={onRestore} className="self-start text-[13px] text-ink-3 hover:text-ink">
+              {hidden} marked done · show {hidden === 1 ? "it" : "them"} again
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="font-serif text-[30px] leading-[1.02] tracking-[-0.03em] text-ink">
+              What a recruiter <em className="text-brand">notices</em>
+            </p>
+            <p className="text-[13px] leading-snug text-ink-2">
+              An AI reads every bullet the way a recruiter skims it, scores each role and project, and says what to rewrite.
+            </p>
+            <button type="button" onClick={onAsk} className="ai-ask glass mt-1">
+              Get AI notes
+            </button>
+          </>
+        )}
       </section>
     )
   }
