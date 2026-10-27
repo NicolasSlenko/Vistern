@@ -93,7 +93,7 @@ function entryNotes(
   if (!feedback) return []
   return Object.entries(feedback).flatMap(([key, entry]) => {
     const index = Number(key)
-    if (!Number.isInteger(index) || !entry || !Array.isArray(entry.improvements)) return []
+    if (!Number.isInteger(index) || index < 0 || index >= names.length || !entry || !Array.isArray(entry.improvements)) return []
     const tier = scoreTier(Number(entry.score) || 0)
     return entry.improvements.map((improvement, at) => ({
       id: `${section}-${index}-${at}`,
@@ -107,9 +107,18 @@ function entryNotes(
   })
 }
 
+function hasReviewableContent(value: unknown): boolean {
+  if (typeof value === "string") return value.trim().length > 0
+  if (Array.isArray(value)) return value.some(hasReviewableContent)
+  if (value && typeof value === "object") return Object.values(value).some(hasReviewableContent)
+  return false
+}
+
 /** Every note the AI has about this resume, must-fix first. */
 export function reviewNotes(resume: Resume | null, feedback: XyzFeedback | null): ReviewNote[] {
-  if (!feedback) return []
+  if (!resume || !feedback) return []
+  const { gamification: _gamification, ...profileContent } = resume
+  if (!hasReviewableContent(profileContent)) return []
   const notes = [
     ...entryNotes("experience", feedback.experience, (resume?.experience ?? []).map((item) => item.company || item.position)),
     ...entryNotes("projects", feedback.projects, (resume?.projects ?? []).map((item) => item.name)),
