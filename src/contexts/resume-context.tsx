@@ -107,7 +107,13 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
   const loadResumeData = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch("/api/resume")
+      // Fire all three requests in parallel — they are independent, and running
+      // them serially kept the dashboard on its loading skeleton for 3 round trips.
+      const [response, submissionsResponse, feedbackResponse] = await Promise.all([
+        fetch("/api/resume"),
+        fetch("/api/resume-submissions").catch(() => null),
+        fetch("/api/analyze/xyz-batch").catch(() => null),
+      ])
       if (response.status === 401) {
         setResumeData(null)
         return
@@ -122,50 +128,31 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
 
       if (result.success && result.data) {
         setResumeData(result.data)
-        console.log("Resume data loaded from cloud storage:", result.data)
       } else {
         setResumeData(null)
-        console.log("No resume data found for this user")
       }
 
-      // Also fetch the most recent submission to get filename
-      const submissionsResponse = await fetch("/api/resume-submissions")
-      if (submissionsResponse.ok) {
+      // Most recent submission's filename (sorted by date desc)
+      if (submissionsResponse?.ok) {
         const submissionsResult = await submissionsResponse.json()
         if (submissionsResult.success && submissionsResult.data?.length > 0) {
-          // Get the most recent submission (first one since sorted by date desc)
           setCurrentFileName(submissionsResult.data[0].fileName)
         }
       }
 
-      // Load cached XYZ feedback
-      try {
-        const feedbackResponse = await fetch("/api/analyze/xyz-batch")
-        if (feedbackResponse.ok) {
-          const feedbackResult = await feedbackResponse.json()
-          if (feedbackResult.success && feedbackResult.data) {
-            setXyzFeedback(feedbackResult.data)
-            if (feedbackResult.data.actionableInsights) {
-              setActionableInsights(feedbackResult.data.actionableInsights)
-            } else {
-              setActionableInsights([])
-            }
-          } else {
-            setXyzFeedback(null)
-            setActionableInsights([])
-            if (result.success && result.data) {
-              generateXyzFeedback(result.data)
-            }
-          }
-        } else {
-          setXyzFeedback(null)
-          setActionableInsights([])
-          if (result.success && result.data) {
-            generateXyzFeedback(result.data)
-          }
+      // Load cached XYZ feedback; auto-generate if none is cached
+      let feedbackResult: { success?: boolean; data?: XYZFeedbackData } | null = null
+      if (feedbackResponse?.ok) {
+        try {
+          feedbackResult = await feedbackResponse.json()
+        } catch {
+          feedbackResult = null
         }
-      } catch {
-        // No cached feedback found — auto-generate if resume data exists
+      }
+      if (feedbackResult?.success && feedbackResult.data) {
+        setXyzFeedback(feedbackResult.data)
+        setActionableInsights(feedbackResult.data.actionableInsights ?? [])
+      } else {
         setXyzFeedback(null)
         setActionableInsights([])
         if (result.success && result.data) {
