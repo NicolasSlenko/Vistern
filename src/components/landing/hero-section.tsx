@@ -1,38 +1,59 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useEffect, useRef } from "react";
+import { motion, useInView } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
+
+// Plays the background video only while it is on screen so it stops decoding during scroll
+function HeroVideo() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const inView = useInView(containerRef);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (inView) {
+      video.play().catch(() => {});
+    } else {
+      video.pause();
+    }
+  }, [inView]);
+
+  return (
+    <div ref={containerRef} className="w-full h-full">
+      <video
+        ref={videoRef}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        className="w-full h-full object-cover opacity-100"
+      >
+        <source src="/videos/tree-growth-gen.mp4" type="video/mp4" />
+      </video>
+    </div>
+  );
+}
 
 export function HeroSection({ actionContent }: { actionContent?: React.ReactNode }) {
   return (
     <section className="relative flex flex-col items-center justify-center text-center mt-4 pt-16 pb-16 min-h-[75vh]">
       {/* Background Video acting as an intro sequence */}
       <div className="absolute inset-0 w-full h-full overflow-hidden z-0 rounded-3xl border border-primary/20 shadow-[0_0_50px_-12px_rgba(var(--primary),0.3)]">
-        <div
-          className="w-full h-full"
-          dangerouslySetInnerHTML={{
-            __html: `
-              <video 
-                autoplay 
-                muted 
-                loop 
-                playsinline 
-                preload="auto" 
-                class="w-full h-full object-cover opacity-100"
-              >
-                <source src="/videos/tree-growth-gen.mp4" type="video/mp4" />
-              </video>
-            `
-          }}
-        />
+        <HeroVideo />
         {/* Lighter overlay to ensure the video remains visible while preserving textual readability */}
         <div className="absolute inset-0 bg-background/40 pointer-events-none" />
       </div>
 
       {/* Background Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] -z-10 pointer-events-none opacity-50" />
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full -z-10 pointer-events-none opacity-50"
+        style={{ background: "radial-gradient(circle, color-mix(in oklch, var(--primary) 20%, transparent), transparent 70%)" }}
+      />
 
       <motion.div
         initial={{ opacity: 0, y: 30 }}
