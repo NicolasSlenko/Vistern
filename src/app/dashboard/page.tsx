@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -986,21 +986,24 @@ function OverallResumeScore({
 }: ResumeScoreProps) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
 
-  // Inject matched courses into resumeData for scoring so manual course toggles are reflected
-  const resumeDataToScore = resumeData ? JSON.parse(JSON.stringify(resumeData)) : null;
-  if (resumeDataToScore && matchedCourses.length > 0) {
-    if (!resumeDataToScore.education) resumeDataToScore.education = [];
-    if (resumeDataToScore.education.length === 0) resumeDataToScore.education.push({ achievements: [] });
-    if (!resumeDataToScore.education[0].achievements) resumeDataToScore.education[0].achievements = [];
-    
-    // Add courses to achievements so analyzeCourseworkQuality can see them
-    matchedCourses.forEach(course => {
-      resumeDataToScore.education[0].achievements.push(`Coursework: ${course}`);
-    });
-  }
+  // Scoring deep-clones the resume and runs every quality heuristic, so only redo it
+  // when the inputs change — not on every hover over a breakdown row.
+  const scoreResult: ResumeScoreResult | null = useMemo(() => {
+    if (!resumeData) return null
+    // Inject matched courses into resumeData for scoring so manual course toggles are reflected
+    const resumeDataToScore = JSON.parse(JSON.stringify(resumeData))
+    if (matchedCourses.length > 0) {
+      if (!resumeDataToScore.education) resumeDataToScore.education = [];
+      if (resumeDataToScore.education.length === 0) resumeDataToScore.education.push({ achievements: [] });
+      if (!resumeDataToScore.education[0].achievements) resumeDataToScore.education[0].achievements = [];
 
-  // Use new scoring system if resumeData is available
-  const scoreResult: ResumeScoreResult | null = resumeDataToScore ? calculateResumeScoreDetailed(resumeDataToScore, xyzFeedback) : null
+      // Add courses to achievements so analyzeCourseworkQuality can see them
+      matchedCourses.forEach(course => {
+        resumeDataToScore.education[0].achievements.push(`Coursework: ${course}`);
+      });
+    }
+    return calculateResumeScoreDetailed(resumeDataToScore, xyzFeedback)
+  }, [resumeData, matchedCourses, xyzFeedback])
 
   // Fall back to old scoring if no resumeData
   const totalScore = scoreResult?.totalScore ?? 0
@@ -1926,7 +1929,7 @@ export default function DashboardPage() {
 
   useSignInLogger()
 
-  const simpleBreakdown = resumeData ? getScoreBreakdown(resumeData) : null
+  const simpleBreakdown = useMemo(() => (resumeData ? getScoreBreakdown(resumeData) : null), [resumeData])
 
   useEffect(() => {
     let isMounted = true

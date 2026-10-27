@@ -65,10 +65,12 @@ async function currentResume(userId: string) {
 
   // One-time compatibility read while old users' structured resume data is moved.
   if (!process.env.AWS_BUCKET_NAME || !process.env.IAM_AWS_ACCESS_KEY || !process.env.IAM_AWS_SECRET_ACCESS_KEY) return null;
-  const legacy = await getJsonFromS3<Resume>(`uploads/${userId}/resume-data.json`);
+  const [legacy, xyzFeedback] = await Promise.all([
+    getJsonFromS3<Resume>(`uploads/${userId}/resume-data.json`),
+    getJsonFromS3<any>(`uploads/${userId}/xyz-feedback.json`),
+  ]);
   if (!legacy) return null;
   const resume = normalizeProfileData(legacy);
-  const xyzFeedback = await getJsonFromS3<any>(`uploads/${userId}/xyz-feedback.json`);
   const score = calculateResumeScoreDetailed(resume, xyzFeedback).totalScore;
 
   // Move the structured legacy snapshot on first read. Keep its source S3 JSON
