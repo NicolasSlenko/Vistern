@@ -1,10 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { getJsonFromS3 } from "@/lib/aws/s3";
+import { deleteFromS3, getJsonFromS3 } from "@/lib/aws/s3";
 import { createClerkSupabaseServerClient } from "@/lib/supabase/server";
 import { hasImportedLegacyDataset, markLegacyDatasetImported } from "@/lib/supabase/legacy-import";
 import { normalizeProfileData, profileItemsFromResume, resumeFromProfileItems } from "@/lib/profile/profile-data";
 import type { Json } from "@/lib/supabase/database.types";
+import { getResumeObject } from "@/app/api/parse/resumeSchema";
 
 async function readLegacyMasterProfile(userId: string) {
   const saved = await getJsonFromS3<unknown>(`uploads/${userId}/master-profile.json`);
@@ -124,5 +125,57 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Error saving master profile:", error);
     return NextResponse.json({ success: false, error: "Failed to save master profile" }, { status: 500 });
+  }
+}
+
+
+export async function DELETE(request: NextRequest) {
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+
+  const body = await request.json().catch(() => null);
+  if (body?.confirmation !== "CLEAR") {
+    return NextResponse.json({ success: false, error: "Type CLEAR to confirm." }, { status: 400 });
+  }
+
+  try {
+    const supabase = await createClerkSupabaseServerClient();
+    const { data: profile, error: profileError } = await supabase
+      .from("student_profiles")
+      .select("id")
+      .eq("clerk_user_id", userId)
+      .maybeSingle();
+    if (profileError) throw profileError;
+
+    // An old S3 snapshot must not refill the profile on its next GET.
+    await deleteFromS3(`uploads/${userId}/master-profile.json`);
+
+    if (profile) {
+      for (const table of ["resume_document_items", "profile_item_sources", "profile_import_proposals", "profile_items"] as const) {
+        const { error } = await supabase.from(table).delete().eq("clerk_user_id", userId).eq("profile_id", profile.id);
+        if (error) throw error;
+      }
+
+      const empty = getResumeObject();
+      const { error: updateError } = await supabase
+        .from("student_profiles")
+        .update({ basics: empty.basics as unknown as Json, updated_at: new Date().toISOString() })
+        .eq("id", profile.id)
+        .eq("clerk_user_id", userId);
+      if (updateError) throw updateError;
+
+      const { count, error: verifyError } = await supabase
+        .from("profile_items")
+        .select("id", { count: "exact", head: true })
+        .eq("profile_id", profile.id)
+        .eq("clerk_user_id", userId);
+      if (verifyError || count !== 0) throw verifyError ?? new Error("Profile items remain");
+    }
+
+    await markLegacyDatasetImported(supabase, userId, "profile", 0);
+    return NextResponse.json({ success: true, data: getResumeObject() });
+  } catch (error) {
+    console.error("Error clearing master profile:", error);
+    return NextResponse.json({ success: false, error: "Could not clear your profile. Please try again." }, { status: 500 });
   }
 }
