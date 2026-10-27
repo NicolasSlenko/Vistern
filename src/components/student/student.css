@@ -551,9 +551,13 @@
 :where(.student-app) p {
   color: var(--student-muted);
 }
-:where(.student-app) a {
-  color: inherit;
-  text-decoration: none;
+/* In the base layer, like Tailwind's own reset: unlayered, this beat every
+   utility, so a link styled as a button (brand-button, text-white) lost its colour. */
+@layer base {
+  :where(.student-app) a {
+    color: inherit;
+    text-decoration: none;
+  }
 }
 :where(.student-app) svg {
   flex-shrink: 0;
