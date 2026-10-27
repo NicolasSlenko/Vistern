@@ -30,7 +30,7 @@
 }
 
 /* The eyebrows are the theme's one label style. */
-.public-home :is(.public-eyebrow, .public-preview-label, .public-preview-kicker, .public-section-heading > span, .public-context-copy > span) {
+.public-home :is(.public-eyebrow) {
   font-family: var(--font-geist-mono), ui-monospace, monospace;
   font-size: 11px;
   font-weight: 400;
@@ -49,46 +49,6 @@
   backdrop-filter: blur(20px) saturate(1.5);
 }
 
-/* The hero on the sky, with the sheet's own cards floating over it. */
-.public-home .public-hero {
-  position: relative;
-  isolation: isolate;
-  border-radius: 28px;
-  padding-inline: 40px;
-  margin-top: 18px;
-  overflow: clip;
-}
-.public-home .public-hero::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  background-color: var(--color-sky-low);
-  background-image:
-    /* A pale wash behind the copy so dark text clears the sky at every point. */
-    radial-gradient(85% 100% at 14% 52%, rgb(255 255 255 / 0.8), rgb(255 255 255 / 0.5) 48%, transparent 78%),
-    linear-gradient(rgb(255 255 255 / 0.06), rgb(255 255 255 / 0.06)),
-    radial-gradient(120% 85% at 78% 6%, var(--color-sky-warm), transparent 60%),
-    radial-gradient(140% 100% at 12% 0%, var(--color-sky-high), transparent 62%),
-    radial-gradient(130% 110% at 50% 115%, var(--color-sky-deep), transparent 70%),
-    linear-gradient(170deg, var(--color-sky-high), var(--color-sky-low));
-  background-size: cover;
-}
-/* A fine grid of dots over the sky, as the app's desk carries. */
-.public-home .public-hero::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  border-radius: inherit;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect x='1' y='1' width='2' height='2' fill='%23fff' fill-opacity='.3'/%3E%3C/svg%3E");
-  background-size: 4px 4px;
-  /* The dots thin out under the copy and stay on the sky around the sheet. */
-  -webkit-mask-image: linear-gradient(90deg, transparent 5%, #000 62%);
-  mask-image: linear-gradient(90deg, transparent 5%, #000 62%);
-}
 .public-home .public-hero-description,
 .public-home .public-hero-note {
   color: var(--color-ink-2);
@@ -96,50 +56,6 @@
 .public-home .public-hero-note svg {
   color: var(--color-brand);
 }
-@media (max-width: 980px) {
-  /* One column: the copy is the top of the hero, so the wash sits there. */
-  .public-home .public-hero::before {
-    background-image:
-      radial-gradient(120% 60% at 40% 30%, rgb(255 255 255 / 0.8), rgb(255 255 255 / 0.45) 55%, transparent 85%),
-      linear-gradient(rgb(255 255 255 / 0.06), rgb(255 255 255 / 0.06)),
-      radial-gradient(120% 85% at 78% 6%, var(--color-sky-warm), transparent 60%),
-      radial-gradient(140% 100% at 12% 0%, var(--color-sky-high), transparent 62%),
-      radial-gradient(130% 110% at 50% 115%, var(--color-sky-deep), transparent 70%),
-      linear-gradient(170deg, var(--color-sky-high), var(--color-sky-low));
-  }
-  .public-home .public-hero::after {
-    -webkit-mask-image: linear-gradient(180deg, transparent 5%, #000 60%);
-    mask-image: linear-gradient(180deg, transparent 5%, #000 60%);
-  }
-}
-@media (max-width: 720px) {
-  .public-home .public-hero {
-    border-radius: 20px;
-    padding-inline: 20px;
-  }
-}
-
-/* The mocked-up plan is a sheet, like the real one. */
-.public-home .public-preview {
-  border: 0;
-  border-radius: 24px;
-  background: var(--color-sheet);
-  box-shadow:
-    0 1px 2px rgb(10 24 17 / 0.06),
-    0 18px 44px -20px rgb(10 24 17 / 0.45),
-    0 0 0 12px rgb(255 255 255 / 0.26);
-}
-.public-home .public-floating-note {
-  border: 0;
-  border-radius: 16px;
-  background: color-mix(in oklab, var(--color-sheet) 86%, transparent);
-  -webkit-backdrop-filter: blur(18px) saturate(1.4);
-  backdrop-filter: blur(18px) saturate(1.4);
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 0.6),
-    0 10px 28px -14px rgb(10 24 17 / 0.4);
-}
-
 /* Buttons take the theme's two looks. */
 .public-home .public-button {
   border: 0;
@@ -165,14 +81,6 @@
     0 3px 8px -3px rgb(10 24 17 / 0.14);
 }
 
-/* Cards on the page: the theme's hairline and resting shadow. */
-.public-home :is(.public-step, .public-context-art) {
-  border: 1px solid var(--color-hairline);
-  border-radius: 18px;
-  background: var(--color-sheet);
-  box-shadow: var(--shadow-card-rest);
-}
-
 .public-home a:focus-visible {
   outline: 2px solid color-mix(in oklab, var(--color-brand) 55%, transparent);
   outline-offset: 3px;
@@ -184,37 +92,12 @@
 .dark .public-home .public-nav a, .dark .public-home .public-login { color: #c3d0c7; }
 .dark .public-home .public-nav a:hover, .dark .public-home .public-login:hover { color: var(--public-green); }
 .dark .public-home .public-brand-mark { color: #102016; background: #a4dfb4; }
-.dark .public-home .public-hero::before { background: radial-gradient(100% 100% at 85% 12%, #24362b 0%, #17221c 48%, #111a16 100%); }
-.dark .public-home .public-hero::after { opacity: 0; }
-.dark .public-home .public-hero h1, .dark .public-home .public-preview h2 { color: #f2f6f2; }
-.dark .public-home :is(.public-eyebrow, .public-secondary-link, .public-section-heading > span, .public-context-copy > span, .public-context-copy a) { color: var(--public-green); }
+.dark .public-home :is(.public-eyebrow, .public-secondary-link) { color: var(--public-green); }
 .dark .public-home .public-eyebrow-dot { background: #a4dfb4; box-shadow: 0 0 0 5px rgb(164 223 180 / .15); }
-.dark .public-home :is(.public-hero-note, .public-preview-body > p) { color: #b4c2b8; }
+.dark .public-home :is(.public-hero-note) { color: #b4c2b8; }
 .dark .public-home .public-hero-note svg { color: #a4dfb4; }
 .dark .public-home .public-button { color: #102016; }
 .dark .public-home .public-button-light { color: #102016; background-image: linear-gradient(180deg, #f4f9f4, #dfecdf); box-shadow: none; }
-.dark .public-home .public-preview-orbit-one { background: #2b3c31; }
-.dark .public-home .public-preview-orbit-two { border-color: #5c7763; }
-.dark .public-home .public-preview { background: #19231d; box-shadow: 0 18px 44px -20px rgb(0 0 0 / .8), 0 0 0 10px rgb(213 242 219 / .1); }
-.dark .public-home .public-preview-top { border-color: #354139; color: #b8c8bd; }
-.dark .public-home .public-preview-logo { color: #a4dfb4; background: #2b4031; }
-.dark .public-home .public-preview-dots i { background: #8da795; }
-.dark .public-home :is(.public-preview-kicker, .public-preview-label, .public-preview-section-label) { color: #9fceb0; }
-.dark .public-home .public-preview-focus { border-color: #48664e; color: #a4dfb4; background: #26382c; }
-.dark .public-home .public-preview-focus-icon { color: #a4dfb4; background: #1b2920; }
-.dark .public-home .public-preview-focus strong { color: #eef5ef; }
-.dark .public-home .public-preview-focus small { color: #b8cbbd; }
-.dark .public-home .public-preview-row { border-color: #354139; color: #dce8de; }
-.dark .public-home .public-preview-row > span:last-child { color: #a8c8ae; }
-.dark .public-home .public-preview-check { color: #b7ebc3; background: #2b4a34; }
-.dark .public-home .public-preview-open { border-color: #a6c5ae; }
-.dark .public-home .public-floating-note { background: #25332a; box-shadow: inset 0 0 0 1px #46604c, 0 10px 28px -14px rgb(0 0 0 / .7); }
-.dark .public-home .public-floating-note > span { color: #b2e8bf; background: #324d39; }
-.dark .public-home .public-floating-note small { color: #bdd0c1; }
-.dark .public-home .public-steps { border-color: #27332b; background: #111713; }
-.dark .public-home .public-step-top span { color: #a8bcae; }
-.dark .public-home .public-context-art { background: #19251d; }
-.dark .public-home .public-context-circle { border-color: #527059; color: #b5e7c0; background: #26392b; box-shadow: 0 14px 32px rgb(0 0 0 / .3); }
 .dark .public-home .public-context-chip { border-color: #45604a; color: #e3f0e5; background: #2c4032; box-shadow: none; }
 .dark .public-home .public-closing { background: #193422; }
 .dark .public-home .public-closing p { color: #d5e8d9; }
