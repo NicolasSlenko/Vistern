@@ -12,7 +12,7 @@ export function StudentLoadError({ reset }: { reset: () => void }) {
         <button type="button" className="student-button" onClick={reset}>
           Try again
         </button>
-        <Link className="student-text-link" href="/dashboard">
+        <Link className="student-text-link" href="/home">
           Open resume insights
         </Link>
       </section>

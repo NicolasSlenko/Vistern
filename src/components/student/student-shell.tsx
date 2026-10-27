@@ -48,7 +48,6 @@ const links = [
 const resumePages = [
   { href: "/profile", label: "Master profile" },
   { href: "/resumes", label: "My resumes" },
-  { href: "/dashboard", label: "Resume feedback" },
   { href: "/upload", label: "Upload resume" },
 ]
 const careerPages = [

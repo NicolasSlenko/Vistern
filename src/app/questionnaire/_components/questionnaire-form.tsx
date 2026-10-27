@@ -159,10 +159,10 @@ export default function QuestionnaireForm({ initialData }: QuestionnaireFormProp
             </div>
             <div className="flex gap-2">
               <Button
-                onClick={() => router.push("/dashboard")}
+                onClick={() => router.push("/home")}
                 className="flex-1"
               >
-                View Dashboard
+                Go to Home
               </Button>
               <Button
                 onClick={() => {

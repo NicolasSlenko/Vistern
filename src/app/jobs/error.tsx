@@ -23,7 +23,7 @@ export default function JobsError({ reset }: { reset: () => void }) {
                   <button type="button" className={pill("brand")} onClick={reset}>
                     Try again
                   </button>
-                  <Link href="/dashboard" className={pill("white")}>
+                  <Link href="/home" className={pill("white")}>
                     Open resume insights
                   </Link>
                 </div>

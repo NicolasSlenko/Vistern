@@ -329,7 +329,7 @@ export default function SettingsPage() {
                 <Panel title="Preferences">
                   <ToggleRow
                     label="AI feedback"
-                    description="Show AI-written suggestions for your resume on the dashboard."
+                    description="Show AI-written suggestions for your resume."
                     checked={showAiFeedback}
                     onChange={handleAiFeedbackChange}
                   />
