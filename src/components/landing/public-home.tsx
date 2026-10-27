@@ -9,6 +9,7 @@ import {
   Search,
   Sprout,
 } from "lucide-react"
+import { LandingThemeToggle } from "./landing-theme-toggle"
 import "./public-home.css"
 // The paper theme, loaded after so its variables and chrome win.
 import "./public-home-theme.css"
@@ -49,6 +50,7 @@ export function PublicHome() {
             <a href="#student-context">For students</a>
           </nav>
           <div className="public-header-actions">
+            <LandingThemeToggle />
             <Link className="public-login" href="/sign-in">Log in</Link>
             <Link className="public-button public-button-small" href="/sign-up">Get started <ArrowRight size={16} /></Link>
           </div>
