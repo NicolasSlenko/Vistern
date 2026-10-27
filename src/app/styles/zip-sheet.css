@@ -72,6 +72,43 @@
     }
   }
 
+  /* A page's loading.tsx draws the same frame and sheet as the page, so only
+     what's on the sheet changes when it arrives. The placeholder blocks stay
+     still for a quick load and only start to breathe once the wait is long
+     enough to notice; the real content settles in over them. No fill mode on
+     the arrival, so nothing keeps a translate (and with it a containing block
+     for fixed dialogs) once it's done. */
+  [role="status"][aria-busy="true"] .bg-fill {
+    animation: paper-wait 1.6s ease-in-out 450ms infinite;
+  }
+  .desk > .paper-frame > .paper:not([aria-busy="true"]) > * {
+    animation: paper-arrive 320ms var(--ease-glide);
+  }
+  @keyframes paper-wait {
+    50% {
+      opacity: 0.55;
+    }
+  }
+  @keyframes paper-arrive {
+    from {
+      opacity: 0;
+      translate: 0 6px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [role="status"][aria-busy="true"] .bg-fill {
+      animation: none;
+    }
+    .desk > .paper-frame > .paper:not([aria-busy="true"]) > * {
+      animation: paper-arrive-still 200ms ease-out;
+    }
+    @keyframes paper-arrive-still {
+      from {
+        opacity: 0;
+      }
+    }
+  }
+
   /* A row of choices on a grey track, the chosen one on a white pill that
      slides to the next. The pill is a separate element laid over the track
      (use-thumb.ts). */
