@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
-import { Check, X } from "lucide-react"
+import { Check, Sparkles, X } from "lucide-react"
 import { rewriteKey, type BulletRewrite, type Severity } from "@/lib/resume-suggestions"
 import { bracket, seedOf, underline, type Box } from "./rough"
 import { PAGE } from "./resume-paper"
@@ -64,6 +64,7 @@ function Tip({
   onLeave,
   onAccept,
   onReject,
+  onMore,
 }: {
   placed: Placed
   height: number
@@ -73,6 +74,8 @@ function Tip({
   onLeave: () => void
   onAccept: () => void
   onReject: () => void
+  /** Opens three AI options in place of this one suggestion. */
+  onMore?: () => void
 }) {
   const [left, top, right, bottom] = placed.area
   // Below the mark, unless that would hang off the foot of the page.
@@ -116,6 +119,16 @@ function Tip({
           <X className="h-3 w-3" aria-hidden="true" />
           Keep mine
         </button>
+        {onMore && (
+          <button
+            type="button"
+            onClick={onMore}
+            className="inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[12px] font-medium text-brand transition-colors hover:bg-brand/10"
+          >
+            <Sparkles className="h-3 w-3" aria-hidden="true" />
+            More options
+          </button>
+        )}
       </div>
     </div>
   )
@@ -130,6 +143,7 @@ export function ResumeMarks({
   onOpen,
   onAccept,
   onReject,
+  onMoreOptions,
 }: {
   /** The rewrites that still match the page. */
   rewrites: readonly BulletRewrite[]
@@ -143,6 +157,8 @@ export function ResumeMarks({
   onOpen: (key: string | null) => void
   onAccept: (rewrite: BulletRewrite) => void
   onReject: (rewrite: BulletRewrite) => void
+  /** When set, the card offers "More options": three AI rewrites to choose from. */
+  onMoreOptions?: (rewrite: BulletRewrite) => void
 }) {
   const describe = useId()
 
@@ -286,6 +302,14 @@ export function ResumeMarks({
             onReject(showing.rewrite)
             dismiss()
           }}
+          onMore={
+            onMoreOptions
+              ? () => {
+                  onMoreOptions(showing.rewrite)
+                  dismiss()
+                }
+              : undefined
+          }
         />
       )}
     </>

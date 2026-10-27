@@ -1,10 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { Check, ChevronDown, Plus, Trash2 } from "lucide-react"
+import { Check, ChevronDown, PenLine, Plus, Sparkles, Trash2 } from "lucide-react"
 import type { BulletRewrite } from "@/lib/resume-suggestions"
+import { bulletTarget, isWritableSection, type WritableSection } from "@/lib/bullet-writing"
 import { BulletList } from "./bullet-list"
+import { BulletOptionsDialog } from "./bullet-options"
 import { Field, ProseField, SectionHeading, TagsField } from "./fields"
+import { NewEntryWizard } from "./new-entry-wizard"
 import { pill } from "./pills"
 import type { FieldSpec, ListSectionSpec } from "./sections"
 
@@ -37,15 +40,35 @@ function EntryFields({
   onChange,
   rewrites,
   suggestions,
+  section,
 }: {
   fields: FieldSpec[]
   entry: Entry
   onChange: (key: string, value: unknown) => void
   rewrites?: EntryRewrites
   suggestions?: SuggestionHandlers
+  /** Set for sections whose bullets the AI can rewrite; turns on Improve with AI. */
+  section?: WritableSection
 }) {
+  // The bullet whose three AI options are open, if any.
+  const [enhancing, setEnhancing] = useState<{ field: string; index: number } | null>(null)
+  const enhancingText = enhancing ? asList(entry[enhancing.field])[enhancing.index] ?? "" : ""
+
   return (
     <div className="grid grid-cols-1 gap-x-5 gap-y-[18px] @md:grid-cols-2">
+      {section && enhancing && (
+        <BulletOptionsDialog
+          open
+          onOpenChange={(open) => !open && setEnhancing(null)}
+          section={section}
+          entry={entry}
+          bullet={enhancingText}
+          onChoose={(text) => {
+            const bullets = asList(entry[enhancing.field])
+            onChange(enhancing.field, bullets.map((bullet, at) => (at === enhancing.index ? text : bullet)))
+          }}
+        />
+      )}
       {fields.map((field) => {
         const span = field.half ? "" : "@md:col-span-2"
         switch (field.kind) {
@@ -72,6 +95,7 @@ function EntryFields({
                   onChange={(value) => onChange(field.key, value)}
                   onAccept={suggestions?.onAccept}
                   onReject={suggestions?.onReject}
+                  onEnhance={section ? (index) => setEnhancing({ field: field.key, index }) : undefined}
                 />
               </div>
             )
@@ -279,7 +303,14 @@ function EntryCard({
                 ))}
               </ul>
             )}
-            <EntryFields fields={spec.fields} entry={entry} onChange={onChange} rewrites={rewrites} suggestions={suggestions} />
+            <EntryFields
+              fields={spec.fields}
+              entry={entry}
+              onChange={onChange}
+              rewrites={rewrites}
+              suggestions={suggestions}
+              section={isWritableSection(spec.name) ? spec.name : undefined}
+            />
           </div>
         </div>
       </div>
@@ -323,10 +354,13 @@ export function SectionForm({
     onChange(entries.filter((_, at) => at !== index))
     setOpen((current) => (current === null || current < index ? current : current === index ? null : current - 1))
   }
-  const addEntry = () => {
-    onChange([...entries, spec.blank()])
+  const addEntry = (entry: Entry = spec.blank()) => {
+    onChange([...entries, entry])
     setOpen(entries.length)
   }
+  const [writing, setWriting] = useState(false)
+  const writable = isWritableSection(spec.name) ? spec.name : null
+  const article = /^[aeiou]/i.test(spec.singular) ? "an" : "a"
 
   const count = entries.length
   return (
@@ -358,15 +392,49 @@ export function SectionForm({
           />
         ))}
 
-        <button
-          type="button"
-          onClick={addEntry}
-          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-[18px] border border-dashed border-rule-strong text-[15px] font-medium tracking-[-0.01em] text-brand transition-colors duration-150 hover:border-ink/30 hover:bg-fill [&_svg]:size-4"
-        >
-          <Plus aria-hidden="true" />
-          Add {/^[aeiou]/i.test(spec.singular) ? "an" : "a"} {spec.singular}
-        </button>
+        {writable ? (
+          // Sections with achievement bullets offer the guided AI walkthrough
+          // alongside a plain blank entry; the student picks how to start.
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setWriting(true)}
+              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-[18px] border border-dashed border-brand/50 bg-brand/5 text-[15px] font-medium tracking-[-0.01em] text-brand transition-colors duration-150 hover:bg-brand/10 [&_svg]:size-4"
+            >
+              <Sparkles aria-hidden="true" />
+              Write {article} {spec.singular} with AI
+            </button>
+            <button
+              type="button"
+              onClick={() => addEntry()}
+              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-[18px] border border-dashed border-rule-strong text-[15px] font-medium tracking-[-0.01em] text-ink-2 transition-colors duration-150 hover:border-ink/30 hover:bg-fill [&_svg]:size-4"
+            >
+              <PenLine aria-hidden="true" />
+              Fill one in myself
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => addEntry()}
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-[18px] border border-dashed border-rule-strong text-[15px] font-medium tracking-[-0.01em] text-brand transition-colors duration-150 hover:border-ink/30 hover:bg-fill [&_svg]:size-4"
+          >
+            <Plus aria-hidden="true" />
+            Add {article} {spec.singular}
+          </button>
+        )}
       </div>
+
+      {writable && (
+        <NewEntryWizard
+          open={writing}
+          onOpenChange={setWriting}
+          section={writable}
+          spec={spec}
+          count={bulletTarget(entries, writable)}
+          onCreate={(entry) => addEntry(entry)}
+        />
+      )}
     </div>
   )
 }

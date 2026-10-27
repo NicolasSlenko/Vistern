@@ -26,6 +26,7 @@ export function PaperPane({
   answered,
   onAccept,
   onReject,
+  onMoreOptions,
   original,
 }: {
   resume: Resume | null
@@ -35,6 +36,8 @@ export function PaperPane({
   answered: ReadonlySet<string>
   onAccept: (rewrite: BulletRewrite) => void
   onReject: (rewrite: BulletRewrite) => void
+  /** Opens three AI options for a marked line. */
+  onMoreOptions?: (rewrite: BulletRewrite) => void
   /** The file as uploaded, to check our reading of it against. */
   original?: React.ReactNode
 }) {
@@ -116,6 +119,7 @@ export function PaperPane({
             onOpen={setOpen}
             onAccept={onAccept}
             onReject={onReject}
+            onMoreOptions={onMoreOptions}
           />
         </div>
       </div>
