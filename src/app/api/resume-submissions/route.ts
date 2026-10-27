@@ -25,13 +25,15 @@ export async function GET() {
     }
 
     // Always get the current resume data & feedback for accurate score calculation
-    const resumeData = await getJsonFromS3<Resume>(`uploads/${userId}/resume-data.json`)
-    const xyzFeedback = await getJsonFromS3<any>(`uploads/${userId}/xyz-feedback.json`)
-    const calculatedScore = resumeData ? calculateResumeScoreDetailed(resumeData, xyzFeedback).totalScore : 0
-
-    // Try to get existing submissions metadata
+    // and the existing submissions metadata — all three reads are independent, so run them in parallel
     const metadataKey = `uploads/${userId}/submissions-metadata.json`
-    let metadata = await getJsonFromS3<SubmissionsMetadata>(metadataKey)
+    const [resumeData, xyzFeedback, existingMetadata] = await Promise.all([
+      getJsonFromS3<Resume>(`uploads/${userId}/resume-data.json`),
+      getJsonFromS3<any>(`uploads/${userId}/xyz-feedback.json`),
+      getJsonFromS3<SubmissionsMetadata>(metadataKey),
+    ])
+    const calculatedScore = resumeData ? calculateResumeScoreDetailed(resumeData, xyzFeedback).totalScore : 0
+    let metadata = existingMetadata
 
     if (!metadata) {
       // If no metadata exists, scan the resumes folder and create metadata

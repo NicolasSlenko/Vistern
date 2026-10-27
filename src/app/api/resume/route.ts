@@ -71,7 +71,11 @@ export async function GET() {
       return NextResponse.json({ success: false, data: null, error: "Unauthorized" }, { status: 401 });
     }
 
-    const resumeData = await getJsonFromS3<Resume>(`uploads/${userId}/resume-data.json`);
+    // Fetch resume + feedback in parallel rather than back-to-back
+    const [resumeData, xyzFeedback] = await Promise.all([
+      getJsonFromS3<Resume>(`uploads/${userId}/resume-data.json`),
+      getJsonFromS3<any>(`uploads/${userId}/xyz-feedback.json`),
+    ]);
 
     if (!resumeData) {
       return NextResponse.json({
@@ -83,7 +87,6 @@ export async function GET() {
 
     // Calculate score and breakdown using the same logic as frontend
     const { calculateResumeScoreDetailed, getScoreBreakdown } = await import("@/lib/resumeScoring");
-    const xyzFeedback = await getJsonFromS3<any>(`uploads/${userId}/xyz-feedback.json`);
     const score = calculateResumeScoreDetailed(resumeData, xyzFeedback).totalScore;
     const breakdown = getScoreBreakdown(resumeData);
 

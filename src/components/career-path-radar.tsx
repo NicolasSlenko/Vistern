@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from "recharts"
@@ -131,9 +131,11 @@ export function CareerPathCourseworkChart({
     loadMatchedCourses()
   }, [loadMatchedCourses])
 
-  // Re-load when resumeData changes (after new resume is parsed)
+  // Re-load when resumeData changes (after new resume is parsed). Skip the initial
+  // value — the mount effect above already loaded it, and reloading would flash the spinner.
+  const initialResumeData = useRef(resumeData)
   useEffect(() => {
-    if (resumeData) {
+    if (resumeData && resumeData !== initialResumeData.current) {
       // Small delay to allow the match-coursework API to complete (called from resume-upload)
       const timer = setTimeout(() => {
         loadMatchedCourses()
