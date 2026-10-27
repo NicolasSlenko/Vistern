@@ -10,6 +10,9 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   if (pathname === "/" || pathname === "/landing-page")
     return children
+  // The auth screens draw their own frame, so they skip the legacy header and footer.
+  if (pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up"))
+    return children
   if (
     ["/home", "/career", "/community", "/jobs", "/student-profile"].includes(pathname) ||
     pathname.startsWith("/community/") ||
