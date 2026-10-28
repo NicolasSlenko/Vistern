@@ -61,6 +61,7 @@ Before the layer, nine routes each created their own OpenAI client with a hardco
 - **`temperature`** goes only to models that accept it (HiPerGator). OpenAI's GPT-5+ reasoning models and the current Claude API reject custom values.
 - **Cost logging:** every call prints `[ai] <feature> <model>: <in> in / <out> out, $<cost>`. Prices are in `MODEL_PRICING`; HiPerGator's can be set with `HIPERGATOR_PRICE_INPUT` / `HIPERGATOR_PRICE_OUTPUT`.
 - **HiPerGator safety limits:** open models in JSON mode occasionally never finish, so calls are capped at 8,000 output tokens (a full resume needs about 2,000) and time out after 60 s with one retry.
+- **Runaway replies are retried once (later).** When a structured reply hits the output cap without closing its JSON (`LengthFinishReasonError`, seen on resume parsing, live matching and tailoring), `generateObject` retries once at temperature 0.4, since the same request at temperature 0 tends to loop the same way. A second cut-off fails as before. Tested by `tests/ai-runaway.test.ts`.
 - **Placeholder keys don't count:** an empty key, or one still starting `your-` from `.env.example`, makes that provider "not configured".
 - **Each client uses only its own key (later).** The OpenAI SDK reads `OPENAI_API_KEY` when given no key. On a deployment with an OpenAI key but no HiPerGator key, that sent the OpenAI key to UF's proxy, which rejected every call with 401. Every client now takes its key explicitly and throws `AiNotConfiguredError` before any request when it is missing, and routes show that message instead of a generic failure.
 - **Default provider (later).** `AI_PROVIDER` (else HiPerGator) is the default only when its key is set; otherwise the first configured provider is used.
@@ -154,7 +155,7 @@ Used by "Tailor" on the Match page: `POST /api/tailor-resume` selects content, t
 ## Verification
 
 - PR #1, on `demo`: `npx tsc --noEmit`, `npm run lint`, `npm run build` passed; 88 tests passed. Live checks covered HiPerGator (parse, a 5-project resume in about 10 s, text generation, 10 parallel job matches, both bullet modes), OpenAI structured output, text and embeddings, and upload, tailoring and LaTeX/Overleaf in the app.
-- October 28, on `claude/demo-consolidate`: `npx tsc --noEmit`, `npm run lint` and `npm run build` passed; all **99** tests passed (`npx tsx --test tests/*.test.ts`).
+- October 28, on `dev`: `npx tsc --noEmit`, `npm run lint` and `npm run build` passed; all **102** tests passed (`npx tsx --test tests/*.test.ts`), including the runaway-retry and career-plan project tests.
 - Not verified: Claude with a real key.
 
 ## Known risks
