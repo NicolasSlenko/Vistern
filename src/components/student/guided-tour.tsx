@@ -101,7 +101,7 @@ const sections: Section[] = [
         target: [".career-plan-work"],
         title: "Activities in your plan",
         body: "Your own work, outside the roadmap. Each activity has steps to tick, notes, and an optional date.",
-        points: ["Save one for later to pause it without losing it", "Finished activities move to Completed work and grow a leaf"],
+        points: ["Choose one to see its progress, key details and technologies beside the list", "Save one for later to pause it without losing it", "Finished activities move to Completed work and grow a leaf"],
       },
       {
         target: sidebarSection("/career"),
