@@ -35,7 +35,7 @@ export const activityFieldsSchema = z.object({
     .max(6),
   source: z
     .object({
-      type: z.enum(["career", "guide", "organization"]),
+      type: z.enum(["career", "guide", "organization", "project"]),
       id: z.string().max(60),
     })
     .strict()
@@ -49,12 +49,17 @@ export const activitySchema = activityFieldsSchema.extend({
   updatedAt: z.string().datetime(),
   completedAt: z.string().datetime().nullable(),
 })
+/** Activities still being worked on (active or paused). Finished ones don't count. */
+export const OPEN_ACTIVITY_LIMIT = 250
+/** Everything kept, finished work included: enough for years of steady use. */
+export const ACTIVITY_LIMIT = 1000
+
 export const workspaceSchema = z.object({
   version: z.literal(1).default(1),
   revision: z.number().int().nonnegative().default(0),
   selectedPathId: z.enum(trackIds).nullable().default(null),
   roadmapDone: z.array(z.string().max(80)).max(100).default([]),
-  activities: z.array(activitySchema).max(250).default([]),
+  activities: z.array(activitySchema).max(ACTIVITY_LIMIT).default([]),
 })
 export type CareerActivity = z.infer<typeof activitySchema>
 export type ActivityFields = z.infer<typeof activityFieldsSchema>
@@ -123,7 +128,15 @@ export function updateWorkspace(
     return { ...current, roadmapDone: [...done], revision: current.revision + 1 }
   }
   if (update.intent === "create") {
-    if (current.activities.length >= 250)
+    // Finished work is a record, not a to-do: only what is still open
+    // counts against the working limit, so a long history never blocks
+    // planning something new.
+    const open = current.activities.filter((activity) => activity.status !== "completed").length
+    if (open >= OPEN_ACTIVITY_LIMIT)
+      throw new Error(
+        `You have ${OPEN_ACTIVITY_LIMIT} activities in progress. Finish or remove some before adding more.`,
+      )
+    if (current.activities.length >= ACTIVITY_LIMIT)
       throw new Error("Your plan has reached its activity limit.")
     return workspaceSchema.parse({
       ...current,

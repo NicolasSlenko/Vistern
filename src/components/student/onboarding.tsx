@@ -58,7 +58,8 @@ export function Onboarding({
         step: next,
       })
       setDraft(saved)
-      router.push(next === "done" ? "/home" : `/onboarding?step=${next}${editing ? "&edit=1" : ""}`)
+      // Finishing setup for the first time hands over to the guided tour.
+      router.push(next === "done" ? (editing ? "/home" : "/home?tour=1") : `/onboarding?step=${next}${editing ? "&edit=1" : ""}`)
       router.refresh()
       return true
     } catch (reason) {

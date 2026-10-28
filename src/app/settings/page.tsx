@@ -38,11 +38,16 @@ function DeleteAccountDialog() {
   const handleDelete = async () => {
     setIsDeleting(true)
     try {
-      const res = await fetch("/api/delete-account", { method: "DELETE" })
+      const res = await fetch("/api/delete-account", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ confirmation: confirmText }) })
       const result = await res.json()
       if (result.success) {
         toast.success("Account deleted successfully.")
-        await signOut()
+        for (const key of Object.keys(localStorage)) {
+          if (key === "showAiFeedback" || key.startsWith("vistern-notes-dismissed:") || key.startsWith("vistern-rewrites-answered:")) localStorage.removeItem(key)
+        }
+        sessionStorage.removeItem("hasLoggedSignIn")
+        sessionStorage.removeItem("vistern-sidebar-expanded")
+        await signOut().catch(() => {})
         router.push("/")
       } else {
         toast.error(result.error || "Failed to delete account")
@@ -332,7 +337,7 @@ export default function SettingsPage() {
                   <hr className="border-t border-hairline" />
                   <ToggleRow
                     label="AI feedback"
-                    description="Show AI-written suggestions for your resume on the dashboard."
+                    description="Show AI-written suggestions for your resume."
                     checked={showAiFeedback}
                     onChange={handleAiFeedbackChange}
                   />

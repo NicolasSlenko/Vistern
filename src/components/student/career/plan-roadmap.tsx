@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { ArrowRight, ArrowUpRight, Check, ChevronDown, Compass, Plus } from "lucide-react"
 import { GrowthTree } from "../growth-tree"
 import { undergradPaths } from "@/lib/career/undergrad-paths"
@@ -9,6 +9,7 @@ import { careerProjectDraft } from "@/lib/career/projects"
 import { recommendedProjects, type CareerExperience } from "@/lib/career/recommendations"
 import { careerGrowthProgress, completedTrackIds, roadmapProgress, roadmapStages, roadmapTaskKey, type TrackId } from "@/lib/career/roadmap"
 import type { ActivityFields, CareerActivity, CareerWorkspace } from "@/lib/career/workspace"
+import { ActivityDetail, activityProgress, KIND } from "./activity-detail"
 
 export function PlanRoadmap({
   workspace,
@@ -32,6 +33,8 @@ export function PlanRoadmap({
   onChoose: (draft: ActivityFields & Partial<Pick<CareerActivity, "id" | "status">>) => void
 }) {
   const [switching, setSwitching] = useState(false)
+  const [chosenId, setChosenId] = useState<string | null>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
   const selected = undergradPaths.find((path) => path.id === workspace.selectedPathId)
   const pathId = selected?.id
   const progress = pathId ? roadmapProgress(workspace, pathId) : null
@@ -42,6 +45,40 @@ export function PlanRoadmap({
   const recommendations = pathId ? recommendedProjects(pathId, workspace, experience) : []
   const checkedActivitySteps = workspace.activities.reduce((count, activity) => count + activity.steps.filter((step) => step.done).length, 0)
   const treeProgress = careerGrowthProgress(workspace)
+  const openActivities = [...activeActivities, ...pausedActivities]
+  const chosen = openActivities.find((activity) => activity.id === chosenId) ?? openActivities[0] ?? null
+
+  function chooseActivity(id: string) {
+    setChosenId(id)
+    // One column: the panel sits under the list, so bring it into view.
+    if (window.matchMedia("(max-width: 979px)").matches)
+      requestAnimationFrame(() => panelRef.current?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+        block: "start",
+      }))
+  }
+  const row = (activity: CareerActivity) => {
+    const { done, total, percent } = activityProgress(activity)
+    const kind = KIND[activity.kind]
+    return (
+      <button
+        type="button"
+        key={activity.id}
+        className="career-work-row"
+        aria-pressed={chosen?.id === activity.id}
+        aria-controls="career-work-panel"
+        onClick={() => chooseActivity(activity.id)}
+      >
+        <span className="career-work-row-icon"><kind.icon size={17} aria-hidden="true" /></span>
+        <span className="career-work-row-text">
+          <small>{kind.label}{total ? ` · ${done}/${total} steps` : ""}</small>
+          <strong>{activity.title}</strong>
+          <span className="career-work-row-bar" aria-hidden="true"><span style={{ width: `${percent}%` }} /></span>
+        </span>
+        <span className="career-work-row-percent">{percent}%</span>
+      </button>
+    )
+  }
   const hasProjectExperience = experience.resumeProjectCount > 0 || experience.backgroundAreas.some((area) => ["projects", "work", "research"].includes(area)) || workspace.activities.some((activity) => activity.kind === "project")
 
   const trackPicker = (
@@ -144,25 +181,30 @@ export function PlanRoadmap({
 
       <section className="career-plan-work" aria-labelledby="career-work-title">
         <div className="career-plan-work-heading"><div><span className="career-eyebrow">Your own work</span><h2 id="career-work-title">Activities in your plan</h2></div><Link href="/career?view=projects"><Plus size={16} aria-hidden="true" /> Find a project</Link></div>
-        {activeActivities.length ? activeActivities.map((activity) => <ActivityCard key={activity.id} activity={activity} onChoose={onChoose} onToggleStep={onToggleActivityStep} onChangeStatus={onChangeActivityStatus} />) : <div className="career-plan-work-empty"><h3>No activities in progress yet.</h3><p>Choose a recommended build or add an activity from class, a club, or your own idea.</p><Link href="/career?view=projects">Explore projects <ArrowRight size={16} aria-hidden="true" /></Link></div>}
-        {pausedActivities.length > 0 && <div className="career-plan-other-work"><h3>Saved for later</h3>{pausedActivities.map((activity) => <ActivityCard key={activity.id} activity={activity} onChoose={onChoose} onToggleStep={onToggleActivityStep} onChangeStatus={onChangeActivityStatus} />)}</div>}
+        {chosen ? (
+          <div className="career-work-split">
+            <div className="career-work-list">
+              {activeActivities.length > 0 && <span className="career-eyebrow">In progress · {activeActivities.length}</span>}
+              {activeActivities.map(row)}
+              {pausedActivities.length > 0 && <span className="career-eyebrow">Saved for later · {pausedActivities.length}</span>}
+              {pausedActivities.map(row)}
+            </div>
+            <div ref={panelRef} id="career-work-panel" className="career-work-panel" aria-live="polite">
+              <ActivityDetail
+                key={chosen.id}
+                activity={chosen}
+                onToggleStep={onToggleActivityStep}
+                onChangeStatus={onChangeActivityStatus}
+                onEdit={onChoose}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="career-plan-work-empty"><h3>No activities in progress yet.</h3><p>Choose a recommended build or add an activity from class, a club, or your own idea.</p><Link href="/career?view=projects">Explore projects <ArrowRight size={16} aria-hidden="true" /></Link></div>
+        )}
         {completedActivities + completedTracks > 0 && <Link className="career-plan-history-link" href="/career?view=history"><Check size={16} aria-hidden="true" /> View completed work <span>{completedActivities + completedTracks}</span><ArrowRight size={15} aria-hidden="true" /></Link>}
       </section>
     </div>
   )
 }
 
-function ActivityCard({ activity, onChoose, onToggleStep, onChangeStatus }: {
-  activity: CareerActivity
-  onChoose: (draft: CareerActivity) => void
-  onToggleStep: (activity: CareerActivity, index: number, done: boolean) => void
-  onChangeStatus: (activity: CareerActivity, status: CareerActivity["status"]) => void
-}) {
-  const done = activity.steps.filter((step) => step.done).length
-  const allDone = done === activity.steps.length
-  return <article className="career-plan-activity">
-    <div className="career-plan-activity-heading"><div><span className="career-eyebrow">{activity.kind} · {activity.status === "paused" ? "saved for later" : `${done} / ${activity.steps.length} steps`}</span><h3>{activity.title}</h3></div><button type="button" onClick={() => onChoose(activity)}>Edit details <ArrowUpRight size={15} aria-hidden="true" /></button></div>
-    {activity.steps.length > 0 ? <div className="career-plan-activity-steps">{activity.steps.map((step, index) => <label key={`${activity.id}-${index}`}><input type="checkbox" checked={step.done} onChange={(event) => onToggleStep(activity, index, event.target.checked)} /><span>{step.title}</span></label>)}</div> : <p className="career-plan-activity-note">Open this activity to add steps or record what you worked on.</p>}
-    <div className="career-plan-activity-actions">{activity.status === "paused" ? <button type="button" onClick={() => onChangeStatus(activity, "active")}>Move to in progress</button> : <button type="button" disabled={!allDone} title={!allDone ? "Finish the steps first" : undefined} onClick={() => onChangeStatus(activity, "completed")}>Mark activity complete <Check size={15} aria-hidden="true" /></button>}{!allDone && activity.status !== "paused" && <span>Finish the remaining steps to complete this activity.</span>}</div>
-  </article>
-}

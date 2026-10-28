@@ -517,43 +517,55 @@
 }
 .student-app button:disabled,
 .student-app select:disabled {
-  cursor: wait;
+  cursor: not-allowed;
   opacity: 0.65;
+}
+/* The wait cursor is for work in flight, not for a control that is simply unavailable. */
+.student-app :is(button, select)[aria-busy="true"]:disabled {
+  cursor: wait;
 }
 .student-app :is(button, a, input, textarea, select):focus-visible {
   outline: 3px solid var(--student-accent);
   outline-offset: 4px;
 }
-:where(.student-app) h1,
-:where(.student-app) h2,
-:where(.student-app) h3,
-:where(.student-app) p {
-  margin: 0;
+/* Base layer, so a Tailwind size or colour on a heading or paragraph wins over these
+   defaults (unlayered, they overrode every text-* utility inside the student app). */
+@layer base {
+  :where(.student-app) h1,
+  :where(.student-app) h2,
+  :where(.student-app) h3,
+  :where(.student-app) p {
+    margin: 0;
+  }
+  :where(.student-app) h1 {
+    font-size: clamp(30px, 2.8vw, 38px);
+    line-height: 1.15;
+    letter-spacing: -1.2px;
+    font-weight: 650;
+  }
+  :where(.student-app) h2 {
+    font-size: 23px;
+    line-height: 1.3;
+    letter-spacing: -0.6px;
+    font-weight: 650;
+  }
+  :where(.student-app) h3 {
+    font-size: 19px;
+    line-height: 1.3;
+    letter-spacing: -0.3px;
+    font-weight: 650;
+  }
+  :where(.student-app) p {
+    color: var(--student-muted);
+  }
 }
-:where(.student-app) h1 {
-  font-size: clamp(30px, 2.8vw, 38px);
-  line-height: 1.15;
-  letter-spacing: -1.2px;
-  font-weight: 650;
-}
-:where(.student-app) h2 {
-  font-size: 23px;
-  line-height: 1.3;
-  letter-spacing: -0.6px;
-  font-weight: 650;
-}
-:where(.student-app) h3 {
-  font-size: 19px;
-  line-height: 1.3;
-  letter-spacing: -0.3px;
-  font-weight: 650;
-}
-:where(.student-app) p {
-  color: var(--student-muted);
-}
-:where(.student-app) a {
-  color: inherit;
-  text-decoration: none;
+/* In the base layer, like Tailwind's own reset: unlayered, this beat every
+   utility, so a link styled as a button (brand-button, text-white) lost its colour. */
+@layer base {
+  :where(.student-app) a {
+    color: inherit;
+    text-decoration: none;
+  }
 }
 :where(.student-app) svg {
   flex-shrink: 0;
@@ -1238,9 +1250,11 @@
     margin-bottom: 25px;
     gap: 24px;
   }
-  :where(.student-app) h1 {
-    font-size: 29px;
-    letter-spacing: -0.9px;
+  @layer base {
+    :where(.student-app) h1 {
+      font-size: 29px;
+      letter-spacing: -0.9px;
+    }
   }
   .student-lead {
     font-size: 14px;

@@ -58,5 +58,6 @@ data/resume-data.json
 .codex-build/
 /supabase/.temp/
 .agents/
-docs/
+# Internal working notes and prototypes stay local. Publish reviewed material in public_docs/.
+/docs/
 skills-lock.json

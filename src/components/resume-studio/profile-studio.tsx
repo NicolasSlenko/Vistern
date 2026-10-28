@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { FileText, Loader2, PenLine, Sparkles, Upload } from "lucide-react"
+import { FileText, Loader2, PenLine, Sparkles, Trash2, Upload } from "lucide-react"
 import { toast } from "sonner"
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import type { Resume } from "@/app/api/parse/resumeSchema"
 import { useResume } from "@/contexts/resume-context"
 import type { ModeOption } from "./mode-tabs"
@@ -42,6 +43,9 @@ export function ProfileStudio() {
   const [mode, setMode] = useState<Mode>("write")
   const [section, setSection] = useState<SectionRef>("profile")
   const [asking, setAsking] = useState(false)
+  const [clearOpen, setClearOpen] = useState(false)
+  const [clearText, setClearText] = useState("")
+  const [clearing, setClearing] = useState(false)
   const formRef = useRef<HTMLElement>(null)
 
   const save = useAutosave<Resume>(async (next) => {
@@ -113,6 +117,30 @@ export function ProfileStudio() {
     }
   }
 
+  const clearProfile = async () => {
+    if (clearText !== "CLEAR" || clearing || (save.state !== "clean" && save.state !== "saved")) return
+    setClearing(true)
+    try {
+      const response = await fetch("/api/profile", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmation: clearText }),
+      })
+      const result = await response.json()
+      if (!response.ok || !result.success) throw new Error(result.error || "Could not clear your profile")
+      setProfile(result.data)
+      setSection("profile")
+      setMode("write")
+      setClearOpen(false)
+      setClearText("")
+      toast.success("Master profile cleared")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not clear your profile")
+    } finally {
+      setClearing(false)
+    }
+  }
+
   // Ticked-off notes disappear from the panel, the section counts and the
   // dots on the cards together, because they are all the same list.
   const allNotes = reviewNotes(profile, feedback)
@@ -132,6 +160,30 @@ export function ProfileStudio() {
       note={<SaveNote state={save.state} />}
       actions={
         <>
+          <Dialog open={clearOpen} onOpenChange={(next) => { if (!clearing) { setClearOpen(next); if (!next) setClearText("") } }}>
+            <DialogTrigger asChild>
+              <button type="button" disabled={loading || !profile || (save.state !== "clean" && save.state !== "saved")} title="Clear master profile" className={pill("white", "h-10 px-4 text-[15px] font-medium")}>
+                <Trash2 aria-hidden="true" /> <span className="max-sm:sr-only">Clear profile</span>
+              </button>
+            </DialogTrigger>
+            <DialogContent className="zip-scope flex flex-col gap-5 border-hairline bg-sheet p-6 rounded-[18px] sm:max-w-md sm:rounded-[18px]">
+              <DialogHeader className="flex flex-col gap-2">
+                <DialogTitle className="font-serif text-[26px] leading-tight font-normal text-ink">Clear master profile</DialogTitle>
+                <DialogDescription className="text-[15px] leading-relaxed text-ink-2">Remove your profile details, skills and experience. Saved resumes and your account stay available.</DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="clear-profile-confirm" className="label-mono text-ink-2">Type CLEAR to confirm</label>
+                <input id="clear-profile-confirm" value={clearText} onChange={(event) => setClearText(event.target.value)} placeholder="CLEAR" disabled={clearing} autoComplete="off" className="h-10 w-full rounded-[12px] border border-rule-strong bg-sheet px-3 font-mono text-[14px] text-ink outline-none focus-visible:border-brand disabled:opacity-50" />
+              </div>
+              <DialogFooter className="gap-2 sm:gap-2.5">
+                <DialogClose asChild><button type="button" disabled={clearing} className={pill("white")}>Cancel</button></DialogClose>
+                <button type="button" onClick={clearProfile} disabled={clearText !== "CLEAR" || clearing} className={pill("danger")}>
+                  {clearing ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Trash2 aria-hidden="true" />}
+                  {clearing ? "Clearing..." : "Clear profile"}
+                </button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           <Link href="/resumes" className={pill("white", "h-10 px-4 text-[15px] font-medium")}>
             <FileText aria-hidden="true" />
             <span className="max-sm:sr-only">

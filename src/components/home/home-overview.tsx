@@ -55,6 +55,7 @@ function Panel({
   icon: Icon,
   children,
   className = "",
+  tour,
 }: {
   title: string
   href?: string
@@ -62,9 +63,11 @@ function Panel({
   icon?: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>
   children: React.ReactNode
   className?: string
+  /** The guided tour's hook for this panel. */
+  tour?: string
 }) {
   return (
-    <section className={`flex flex-col gap-3.5 rounded-[18px] border border-hairline bg-sheet p-5 shadow-card-rest ${className}`}>
+    <section data-tour={tour} className={`flex flex-col gap-3.5 rounded-[18px] border border-hairline bg-sheet p-5 shadow-card-rest ${className}`}>
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="label-mono flex items-center gap-2 text-ink-2">
           {Icon && <Icon className="h-3.5 w-3.5" aria-hidden={true} />}
@@ -158,7 +161,7 @@ export function HomeOverview({
             <div className="mx-auto flex max-w-[1080px] flex-col gap-9">
               {/* What to do next. The one thing the page is for, so it gets
                   the serif and the full width. */}
-              <header className="flex flex-col gap-4">
+              <header data-tour="home-next" className="flex flex-col gap-4">
                 <p className="label-mono text-ink-2">
                   {greeting(new Date().getHours())}
                   {firstName ? `, ${firstName}` : ""}
@@ -210,7 +213,7 @@ export function HomeOverview({
               <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
                 {/* Resume. The number first, because it's the one thing a
                     student checks on every visit. */}
-                <Panel title="Resume" icon={FileText} href={resume ? "/profile" : "/upload"} action={resume ? "Open profile" : "Upload"}>
+                <Panel tour="home-resume" title="Resume" icon={FileText} href={resume ? "/profile" : "/upload"} action={resume ? "Open profile" : "Upload"}>
                   {score === null ? (
                     <>
                       <p className="font-serif text-[26px] leading-[1.05] tracking-[-0.025em] text-ink">
@@ -264,7 +267,7 @@ export function HomeOverview({
 
                 {/* Growth, as the tree: a leaf for every activity finished,
                     and each one says which when it's chosen. */}
-                <Panel title="Growth" icon={Compass} href="/career?view=history" action="Completed work">
+                <Panel tour="home-growth" title="Growth" icon={Compass} href="/career?view=history" action="Completed work">
                   <p className="flex items-baseline gap-2">
                     <span className="font-serif text-[48px] leading-[0.85] tracking-[-0.045em] tabular-nums text-ink">
                       {completed.length}
@@ -276,7 +279,7 @@ export function HomeOverview({
                 </Panel>
 
                 {/* Dates. */}
-                <Panel title="Dates" icon={CalendarDays} href="/career?new=preparation" action="Add one">
+                <Panel tour="home-dates" title="Dates" icon={CalendarDays} href="/career?new=preparation" action="Add one">
                   {dates.length ? (
                     <ul className="flex flex-col">
                       {dates.slice(0, 4).map((activity) => (
@@ -298,7 +301,7 @@ export function HomeOverview({
                 </Panel>
               </div>
 
-              <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+              <div data-tour="home-more" className="grid grid-cols-1 gap-5 lg:grid-cols-2">
                 {otherWork.length > 0 && (
                   <Panel title="Also in your plan" href="/career" action="View all">
                     <ul className="flex flex-col">

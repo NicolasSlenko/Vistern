@@ -10,6 +10,9 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   if (pathname === "/" || pathname === "/landing-page")
     return children
+  // The auth screens draw their own frame, so they skip the legacy header and footer.
+  if (pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up"))
+    return children
   if (
     ["/home", "/career", "/community", "/jobs", "/student-profile"].includes(pathname) ||
     pathname.startsWith("/community/") ||
@@ -18,8 +21,8 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
     return children
   if (pathname === "/onboarding")
     return <ResumeProvider>{children}</ResumeProvider>
-  const toolPages = ["/profile", "/dashboard", "/upload", "/match", "/settings", "/resumes"]
-  const needsResume = ["/profile", "/dashboard", "/upload", "/match", "/resumes"]
+  const toolPages = ["/profile", "/upload", "/match", "/settings", "/resumes"]
+  const needsResume = ["/profile", "/upload", "/match", "/resumes"]
   if (toolPages.includes(pathname) || pathname.startsWith("/resumes/"))
     return needsResume.includes(pathname) || pathname.startsWith("/resumes/")
       ? <ResumeProvider><StudentShell>{children}</StudentShell></ResumeProvider>

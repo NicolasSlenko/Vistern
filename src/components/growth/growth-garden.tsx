@@ -65,23 +65,51 @@ const ANCHORS: Anchor[] = [
   { x: 196, y: 170, angle: 326, length: 42 },
 ]
 
+/** The crown's outer leaves: two rings of 13, staggered so neither hides the other. */
+const RING_SLOTS = 13
+const RING_COUNT = 2
+
+/**
+ * How many leaves the tree draws. Past this a tree stops reading as a tree and
+ * leaves start to cover each other — the old rings of three radii turned 120
+ * finished things into one green smear with most leaves out of reach.
+ */
+export const GARDEN_LEAF_LIMIT = ANCHORS.length + RING_SLOTS * RING_COUNT
+
 /**
  * More finished work than the drawing has branch ends: the extra leaves ring
- * the crown, each a little further round and out, so a very full tree still
- * reads as a tree rather than a pile.
+ * the crown, alternating rings as they go round, so a full tree is still a
+ * tree and every leaf can be picked out.
  */
 function anchorFor(index: number): Anchor {
   if (index < ANCHORS.length) return ANCHORS[index]
   const extra = index - ANCHORS.length
-  const angle = -150 + ((extra * 47) % 240)
-  const radius = 76 + (extra % 3) * 13
+  const ring = extra % RING_COUNT
+  const slot = Math.floor(extra / RING_COUNT)
+  const angle = -165 + slot * (225 / (RING_SLOTS - 1)) + ring * 9
+  const radius = 80 + ring * 20
   const radians = (angle * Math.PI) / 180
   return {
     x: 145 + Math.cos(radians) * radius * 0.92,
     y: 132 + Math.sin(radians) * radius * 0.78,
     angle: angle + 360,
-    length: 36,
+    length: ring ? 32 : 36,
   }
+}
+
+/**
+ * The leaves to draw, each with the place it grows. A full tree keeps the
+ * latest finished work, and each leaf holds the slot its number gives it —
+ * the newest takes over the slot of the oldest still on the tree — so the
+ * rest never move as more is finished.
+ */
+function placed(leaves: GardenLeaf[]) {
+  const from = Math.max(0, leaves.length - GARDEN_LEAF_LIMIT)
+  return leaves.slice(from).map((leaf, offset) => ({
+    leaf,
+    anchor: anchorFor((from + offset) % GARDEN_LEAF_LIMIT),
+    order: offset,
+  }))
 }
 
 /** A leaf pointing along +x from the origin, to be rotated into place. */
@@ -147,6 +175,7 @@ export function GrowthGarden({
   const choose = (id: string | null) => (controlled ? onSelect(id) : setOwnChoice(id))
 
   const showing = useMemo(() => leaves.find((leaf) => leaf.id === chosen) ?? null, [leaves, chosen])
+  const drawn = useMemo(() => placed(leaves), [leaves])
 
   return (
     <div className={`flex flex-col gap-3 ${className}`}>
@@ -172,8 +201,7 @@ export function GrowthGarden({
             </g>
           )}
 
-          {leaves.map((leaf, index) => {
-            const anchor = anchorFor(index)
+          {drawn.map(({ leaf, anchor, order }) => {
             const open = leaf.id === chosen
             return (
               <g
@@ -182,7 +210,7 @@ export function GrowthGarden({
                 data-open={open || undefined}
                 data-quiet={chosen !== null && !open ? "" : undefined}
                 // Unfurls in turn, so a new leaf is visibly the newest.
-                style={{ "--delay": `${Math.min(index, 18) * 70}ms` } as React.CSSProperties}
+                style={{ "--delay": `${Math.min(order, 18) * 70}ms` } as React.CSSProperties}
                 transform={`translate(${anchor.x} ${anchor.y}) rotate(${anchor.angle})`}
               >
                 {/* Only the drawing grows under the pointer. The target below
@@ -242,7 +270,15 @@ export function GrowthGarden({
             <p className="text-[13px] leading-snug text-ink-2">{emptyNote}</p>
           ) : (
             <p className="text-[13px] leading-snug text-ink-2">
-              {leaves.length} {leaves.length === 1 ? "leaf, one for the thing" : "leaves, one for each thing"} you have finished.{" "}
+              {leaves.length > GARDEN_LEAF_LIMIT ? (
+                <>
+                  {leaves.length} things finished; the tree shows your latest {GARDEN_LEAF_LIMIT}.{" "}
+                </>
+              ) : (
+                <>
+                  {leaves.length} {leaves.length === 1 ? "leaf, one for the thing" : "leaves, one for each thing"} you have finished.{" "}
+                </>
+              )}
               <span className="text-ink-3">Choose one to see what it was.</span>
             </p>
           )}

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { FileText, Menu, LogOut, LayoutDashboard, User, Upload, Home, Info, Settings, Target, type LucideIcon } from "lucide-react"
+import { FileText, Menu, LogOut, User, Upload, Home, Info, Settings, Target, type LucideIcon } from "lucide-react"
 import {
   SignedIn,
   SignedOut,
@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils"
 export function Header() {
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/95">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
 
@@ -35,7 +35,6 @@ export function Header() {
             <SignedIn>
               <NavButton href="/home" icon={Home} label="Home" />
               <NavButton href="/upload" icon={Upload} label="Upload" />
-              <NavButton href="/dashboard" icon={LayoutDashboard} label="Dashboard" />
               <NavButton href="/match" icon={Target} label="Match" />
               <NavButton href="/profile" icon={User} label="Profile" />
               <NavButton href="/settings" icon={Settings} label="Settings" />
