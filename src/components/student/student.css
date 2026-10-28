@@ -517,8 +517,12 @@
 }
 .student-app button:disabled,
 .student-app select:disabled {
-  cursor: wait;
+  cursor: not-allowed;
   opacity: 0.65;
+}
+/* The wait cursor is for work in flight, not for a control that is simply unavailable. */
+.student-app :is(button, select)[aria-busy="true"]:disabled {
+  cursor: wait;
 }
 .student-app :is(button, a, input, textarea, select):focus-visible {
   outline: 3px solid var(--student-accent);

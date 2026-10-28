@@ -1022,8 +1022,6 @@
 .career-plan-activity-steps input:checked + span { color: var(--career-muted); text-decoration: line-through; }
 .career-plan-activity-note { margin-top: 13px; font-size: 13px; }
 .career-plan-activity-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 21px; padding-top: 15px; border-top: 1px solid var(--career-border); }
-.career-plan-activity-actions button { display: inline-flex; align-items: center; gap: 7px; min-height: 38px; padding: 0 12px; border: 1px solid var(--career-accent); border-radius: 7px; background: var(--career-soft); color: var(--career-accent); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
-.career-plan-activity-actions button:disabled { opacity: .5; cursor: not-allowed; }
 .career-plan-activity-actions span { color: var(--career-muted); font-size: 12px; }
 .career-plan-other-work { margin-top: 30px; }
 .career-plan-other-work > h3 { margin-bottom: 14px; color: var(--career-ink); font-size: 18px; }
@@ -1269,10 +1267,6 @@
 .career-detail-steps li[data-done] label span { color: var(--career-muted); text-decoration: line-through; }
 .career-detail-steps li + li { border-top: 1px solid var(--career-border); }
 .career-detail-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-top: 18px; border-top: 1px solid var(--career-border); }
-.career-detail-actions button { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 14px; border: 1px solid var(--career-border); border-radius: 999px; background: var(--career-surface); color: var(--career-ink); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
-.career-detail-actions button:hover { border-color: var(--career-accent); }
-.career-detail-actions .career-detail-primary { border-color: var(--career-accent); background: var(--career-accent); color: var(--career-surface); }
-.career-detail-actions button:disabled { opacity: .45; cursor: not-allowed; }
 .career-detail-actions p { flex-basis: 100%; margin: 0; color: var(--career-muted); font-size: 12px; }
 .career-history-detail-activity { padding: 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; }
 @media (min-width: 980px) {

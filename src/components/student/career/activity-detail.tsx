@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { ArrowUpRight, BookOpen, CalendarCheck, Check, Compass, FolderKanban, Pause, Play, Target, Users, type LucideIcon } from "lucide-react"
+import { pill } from "@/components/resume-studio/pills"
 import { careers, guides, organizations } from "@/lib/career/catalog"
 import { projectForActivity, projectPaths } from "@/lib/career/projects"
 import type { CareerActivity } from "@/lib/career/workspace"
@@ -14,6 +15,9 @@ export const KIND: Record<CareerActivity["kind"], { label: string; icon: LucideI
   community: { label: "Community", icon: Users },
   preparation: { label: "Preparation", icon: CalendarCheck },
 }
+
+/** The panel's action buttons: the theme's pills, a size down from a page's main button. */
+const ACTION = "h-9 px-4 text-[13px] font-medium"
 
 const STATUS: Record<CareerActivity["status"], string> = {
   active: "In progress",
@@ -194,23 +198,24 @@ export function ActivityDetail({
           <>
             <button
               type="button"
-              className="career-detail-primary"
+              className={pill("brand", ACTION)}
               disabled={!allDone}
+              title={!allDone ? "Finish the steps first" : undefined}
               onClick={() => onChangeStatus(activity, "completed")}
             >
               Mark complete <Check size={15} aria-hidden="true" />
             </button>
-            <button type="button" onClick={() => onChangeStatus(activity, "paused")}>
+            <button type="button" className={pill("white", ACTION)} onClick={() => onChangeStatus(activity, "paused")}>
               <Pause size={14} aria-hidden="true" /> Save for later
             </button>
           </>
         )}
         {onChangeStatus && activity.status === "paused" && (
-          <button type="button" className="career-detail-primary" onClick={() => onChangeStatus(activity, "active")}>
+          <button type="button" className={pill("brand", ACTION)} onClick={() => onChangeStatus(activity, "active")}>
             <Play size={14} aria-hidden="true" /> Move to in progress
           </button>
         )}
-        <button type="button" onClick={() => onEdit(activity)}>
+        <button type="button" className={pill("white", ACTION)} onClick={() => onEdit(activity)}>
           {activity.status === "completed" ? "Open activity" : "Edit details"} <ArrowUpRight size={15} aria-hidden="true" />
         </button>
         {onChangeStatus && activity.status === "active" && !allDone && (
