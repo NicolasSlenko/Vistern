@@ -21,8 +21,10 @@ import {
   ChevronDown,
   Moon,
   Sun,
+  Signpost,
 } from "lucide-react"
 import { careerNavigationEvent, navigateCareer } from "@/lib/career/navigation"
+import { GuidedTour, startTour } from "./guided-tour"
 import "./student.css"
 // The paper theme, loaded after so its variables and chrome win.
 import "./student-theme.css"
@@ -176,13 +178,17 @@ export function StudentShell({
                 const pages = sectionPages[href]
                 const expanded = expandedSections.includes(href)
                 return <div className="student-nav-section" key={href}>
-                  {pages ? <button type="button" className="student-nav-disclosure" aria-current={href === activeHref ? "page" : undefined} aria-expanded={expanded} aria-controls={`student-subnav-${href.slice(1)}`} onClick={() => toggleSection(href)}><Icon size={19} /><span>{label}</span><ChevronDown size={15} aria-hidden="true" /></button>
-                    : <Link href={href} aria-current={href === activeHref ? "page" : undefined}><Icon size={19} />{label}</Link>}
+                  {pages ? <button type="button" data-nav={href} className="student-nav-disclosure" aria-current={href === activeHref ? "page" : undefined} aria-expanded={expanded} aria-controls={`student-subnav-${href.slice(1)}`} onClick={() => toggleSection(href)}><Icon size={19} /><span>{label}</span><ChevronDown size={15} aria-hidden="true" /></button>
+                    : <Link href={href} data-nav={href} aria-current={href === activeHref ? "page" : undefined}><Icon size={19} />{label}</Link>}
                   {pages && expanded && <div id={`student-subnav-${href.slice(1)}`} className="student-subnav">{pages.map((page) => <Link key={page.href} href={page.href} aria-current={isCurrentSubpage(page.href) ? "page" : undefined}>{page.label}</Link>)}</div>}
                 </div>
               })}
             </nav>
             <div className="student-account-nav">
+              <button type="button" onClick={startTour}>
+                <Signpost size={18} aria-hidden="true" />
+                Take the tour
+              </button>
               <ThemeToggle />
               <UserButton />
               <SignOutButton redirectUrl="/">
@@ -218,6 +224,9 @@ export function StudentShell({
                   {pages && expanded && <div id={`student-mobile-subnav-${href.slice(1)}`} className="student-mobile-subnav">{pages.map((page) => <Link key={page.href} href={page.href} onClick={closeMenu} aria-current={isCurrentSubpage(page.href) ? "page" : undefined}>{page.label}</Link>)}</div>}
                 </div>
               })}
+              <button type="button" className="student-mobile-tour" onClick={() => { setOpen(false); startTour() }}>
+                Take the tour
+              </button>
               <Link href="/settings" onClick={closeMenu}>
                 Settings
               </Link>
@@ -231,6 +240,7 @@ export function StudentShell({
       <main id="student-main" tabIndex={-1} className="student-main">
         {children}
       </main>
+      {!onboarding && <GuidedTour />}
     </div>
   )
 }
