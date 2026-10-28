@@ -177,7 +177,7 @@ export function StudentShell({
               {links.map(({ href, label, icon: Icon }) => {
                 const pages = sectionPages[href]
                 const expanded = expandedSections.includes(href)
-                return <div className="student-nav-section" key={href}>
+                return <div className="student-nav-section" data-nav-section={href} key={href}>
                   {pages ? <button type="button" data-nav={href} className="student-nav-disclosure" aria-current={href === activeHref ? "page" : undefined} aria-expanded={expanded} aria-controls={`student-subnav-${href.slice(1)}`} onClick={() => toggleSection(href)}><Icon size={19} /><span>{label}</span><ChevronDown size={15} aria-hidden="true" /></button>
                     : <Link href={href} data-nav={href} aria-current={href === activeHref ? "page" : undefined}><Icon size={19} />{label}</Link>}
                   {pages && expanded && <div id={`student-subnav-${href.slice(1)}`} className="student-subnav">{pages.map((page) => <Link key={page.href} href={page.href} aria-current={isCurrentSubpage(page.href) ? "page" : undefined}>{page.label}</Link>)}</div>}

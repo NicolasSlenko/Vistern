@@ -66,11 +66,11 @@ export function StudioShell<Id extends string>({
           <div className="paper flex flex-1 flex-col @6xl/studio:min-h-0">
             {/* Raised over the columns and the floating switch, so anything
                 that opens from it goes over them. */}
-            <header className="relative z-40 border-b border-hairline">
+            <header data-tour="studio-header" className="relative z-40 border-b border-hairline">
               <div className="flex min-h-[72px] flex-wrap items-center justify-between gap-x-4 gap-y-2 px-3 py-[13px] sm:px-[14px] @6xl/studio:grid @6xl/studio:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
                 <div className="flex min-w-0 items-center gap-3">{title}{note}</div>
                 {/* In the middle of the bar on wide screens; narrower, atop the left column. */}
-                <div className="hidden items-center gap-2 @6xl/studio:flex">
+                <div data-tour="studio-modes" className="hidden items-center gap-2 @6xl/studio:flex">
                   {preview && (
                     <button
                       type="button"
@@ -93,12 +93,13 @@ export function StudioShell<Id extends string>({
               {/* The left column. On wide screens it scrolls on its own and
                   fades at its foot as a sign there's more. */}
               <aside
+                data-tour="studio-left"
                 data-mode={mode}
                 className={`shrink-0 border-b border-hairline @6xl/studio:flex @6xl/studio:flex-col @6xl/studio:overflow-clip @6xl/studio:rounded-bl-[28px] @6xl/studio:border-b-0 @6xl/studio:border-r ${
                   folded ? "@6xl/studio:w-0 @6xl/studio:border-r-0" : "@6xl/studio:w-[276px]"
                 } ${showing === "preview" ? "hidden @6xl/studio:flex" : ""}`}
               >
-                <div className="bg-sheet px-3 pt-3 sm:px-4 @6xl/studio:hidden">
+                <div data-tour="studio-modes" className="bg-sheet px-3 pt-3 sm:px-4 @6xl/studio:hidden">
                   <ModeTabs modes={modes} mode={mode} onChoose={onMode} stretch />
                 </div>
                 <div
@@ -117,6 +118,7 @@ export function StudioShell<Id extends string>({
               {/* The form. With a page beside it, the middle column is as wide
                   as is comfortable to write in; without one, it takes the room. */}
               <main
+                data-tour="studio-form"
                 ref={formRef}
                 className={`min-w-0 flex-1 px-4 pb-12 pt-7 sm:px-7 @6xl/studio:overflow-y-auto @6xl/studio:pb-14 ${
                   preview ? "@6xl/studio:w-[clamp(390px,33cqw,520px)] @6xl/studio:flex-none" : ""

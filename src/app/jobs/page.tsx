@@ -68,7 +68,7 @@ export default async function JobsPage() {
       <div className="zip-scope desk desk-bright min-h-[calc(100vh-var(--chrome-top,82px))] p-2 pb-10 sm:p-5 xl:p-6">
         <div className="paper-frame">
           <div className="paper flex min-h-[calc(100vh-var(--chrome-top,82px)-68px)] flex-col">
-            <header className="flex min-h-[72px] flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-hairline px-4 py-[13px] sm:px-6">
+            <header data-tour="jobs-header" className="flex min-h-[72px] flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-hairline px-4 py-[13px] sm:px-6">
               <h1 className="text-[17px] font-medium tracking-[-0.02em] text-ink sm:text-[18px]">Browse jobs</h1>
               <div className="flex items-center gap-2.5">
                 <Link href="/jobs/applications" className={pill("white", "h-10 px-4 text-[15px] font-medium")}>
@@ -96,7 +96,7 @@ export default async function JobsPage() {
                 </div>
 
                 <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
-                  <section className="flex flex-col gap-4">
+                  <section data-tour="jobs-places" className="flex flex-col gap-4">
                     <h2 className="label-mono text-ink-2">Places to explore</h2>
                     <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       {sources.map((source) => (
@@ -122,7 +122,7 @@ export default async function JobsPage() {
                     </ul>
                   </section>
 
-                  <aside className="flex h-fit flex-col gap-3.5 rounded-[18px] border border-hairline bg-sheet p-5 shadow-card-rest">
+                  <aside data-tour="jobs-search" className="flex h-fit flex-col gap-3.5 rounded-[18px] border border-hairline bg-sheet p-5 shadow-card-rest">
                     <h2 className="label-mono text-ink-2">Your search</h2>
                     <ul className="flex flex-col">
                       {search.map((item) => (
