@@ -9,6 +9,7 @@ import {
   updateWorkspace,
   WorkspaceConflict,
   studentDate,
+  OPEN_ACTIVITY_LIMIT,
 } from "../src/lib/career/workspace"
 import { careerGrowthProgress, completedTrackIds, roadmapStages, roadmapTaskKey } from "../src/lib/career/roadmap"
 
@@ -311,4 +312,22 @@ test("community completion uses the same UF calendar date as Home near midnight 
       ),
     /after the activity/,
   )
+})
+
+test("finished activities don't count against the limit on open ones", () => {
+  const activity = (index: number, status: "active" | "completed") => ({
+    ...draft,
+    id: `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
+    status,
+    createdAt: now,
+    updatedAt: now,
+    completedAt: status === "completed" ? now : null,
+  })
+  const finished = Array.from({ length: 400 }, (_, index) => activity(index, "completed"))
+  const history = workspaceSchema.parse({ activities: finished })
+  assert.equal(updateWorkspace(history, create, id, now).activities.length, 401)
+
+  const open = Array.from({ length: OPEN_ACTIVITY_LIMIT }, (_, index) => activity(1000 + index, "active"))
+  const busy = workspaceSchema.parse({ activities: [...open, ...finished] })
+  assert.throws(() => updateWorkspace(busy, create, id, now), /in progress/)
 })

@@ -67,6 +67,12 @@ function fromDatabaseRow(row: {
   };
 }
 
+/**
+ * Most roles one tracker holds. Set explicitly so a large board is a clear
+ * message on save, not rows quietly cut off by the database's own row cap.
+ */
+export const SAVED_JOB_LIMIT = 500;
+
 async function ensureLegacyJobsImported(userId: string) {
   const supabase = await createClerkSupabaseServerClient();
   if (await hasImportedLegacyDataset(supabase, userId, "saved_jobs")) return supabase;
@@ -93,7 +99,8 @@ export async function getJobs(userId: string): Promise<SavedJob[]> {
     .select("external_id,title,company,location,apply_url,match_score,contract_type,stage,saved_at")
     .eq("clerk_user_id", userId)
     .eq("provider", JOB_PROVIDER)
-    .order("saved_at", { ascending: false });
+    .order("saved_at", { ascending: false })
+    .limit(SAVED_JOB_LIMIT);
 
   if (error) throw error;
   return (data ?? []).map(fromDatabaseRow);
@@ -120,6 +127,18 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await ensureLegacyJobsImported(userId);
+    const { count, error: countError } = await supabase
+      .from("saved_jobs")
+      .select("external_id", { count: "exact", head: true })
+      .eq("clerk_user_id", userId)
+      .eq("provider", JOB_PROVIDER);
+    if (countError) throw countError;
+    if ((count ?? 0) >= SAVED_JOB_LIMIT) {
+      return NextResponse.json(
+        { success: false, error: `Your tracker holds ${SAVED_JOB_LIMIT} roles. Remove some closed ones to save more.` },
+        { status: 409 },
+      );
+    }
     const { error } = await supabase.from("saved_jobs").upsert(
       normalizeLegacyJob(userId, { ...job, savedAt: Date.now() }),
       { onConflict: "clerk_user_id,provider,external_id", ignoreDuplicates: true },

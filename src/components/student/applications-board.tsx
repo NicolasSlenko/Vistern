@@ -15,7 +15,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core"
-import { ArrowRight, BriefcaseBusiness, GripVertical, LayoutGrid, List, Search, Trash2 } from "lucide-react"
+import { ArrowRight, BriefcaseBusiness, ChevronsLeftRight, ChevronsRightLeft, GripVertical, LayoutGrid, List, Search, Trash2 } from "lucide-react"
 import type { JobBucket, SavedJob } from "@/app/api/job-board/route"
 import { pill, SEGMENT, SEGMENTS } from "@/components/resume-studio/pills"
 import { useThumb } from "@/components/resume-studio/use-thumb"
@@ -66,6 +66,9 @@ function Notice({
 
 const stageLabel = (bucket: JobBucket) => stages.find((stage) => stage.id === bucket)?.label ?? bucket
 
+/** Past this many roles a column switches to compact cards, so more fit before it scrolls. */
+const COMPACT_AFTER = 15
+
 // Buttons and links inside a draggable card must not start a drag.
 const noDrag = { onPointerDown: (event: React.PointerEvent) => event.stopPropagation() }
 
@@ -76,18 +79,21 @@ function JobCard({
   removing,
   showStage,
   dragging,
+  compact,
 }: {
   job: SavedJob
   onRemove?: (id: string) => void
   removing?: boolean
   showStage?: boolean
   dragging?: boolean
+  /** One line of facts instead of two: for a long column. */
+  compact?: boolean
 }) {
   const [confirming, setConfirming] = useState(false)
   const applyUrl = safeApplyUrl(job.applyUrl)
   return (
     <article
-      className={`group flex flex-col gap-2.5 rounded-[14px] border bg-sheet p-3.5 shadow-card-rest transition-colors duration-150 ${
+      className={`group flex flex-col rounded-[14px] border bg-sheet shadow-card-rest ${compact ? "gap-2 p-2.5" : "gap-2.5 p-3.5"} transition-colors duration-150 ${
         dragging ? "border-rule-strong shadow-lg" : "border-hairline hover:border-rule"
       }`}
     >
@@ -99,9 +105,10 @@ function JobCard({
           {job.company.slice(0, 1).toUpperCase()}
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <h3 className="text-[14px] font-medium leading-snug tracking-[-0.01em] text-ink">{job.title}</h3>
+          <h3 className={`text-[14px] font-medium leading-snug tracking-[-0.01em] text-ink ${compact ? "line-clamp-2" : ""}`}>{job.title}</h3>
           <p className="truncate text-[12px] text-ink-2">
-            {job.company}{job.location ? ` · ${job.location}` : ""}
+            {job.company}{job.location && !compact ? ` · ${job.location}` : ""}
+            {compact && job.matchScore > 0 && <span className="tabular-nums text-brand"> · {Math.round(job.matchScore)}%</span>}
           </p>
         </div>
         {onRemove && !confirming && (
@@ -140,7 +147,7 @@ function JobCard({
             </button>
           </span>
         </div>
-      ) : (
+      ) : compact ? null : (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-hairline pt-2.5 text-[12px]">
           {showStage && (
             <span className="rounded-full bg-fill px-2 py-0.5 font-medium text-ink-2">{stageLabel(job.bucket)}</span>
@@ -168,7 +175,7 @@ function JobCard({
   )
 }
 
-function DraggableJob({ job, disabled, ...rest }: { job: SavedJob; disabled: boolean; onRemove: (id: string) => void; removing: boolean }) {
+function DraggableJob({ job, disabled, ...rest }: { job: SavedJob; disabled: boolean; onRemove: (id: string) => void; removing: boolean; compact: boolean }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: job.id, disabled })
   return (
     <div
@@ -189,22 +196,74 @@ function DraggableJob({ job, disabled, ...rest }: { job: SavedJob; disabled: boo
   )
 }
 
-function StageColumn({ stage, count, children }: { stage: { id: JobBucket; label: string }; count: number; children: React.ReactNode }) {
+function StageColumn({
+  stage,
+  count,
+  collapsed,
+  onToggle,
+  children,
+}: {
+  stage: { id: JobBucket; label: string }
+  count: number
+  /** Folded to a narrow strip that still takes a drop. */
+  collapsed?: boolean
+  onToggle?: () => void
+  children: React.ReactNode
+}) {
   const { setNodeRef, isOver } = useDroppable({ id: stage.id })
+  const label = `${stage.label}, ${count} ${count === 1 ? "role" : "roles"}`
+
+  if (collapsed)
+    return (
+      <section ref={setNodeRef} aria-label={label} className="flex w-14 shrink-0 flex-col">
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={false}
+          aria-label={`Show ${stage.label}, ${count} ${count === 1 ? "role" : "roles"}`}
+          className={`flex min-h-[220px] flex-col items-center gap-3 rounded-[16px] border border-dashed px-1 py-3 text-ink-3 transition-colors duration-150 hover:border-rule-strong hover:text-ink ${
+            isOver ? "border-rule-strong bg-fill text-ink" : "border-rule"
+          }`}
+        >
+          <ChevronsLeftRight className="h-4 w-4" aria-hidden="true" />
+          <span className="label-mono [writing-mode:vertical-rl]">{stage.label}</span>
+          <span className="text-[13px] tabular-nums">{count}</span>
+        </button>
+      </section>
+    )
+
   return (
-    <section className="flex w-[268px] shrink-0 flex-col gap-3" aria-label={`${stage.label}, ${count} ${count === 1 ? "role" : "roles"}`}>
+    <section className="flex min-w-[232px] flex-1 basis-0 flex-col gap-3" aria-label={label}>
       <header className="flex items-baseline justify-between gap-2 border-b border-hairline pb-2">
         <h2 className="label-mono text-ink-2">{stage.label}</h2>
-        <span className="text-[13px] tabular-nums text-ink-3">{count}</span>
+        <span className="flex items-center gap-1.5">
+          <span className="text-[13px] tabular-nums text-ink-3">{count}</span>
+          {onToggle && (
+            <button
+              type="button"
+              onClick={onToggle}
+              aria-expanded={true}
+              aria-label={`Fold ${stage.label}`}
+              className="-my-1 flex h-7 w-7 items-center justify-center rounded-full text-ink-3 transition-colors duration-150 hover:bg-fill hover:text-ink"
+            >
+              <ChevronsRightLeft className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+          )}
+        </span>
       </header>
+      {/* A long column scrolls inside itself, so every stage stays on screen
+          to drop into; the drag scrolls it when held near either end. */}
       <div
         ref={setNodeRef}
-        className={`flex min-h-[120px] flex-col gap-2.5 rounded-[16px] p-1.5 transition-colors duration-150 ${
+        className={`no-scrollbar flex max-h-[min(68vh,680px)] min-h-[120px] flex-col gap-2.5 overflow-y-auto overscroll-contain rounded-[16px] p-1.5 transition-colors duration-150 ${
           isOver ? "bg-fill outline outline-1 outline-dashed outline-rule-strong" : "bg-transparent"
         }`}
       >
         {children}
       </div>
+      {count > COMPACT_AFTER && (
+        <p className="px-1.5 text-[12px] text-ink-3">Scroll the column for all {count}</p>
+      )}
     </section>
   )
 }
@@ -216,6 +275,8 @@ export function ApplicationsBoard({ initialJobs }: { initialJobs: SavedJob[] | n
   const [error, setError] = useState("")
   const [removingId, setRemovingId] = useState<string | null>(null)
   const [activeId, setActiveId] = useState<string | null>(null)
+  // Closed roles are a record, not work in hand: folded away unless asked for.
+  const [closedOpen, setClosedOpen] = useState(false)
   const inProgress = jobs.filter((job) => ["applied", "interviewing"].includes(job.bucket)).length
   const thumb = useThumb(view)
   const sensors = useSensors(
@@ -396,11 +457,18 @@ export function ApplicationsBoard({ initialJobs }: { initialJobs: SavedJob[] | n
                         onDragEnd={onDragEnd}
                         onDragCancel={() => setActiveId(null)}
                       >
-                        <div className="flex min-w-max items-start gap-4">
+                        <div className="flex items-start gap-4">
                           {stages.map((stage) => {
                             const items = jobs.filter((job) => job.bucket === stage.id)
+                            const foldable = stage.id === "rejected"
                             return (
-                              <StageColumn key={stage.id} stage={stage} count={items.length}>
+                              <StageColumn
+                                key={stage.id}
+                                stage={stage}
+                                count={items.length}
+                                collapsed={foldable && !closedOpen}
+                                onToggle={foldable ? () => setClosedOpen((open) => !open) : undefined}
+                              >
                                 {items.map((job) => (
                                   <DraggableJob
                                     key={job.id}
@@ -408,6 +476,7 @@ export function ApplicationsBoard({ initialJobs }: { initialJobs: SavedJob[] | n
                                     disabled={savingId !== null}
                                     onRemove={removeJob}
                                     removing={removingId === job.id}
+                                    compact={items.length > COMPACT_AFTER}
                                   />
                                 ))}
                                 {items.length === 0 && (

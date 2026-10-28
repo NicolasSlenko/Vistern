@@ -205,6 +205,7 @@ export default function MatchPage() {
     const res = await fetch("/api/job-board", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
     const result = await res.json()
     if (result.success) { setSavedJobs(result.data); setExpandedBucket("interested"); toast.success("Job saved to board") }
+    else toast.error(result.error || "The job couldn't be saved. Try again.")
   }
 
   const moveBucket = async (id: string, bucket: JobBucket) => {
