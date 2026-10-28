@@ -33,7 +33,7 @@ npm run start      # Start production server
 npm run lint       # Run ESLint
 ```
 
-Regression tests run with `npm run test:student`, `npm run test:resume`, and `npm run test:career`. Build before `npm run start:local` to run the authenticated app at `http://localhost:4191`.
+Regression tests run with `npm run test:student`, `npm run test:resume`, `npm run test:career`, `npm run test:bullets`, `npm run test:ai`, and `npm run test:jobs`. Build before `npm run start:local` to run the authenticated app at `http://localhost:4191`.
 
 ## Architecture Overview
 

@@ -20,7 +20,8 @@
     "test:ai": "tsx --test tests/ai-provider.test.ts",
     "preview:student": "node scripts/student-preview.mjs",
     "preview:studio": "node scripts/studio-preview.mjs",
-    "test:career": "tsx --test tests/career-*.test.ts"
+    "test:career": "tsx --test tests/career-*.test.ts",
+    "test:jobs": "tsx --test tests/job-filter.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.2.0",
