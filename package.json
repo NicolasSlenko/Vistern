@@ -17,7 +17,7 @@
     "test:merge": "tsx --test tests/profile-merge.test.ts",
     "test:score": "tsx --test tests/resume-score.test.ts",
     "test:bullets": "tsx --test tests/bullet-writing.test.ts",
-    "test:ai": "tsx --test tests/ai-provider.test.ts",
+    "test:ai": "tsx --test tests/ai-*.test.ts",
     "preview:student": "node scripts/student-preview.mjs",
     "preview:studio": "node scripts/studio-preview.mjs",
     "test:career": "tsx --test tests/career-*.test.ts",

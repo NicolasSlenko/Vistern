@@ -1,6 +1,6 @@
 # Vistern documentation
 
-This is the public project reference for the current `ui/zip-paper-theme` code. It describes implemented behavior and calls out planned or legacy pieces separately. AI features (provider layer, model choice, live matching, bullet writing, tailoring) are documented in [`ai-layer.md`](ai-layer.md). The local `docs/` workspace is excluded from Git; public diagrams are in [`diagrams/`](diagrams/).
+This is the public project reference for the current `dev` code, the branch all work now builds on. It describes implemented behavior and calls out planned or legacy pieces separately. AI features (provider layer, model choice, live matching, bullet writing, tailoring) are documented in [`ai-layer.md`](ai-layer.md). The local `docs/` workspace is excluded from Git; public diagrams are in [`diagrams/`](diagrams/).
 
 ## Purpose and users
 

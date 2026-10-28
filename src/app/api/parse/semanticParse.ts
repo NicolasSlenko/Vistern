@@ -76,7 +76,7 @@ export const extractWithChatGPT = async (content: string, provider: AiProvider) 
 
     return { ...parsed, details: normalizeParsedResume(parsed.details as Resume) }
   } catch (e) {
-    console.log(e)
+    console.error("Resume extraction failed:", e)
     return { details: null, missing: [] }
   }
 }

@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk"
 import { OpenAI } from "openai"
 import { zodResponseFormat } from "openai/helpers/zod"
+import { LengthFinishReasonError } from "openai/error"
 import type { z } from "zod"
 
 // Server-only AI layer. Routes pick a provider per request (see resolve.ts) and call
@@ -138,6 +139,8 @@ function logUsage(label: string, model: string, usage: AiUsage | null) {
 // Healthy calls finish in 1–40s, so a minute means the request stalled and is worth one retry.
 const HIPERGATOR_MAX_OUTPUT_TOKENS = 8000
 const HIPERGATOR_TIMEOUT_MS = 60_000
+// Warm enough to break a repetition loop, cool enough to keep extraction faithful.
+const RUNAWAY_RETRY_TEMPERATURE = 0.4
 
 function outputCap(provider: AiProvider) {
   return provider === "hipergator" ? { max_tokens: HIPERGATOR_MAX_OUTPUT_TOKENS } : {}
@@ -234,13 +237,25 @@ export async function generateObject<T extends z.ZodTypeAny>(
     return { data: parsed.success ? parsed.data : null, usage }
   }
 
-  const completion = await openAiCompatibleClient(provider).chat.completions.parse({
-    model,
-    messages: chatMessages(options),
-    response_format: responseFormat,
-    ...(acceptsTemperature(provider) ? { temperature: options.temperature } : {}),
-    ...outputCap(provider),
-  })
+  const request = (temperature: number | undefined) =>
+    openAiCompatibleClient(provider).chat.completions.parse({
+      model,
+      messages: chatMessages(options),
+      response_format: responseFormat,
+      ...(acceptsTemperature(provider) ? { temperature } : {}),
+      ...outputCap(provider),
+    })
+
+  let completion
+  try {
+    completion = await request(options.temperature)
+  } catch (error) {
+    // The model ran on until the output cap without closing the JSON (see outputCap).
+    // At a low temperature the same request loops the same way, so retry once warmer.
+    if (!(error instanceof LengthFinishReasonError) || !acceptsTemperature(provider)) throw error
+    console.warn(`[ai] ${options.name} ${model}: hit the output cap, retrying once`)
+    completion = await request(Math.max(options.temperature ?? 0, RUNAWAY_RETRY_TEMPERATURE))
+  }
 
   const usage = completion.usage
     ? { inputTokens: completion.usage.prompt_tokens, outputTokens: completion.usage.completion_tokens }
