@@ -1022,8 +1022,6 @@
 .career-plan-activity-steps input:checked + span { color: var(--career-muted); text-decoration: line-through; }
 .career-plan-activity-note { margin-top: 13px; font-size: 13px; }
 .career-plan-activity-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 21px; padding-top: 15px; border-top: 1px solid var(--career-border); }
-.career-plan-activity-actions button { display: inline-flex; align-items: center; gap: 7px; min-height: 38px; padding: 0 12px; border: 1px solid var(--career-accent); border-radius: 7px; background: var(--career-soft); color: var(--career-accent); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
-.career-plan-activity-actions button:disabled { opacity: .5; cursor: not-allowed; }
 .career-plan-activity-actions span { color: var(--career-muted); font-size: 12px; }
 .career-plan-other-work { margin-top: 30px; }
 .career-plan-other-work > h3 { margin-bottom: 14px; color: var(--career-ink); font-size: 18px; }

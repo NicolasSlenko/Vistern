@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useState } from "react"
 import { ArrowRight, ArrowUpRight, Check, ChevronDown, Compass, Plus } from "lucide-react"
 import { GrowthTree } from "../growth-tree"
+import { pill } from "@/components/resume-studio/pills"
 import { undergradPaths } from "@/lib/career/undergrad-paths"
 import { careerProjectDraft } from "@/lib/career/projects"
 import { recommendedProjects, type CareerExperience } from "@/lib/career/recommendations"
@@ -163,6 +164,6 @@ function ActivityCard({ activity, onChoose, onToggleStep, onChangeStatus }: {
   return <article className="career-plan-activity">
     <div className="career-plan-activity-heading"><div><span className="career-eyebrow">{activity.kind} · {activity.status === "paused" ? "saved for later" : `${done} / ${activity.steps.length} steps`}</span><h3>{activity.title}</h3></div><button type="button" onClick={() => onChoose(activity)}>Edit details <ArrowUpRight size={15} aria-hidden="true" /></button></div>
     {activity.steps.length > 0 ? <div className="career-plan-activity-steps">{activity.steps.map((step, index) => <label key={`${activity.id}-${index}`}><input type="checkbox" checked={step.done} onChange={(event) => onToggleStep(activity, index, event.target.checked)} /><span>{step.title}</span></label>)}</div> : <p className="career-plan-activity-note">Open this activity to add steps or record what you worked on.</p>}
-    <div className="career-plan-activity-actions">{activity.status === "paused" ? <button type="button" onClick={() => onChangeStatus(activity, "active")}>Move to in progress</button> : <button type="button" disabled={!allDone} title={!allDone ? "Finish the steps first" : undefined} onClick={() => onChangeStatus(activity, "completed")}>Mark activity complete <Check size={15} aria-hidden="true" /></button>}{!allDone && activity.status !== "paused" && <span>Finish the remaining steps to complete this activity.</span>}</div>
+    <div className="career-plan-activity-actions">{activity.status === "paused" ? <button type="button" className={pill("white")} onClick={() => onChangeStatus(activity, "active")}>Move to in progress</button> : <button type="button" className={pill("brand")} disabled={!allDone} title={!allDone ? "Finish the steps first" : undefined} onClick={() => onChangeStatus(activity, "completed")}>Mark activity complete <Check aria-hidden="true" /></button>}{!allDone && activity.status !== "paused" && <span>Finish the remaining steps to complete this activity.</span>}</div>
   </article>
 }
