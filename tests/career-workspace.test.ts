@@ -343,3 +343,18 @@ test("a project activity keeps its link to the catalog, so its tools can be show
   assert.equal(projectForActivity({ title: project.title, source: null })?.id, project.id)
   assert.equal(projectForActivity({ title: project.title, source: { type: "guide", id: "careers" } }), null)
 })
+
+test("a catalog project can be added to the plan through the API", async () => {
+  let saved = workspaceSchema.parse({})
+  const handler = createCareerHandler({
+    userId: async () => "student-a",
+    read: async () => ({ data: saved, etag: null }),
+    write: async (_userId, data) => { saved = data },
+  })
+  const response = await handler(request({ intent: "create", revision: 0, activity: careerProjectDraft(careerProjects[0]) }))
+  assert.equal(response.status, 200)
+  assert.deepEqual(saved.activities[0].source, { type: "project", id: careerProjects[0].id })
+
+  const unknown = await handler(request({ intent: "create", revision: 1, activity: { ...careerProjectDraft(careerProjects[0]), source: { type: "project", id: "retired-project" } } }))
+  assert.equal(unknown.status, 400)
+})

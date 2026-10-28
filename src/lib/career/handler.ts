@@ -6,6 +6,15 @@ import {
   type CareerWorkspace,
 } from "./workspace"
 import { careers, guides, organizations } from "./catalog"
+import { careerProjects } from "./projects"
+
+// Each activity source type is checked against its own catalog.
+const sourceCatalogs = {
+  career: careers,
+  guide: guides,
+  organization: organizations,
+  project: careerProjects,
+} satisfies Record<string, readonly { id: string }[]>
 
 export function createCareerHandler(deps: {
   userId: () => Promise<string | null>
@@ -48,13 +57,7 @@ export function createCareerHandler(deps: {
       const source = "activity" in update ? update.activity.source : null
       if (
         source &&
-        !(
-          source.type === "career"
-            ? careers
-            : source.type === "guide"
-              ? guides
-              : organizations
-        ).some((item) => item.id === source.id)
+        !sourceCatalogs[source.type].some((item) => item.id === source.id)
       ) {
         return Response.json(
           { success: false, error: "That resource is no longer available." },
