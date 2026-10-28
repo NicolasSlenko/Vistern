@@ -505,3 +505,96 @@
   text-transform: uppercase;
   color: var(--color-ink-2);
 }
+
+/* The guided tour: a card in the corner, not a modal — the page under it
+   stays usable, so a student can look round a stop before moving on. On a
+   phone it sits along the bottom edge instead. */
+.guided-tour {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(360px, calc(100vw - 48px));
+  padding: 18px 20px 20px;
+  border: 1px solid var(--color-hairline);
+  border-radius: 20px;
+  background: var(--color-sheet);
+  box-shadow: var(--shadow-card-lifted);
+  animation: guided-tour-in 360ms var(--ease-glide);
+}
+@keyframes guided-tour-in {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
+}
+.guided-tour-close {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin: -6px -8px -6px 0;
+  border-radius: 999px;
+  color: var(--color-ink-3);
+  transition: background 120ms, color 120ms;
+}
+.guided-tour-close:hover {
+  background: var(--color-fill);
+  color: var(--color-ink);
+}
+.guided-tour-track {
+  display: flex;
+  gap: 4px;
+}
+.guided-tour-track span {
+  flex: 1;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--color-fill);
+  transition: background 300ms var(--ease-glide);
+}
+.guided-tour-track span[data-done] {
+  background: var(--color-brand);
+}
+/* The sidebar entry for the stop the tour is on. */
+.student-sidebar [data-tour-spot] {
+  box-shadow:
+    inset 2px 0 0 var(--color-brand),
+    0 0 0 2px color-mix(in oklab, var(--color-brand) 35%, transparent);
+}
+.student-mobile-tour {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 12px 13px;
+  border-radius: 11px;
+  color: var(--student-muted);
+  font-family: var(--font-newsreader), Georgia, serif;
+  font-size: 16px;
+  font-weight: 450;
+  letter-spacing: -0.012em;
+  text-align: left;
+}
+.student-mobile-tour:hover {
+  background: color-mix(in oklab, var(--color-fill) 70%, transparent);
+  color: var(--color-ink);
+}
+@media (max-width: 39.99rem) {
+  .guided-tour {
+    right: 10px;
+    bottom: 10px;
+    left: 10px;
+    width: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .guided-tour {
+    animation: none;
+  }
+  .guided-tour-track span {
+    transition: none;
+  }
+}
