@@ -79,12 +79,41 @@ function calculateYearsRemaining(endDate?: string, startDate?: string): number {
   return Math.max(1, yearsRemaining) // at least 1
 }
 
+/**
+ * What the last load found. The provider is unmounted whenever the student
+ * visits a page that doesn't use it (Home, Career, Jobs…), so without this
+ * every return to Profile, Resumes or Match started from an empty skeleton and
+ * three requests. With it, the page shows what it knew straight away and the
+ * reload below quietly replaces it. Held per Clerk user, and only for a few
+ * minutes, so another account never sees it.
+ */
+interface Snapshot {
+  userId: string
+  at: number
+  resumeData: Resume
+  currentFileName: string | null
+  xyzFeedback: XYZFeedbackData | null
+  actionableInsights: ActionableInsight[]
+}
+const SNAPSHOT_TTL_MS = 5 * 60 * 1000
+let snapshot: Snapshot | null = null
+
+const clerkUserId = (): string | null =>
+  typeof window === "undefined" ? null : ((window as unknown as { Clerk?: { user?: { id?: string } | null } }).Clerk?.user?.id ?? null)
+
+function freshSnapshot(): Snapshot | null {
+  const userId = clerkUserId()
+  return snapshot && userId && snapshot.userId === userId && Date.now() - snapshot.at < SNAPSHOT_TTL_MS ? snapshot : null
+}
+
 export function ResumeProvider({ children }: { children: ReactNode }) {
-  const [resumeData, setResumeData] = useState<Resume | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [currentFileName, setCurrentFileName] = useState<string | null>(null)
-  const [xyzFeedback, setXyzFeedback] = useState<XYZFeedbackData | null>(null)
-  const [actionableInsights, setActionableInsights] = useState<ActionableInsight[]>([])
+  // Read once, before the first render, so a remount never flashes the skeleton.
+  const [known] = useState(freshSnapshot)
+  const [resumeData, setResumeData] = useState<Resume | null>(known?.resumeData ?? null)
+  const [isLoading, setIsLoading] = useState(!known)
+  const [currentFileName, setCurrentFileName] = useState<string | null>(known?.currentFileName ?? null)
+  const [xyzFeedback, setXyzFeedback] = useState<XYZFeedbackData | null>(known?.xyzFeedback ?? null)
+  const [actionableInsights, setActionableInsights] = useState<ActionableInsight[]>(known?.actionableInsights ?? [])
   const [showFeedback, setShowFeedback] = useState(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("showAiFeedback")
@@ -105,7 +134,8 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
 
   // Load the current structured resume for the signed-in user.
   const loadResumeData = async () => {
-    setIsLoading(true)
+    // With something to show, reload behind it instead of putting the skeleton back.
+    if (!freshSnapshot()) setIsLoading(true)
     try {
       // Fire all three requests in parallel — they are independent, and running
       // them serially kept the dashboard on its loading skeleton for 3 round trips.
@@ -115,6 +145,7 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
         fetch("/api/analyze/xyz-batch").catch(() => null),
       ])
       if (response.status === 401) {
+        snapshot = null
         setResumeData(null)
         return
       }
@@ -129,6 +160,7 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
       if (result.success && result.data) {
         setResumeData(result.data)
       } else {
+        snapshot = null
         setResumeData(null)
       }
 
@@ -206,6 +238,12 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
       console.error("Error generating XYZ feedback:", error)
     }
   }
+
+  // Remember what is on screen for the next time this provider mounts.
+  useEffect(() => {
+    const userId = clerkUserId()
+    if (resumeData && userId) snapshot = { userId, at: Date.now(), resumeData, currentFileName, xyzFeedback, actionableInsights }
+  }, [resumeData, currentFileName, xyzFeedback, actionableInsights])
 
   // Load on mount
   useEffect(() => {

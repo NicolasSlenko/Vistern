@@ -189,6 +189,15 @@ export async function POST(request: NextRequest) {
             }
         }
 
+        const experienceCount = Array.isArray(resumeData.experience) ? resumeData.experience.length : 0;
+        const projectNames: string[] = Array.isArray(resumeData.projects)
+            ? resumeData.projects.map((p: { name?: string }) => p?.name || "Untitled project")
+            : [];
+        const requiredEntries = [
+            experienceCount > 0 ? `- Experience: exactly ${experienceCount} \\resumeSubheading entr${experienceCount === 1 ? "y" : "ies"}` : "",
+            projectNames.length > 0 ? `- Projects: exactly ${projectNames.length} \\resumeProjectHeading entr${projectNames.length === 1 ? "y" : "ies"}: ${projectNames.map((n) => `"${n}"`).join(", ")}` : "",
+        ].filter(Boolean).join("\n");
+
         const prompt = `Generate a COMPLETE, compilable LaTeX resume using Jake Gutierrez's template format.
 
 Use the resume data below and APPLY ALL the improvement suggestions listed. For each bullet point that has a suggested rewrite, use the improved version.
@@ -200,13 +209,36 @@ CRITICAL RULES:
 - DO NOT remove any existing sections or entries.
 - CRITICAL: You MUST include EVERY SINGLE original bullet point from the resume data exactly as it was. ONLY replace a bullet if an explicit improvement is provided for it. DO NOT drop, omit, or summarize existing bullets unprompted.
 - Format the Header strictly: Name in bold and centered at the very top (\textbf{\Huge \scshape \Name}). Exactly underneath, center a single line containing all contact details (Phone, Email, LinkedIn, GitHub, Portfolio, Location) separated by pipes ($|$). For LinkedIn, GitHub, and Portfolio: display the visible stripped URL alongside the hyperlink (e.g. \href{https://linkedin.com/in/name}{linkedin.com/in/name}), DO NOT just hyperlink the word "LinkedIn".
-- Format the sections in exactly this order: Education, Experience, Projects, Skills.
+- Format the sections in exactly this order: Education, Experience, Projects, Skills. Any other non-empty section in the data (certifications, achievements, etc.) goes after Skills. Omit a section only when its array in the data is empty.
+- Every project in the "projects" array MUST appear in a Projects section, even when the resume also has experience. Projects are as important as jobs on a student resume — never drop them to save space; tighten bullet wording instead.
+- Project heading: \\resumeProjectHeading{\\textbf{Project Name} $|$ \\emph{Tech1, Tech2}}{link or date if present}. Its bullets are the project's "highlights". If a project has no highlights, use its "description" as its single bullet.
 - For the Skills section: DO NOT include proficiency levels. Group the skills logically into 3 dense categories (based on what feels right) to maximize space. Format the Skills section very tightly so it takes up minimal vertical space on the one-page layout.
 - Preserve all dates, company names, job titles, school names, and links exactly as they appear.
 - Escape special LaTeX characters: & % $ # _ { } ~ ^
 - Use $\\times$ for multiplication symbols
 ${improvementsSummary.length > 0 ? `- Use \\\\textbf{} for action verbs and key metrics in bullet points\n- Make sure every \\\\resumeItem uses the \\\\textbf{Verb} pattern for the first word\n- If a bullet has multiple suggested improvements, pick the single best one` : `- CRITICAL: Copy every bullet point VERBATIM from the resume data. Do NOT rephrase, improve, or reword any bullet. The text must be character-for-character identical to the source data (only wrap in LaTeX markup like \\\\resumeItem{}). Do NOT add \\\\textbf{} inside bullet text.`}
 
+=== SECTION MARKUP EXAMPLE (structure only — use the real data) ===
+\\section{Experience}
+  \\resumeSubHeadingListStart
+    \\resumeSubheading
+      {Job Title}{Start -- End}
+      {Company}{City, ST}
+      \\resumeItemListStart
+        \\resumeItem{Bullet text}
+      \\resumeItemListEnd
+  \\resumeSubHeadingListEnd
+
+\\section{Projects}
+  \\resumeSubHeadingListStart
+    \\resumeProjectHeading
+      {\\textbf{Project Name} $|$ \\emph{React, Node.js}}{}
+      \\resumeItemListStart
+        \\resumeItem{Bullet text}
+      \\resumeItemListEnd
+  \\resumeSubHeadingListEnd
+
+${requiredEntries ? `=== REQUIRED ENTRIES (check your output against this before finishing) ===\n${requiredEntries}\n` : ""}
 === RESUME DATA (JSON) ===
 ${JSON.stringify(resumeData, null, 2)}
 
@@ -231,6 +263,7 @@ ${customInstructions}
 You must output ONLY valid, compilable LaTeX code using the EXACT template provided below. 
 Never output markdown fences or explanations.
 CRITICAL: Only include sections that exist in the provided resume data. Do NOT invent new sections like Summary, Objective, or Profile. Your ONLY job is to format the data into LaTeX and improve bullet point wording where suggestions are provided.
+CRITICAL: Every experience and every project in the data must appear in the output. A missing Projects section is the most common failure — always include it when the data has projects.
 
 === REQUIRED LATEX TEMPLATE TO FILL OUT ===
 ${JAKE_TEMPLATE}

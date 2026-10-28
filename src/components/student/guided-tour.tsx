@@ -26,7 +26,7 @@ const sections: Section[] = [
         title: "Welcome to Vistern",
         body: "This walkthrough goes through each part of the app, one page at a time, and points out what everything on it is for.",
         points: [
-          "Six sections: Home, Career, Profile, Resumes, Jobs and Community",
+          "Seven sections: Home, Career, Profile, Resumes, Jobs, Applications and Community",
           "Jump to any of them with the tabs above, or skip a section you don’t need",
           "On a keyboard, ← and → move through the steps and Esc ends the tour",
         ],
@@ -191,7 +191,36 @@ const sections: Section[] = [
       {
         target: sidebarSection("/jobs"),
         title: "Applications",
-        body: "Applications is a board with a column for each stage: saved, applied, interviewing, offer. Drag a role across as it moves along.",
+        body: "Applications is a board with a column for each stage: saved, applied, interviewing, offer. The next section covers it.",
+      },
+    ],
+  },
+  {
+    id: "applications",
+    label: "Applications",
+    path: "/jobs/applications",
+    steps: [
+      {
+        target: ['[data-tour="apps-header"]'],
+        title: "Applications",
+        body: "Every role you’ve saved, and where each one stands. Save roles from the job board or from your live matches.",
+        points: ["Find jobs takes you back to the job board to save more"],
+      },
+      {
+        target: ['[data-tour="apps-summary"]'],
+        title: "At a glance",
+        body: "How many roles you’re tracking, how many are in progress, and how many have reached interviews or offers.",
+      },
+      {
+        target: ['[data-tour="apps-board"]', '[data-tour="apps-empty"]'],
+        title: "The board",
+        body: "One column for each stage: Saved, Applied, Interviewing, Offer and Closed. Drag a role to another column as your application moves along; it saves as soon as you drop it.",
+        points: ["On a touch screen, press and hold a card, then drag", "On a keyboard, focus a card, press Space, move with the arrow keys, then Space again", "The bin on a card removes the role, after asking you to confirm", "Listing opens the employer’s own posting"],
+      },
+      {
+        target: ['[data-tour="apps-view"]', '[data-tour="apps-empty"]'],
+        title: "Board or list",
+        body: "Switch to List to see every role in one column with its stage shown as a label. Moving roles between stages is done on the board.",
       },
     ],
   },

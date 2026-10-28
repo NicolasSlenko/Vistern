@@ -70,7 +70,7 @@
    source order. The sheet lifts off the page rather than sinking into it, so
    it goes lighter than the paper, not darker. */
 .dark {
-  --color-paper: #0b0e0c;
+  --color-paper: #111713;
   --color-sheet: #141a17;
   --color-fill: #1b2220;
   --color-fill-line: #232b28;
@@ -88,10 +88,11 @@
   --color-alert: #f0837a;
   --color-caution: #e5b55a;
 
-  --color-sky-high: #16302a;
-  --color-sky-low: #0f241f;
-  --color-sky-warm: #1d3a2c;
-  --color-sky-deep: #0a1713;
+  /* Lifted from near-black so the sky reads as green behind the sheet. */
+  --color-sky-high: #2e5c4b;
+  --color-sky-low: #1f4638;
+  --color-sky-warm: #3a6a4c;
+  --color-sky-deep: #12301f;
 
   /* Shadows don't read on a dark page, so the cards lean on depth of colour
      and a lit top edge instead; what's left is just enough to separate them. */

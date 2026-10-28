@@ -53,6 +53,8 @@ interface XyzEntry {
   score: number
   xyz_analysis: string
   improvements: string[]
+  /** Who it's about (lib/feedback-entries.ts); absent on reviews saved before labels. */
+  entry?: string
 }
 
 export interface XyzFeedback {

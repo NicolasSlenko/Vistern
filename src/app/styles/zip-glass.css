@@ -139,7 +139,7 @@
     background-size: 4px 4px;
   }
   .dark .desk-bright::after {
-    opacity: 0.28;
+    opacity: 0.4;
   }
 
   /* Some people ask for less see-through UI: a solid pane instead. */

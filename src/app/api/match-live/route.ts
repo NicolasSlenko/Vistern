@@ -7,22 +7,10 @@ import { getCurrentResumeData, getUserPreferences } from "@/lib/supabase/user-da
 import { searchSimilarDocuments } from "@/lib/vectorSearch"
 import { checkAndIncrementLimit } from "@/lib/usageLimits"
 import type { Resume } from "@/app/api/parse/resumeSchema"
+import { allowedLevels, keepListing } from "@/lib/jobs/listing-filter"
+import { readLiveJobsCache, writeLiveJobsCache } from "@/lib/jobs/live-cache"
+import { dedupeJobs, fetchAdzunaJobs, fetchMuseJobs, type AdzunaJob } from "@/lib/jobs/sources"
 
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000
-const liveJobsCache = new Map<string, CachedLiveJobs>()
-
-interface AdzunaJob {
-  id: string
-  title: string
-  company: { display_name: string }
-  location: { display_name: string }
-  description: string
-  salary_min?: number
-  salary_max?: number
-  redirect_url: string
-  contract_type?: string
-  created: string
-}
 
 const CompareResultSchema = z.object({
   overallMatch: z.number().describe("0-100 overall alignment score"),
@@ -56,20 +44,8 @@ export interface LiveJob {
   }
 }
 
-interface CachedLiveJobs {
-  jobs: LiveJob[]
-  cachedAt: number
-}
-
-const LOCATION_TO_COUNTRY: Record<string, string> = {
-  "United States": "us",
-  "Canada": "ca",
-  "United Kingdom": "gb",
-  "Europe": "de",
-  "Asia Pacific": "au",
-  "Latin America": "br",
-  "Remote (Anywhere)": "us",
-}
+const prefsKeyOf = (prefs: Record<string, string[]> | null) =>
+  JSON.stringify(["roleTypes", "jobType", "experienceLevel", "location", "workEnvironment", "degreeLevel"].map((key) => prefs?.[key] ?? []))
 
 function buildResumeSummary(resume: Resume): string {
   const skills = resume.skills
@@ -96,14 +72,18 @@ async function analyzeJobFit(
   provider: AiProvider,
   resumeSummary: string,
   job: AdzunaJob,
-  degreeLevel: string[] = []
+  degreeLevel: string[] = [],
+  seeking: string[] = []
 ): Promise<z.infer<typeof CompareResultSchema>> {
   const degreeLine = degreeLevel.length && !degreeLevel.includes("No Preference")
     ? `\nCANDIDATE DEGREE LEVEL: ${degreeLevel.join(", ")} — factor this into the education alignment score.`
     : ""
+  const seekingLine = seeking.length
+    ? `\nTHE CANDIDATE IS A STUDENT LOOKING FOR: ${seeking.join(", ")}. Judge experience against what this level of role expects, not against a senior hire.`
+    : ""
   const result = await generateObject({
     provider,
-    system: `You are a strict, honest technical recruiter. Score how well this candidate matches the job.${degreeLine}
+    system: `You are a strict, honest technical recruiter. Score how well this candidate matches the job.${degreeLine}${seekingLine}
 
 SCORING CALIBRATION — do not inflate scores:
 - 80-100: Near-perfect fit. Candidate has nearly all required skills AND relevant experience.
@@ -130,182 +110,16 @@ ${job.description.slice(0, 900)}`,
   return result.data!
 }
 
-async function adzunaSearch(
-  appId: string,
-  appKey: string,
-  what: string,
-  country: string,
-  extra: Record<string, string> = {}
-): Promise<AdzunaJob[]> {
-  const params = new URLSearchParams({ app_id: appId, app_key: appKey, results_per_page: "50", what, ...extra })
-  const url = `https://api.adzuna.com/v1/api/jobs/${country}/search/1?${params.toString()}`
-  try {
-    const res = await fetch(url, { cache: "no-store" })
-    if (!res.ok) return []
-    const data = await res.json()
-    return (data.results as AdzunaJob[]) || []
-  } catch {
-    return []
-  }
-}
-
-// ─── The Muse (free, no auth) ────────────────────────────────────────────────
-
-interface MuseJob {
-  id: number
-  name: string
-  company: { name: string }
-  locations: Array<{ name: string }>
-  contents: string
-  refs: { landing_page: string }
-}
-
-const ROLE_TO_MUSE_CATEGORY: Record<string, string> = {
-  "software": "Software Engineering",
-  "frontend": "Software Engineering",
-  "backend": "Software Engineering",
-  "full-stack": "Software Engineering",
-  "fullstack": "Software Engineering",
-  "mobile": "Software Engineering",
-  "ios": "Software Engineering",
-  "android": "Software Engineering",
-  "devops": "Software Engineering",
-  "data science": "Data Science",
-  "data analyst": "Data & Analytics",
-  "machine learning": "Data Science",
-  "product manager": "Product",
-  "ux": "Design & UX",
-  "ui": "Design & UX",
-  "cybersecurity": "IT",
-  "cloud": "Software Engineering",
-}
-
-function roleToMuseCategory(role: string): string {
-  const lower = (role || "").toLowerCase()
-  for (const [key, cat] of Object.entries(ROLE_TO_MUSE_CATEGORY)) {
-    if (lower.includes(key)) return cat
-  }
-  return "Software Engineering"
-}
-
-async function fetchMuseJobs(roleTypes: string[], isRemote: boolean): Promise<AdzunaJob[]> {
-  const categories = [...new Set(roleTypes.slice(0, 3).map(roleToMuseCategory))]
-  const searches = categories.map(async (cat): Promise<AdzunaJob[]> => {
-    try {
-      const params = new URLSearchParams({ category: cat, page: "0", descending: "true" })
-      if (isRemote) params.set("location", "Flexible / Remote")
-      const res = await fetch(`https://www.themuse.com/api/public/jobs?${params}`, { cache: "no-store" })
-      if (!res.ok) return []
-      const data = await res.json()
-      return ((data.results || []) as MuseJob[]).map(j => ({
-        id: `muse_${j.id}`,
-        title: j.name,
-        company: { display_name: j.company.name },
-        location: { display_name: j.locations[0]?.name || "Remote" },
-        description: j.contents.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
-        redirect_url: j.refs.landing_page,
-        created: new Date().toISOString(),
-      }))
-    } catch {
-      return []
-    }
-  })
-  const results = await Promise.all(searches)
-  return results.flat()
-}
-
-function dedupeJobs(jobs: AdzunaJob[]): AdzunaJob[] {
-  const seenIds = new Set<string>()
-  const seenTitleCompany = new Set<string>()
-  return jobs.filter(j => {
-    if (seenIds.has(j.id)) return false
-    seenIds.add(j.id)
-    const key = `${(j.title || "").toLowerCase().replace(/\s+/g, " ").trim()}|${(j.company?.display_name || "").toLowerCase().trim()}`
-    if (seenTitleCompany.has(key)) return false
-    seenTitleCompany.add(key)
-    return true
-  })
-}
-
-async function fetchAdzunaJobs(prefs: Record<string, string[]>): Promise<AdzunaJob[]> {
-  const appId = process.env.ADZUNA_APP_ID
-  const appKey = process.env.ADZUNA_APP_KEY
-  if (!appId || !appKey) {
-    throw new Error("Adzuna API credentials not configured. Add ADZUNA_APP_ID and ADZUNA_APP_KEY to your .env.")
-  }
-
-  const roleTypes: string[] = prefs.roleTypes || []
-  const location: string[] = prefs.location || []
-  const jobType: string[] = prefs.jobType || []
-  const workEnvironment: string[] = prefs.workEnvironment || []
-  const degreeLevel: string[] = prefs.degreeLevel || []
-
-  const wantsInternship = jobType.includes("Internship") && !jobType.includes("Full-Time")
-  const wantsFullTime = jobType.includes("Full-Time") && !jobType.includes("Internship")
-  const isRemote = workEnvironment.some(e => (e || "").toLowerCase().includes("remote")) || location.includes("Remote (Anywhere)")
-
-  // Degree-level search tag appended to queries for signal (soft filter via LLM scoring)
-  const degreeTags: string[] = []
-  if (degreeLevel.includes("Undergraduate / Associate") && !degreeLevel.includes("PhD / Doctorate")) degreeTags.push("entry level")
-  if (degreeLevel.includes("Master's Degree")) degreeTags.push("masters")
-  if (degreeLevel.includes("PhD / Doctorate")) degreeTags.push("phd research scientist")
-
-  const nonRemoteLocation = location.find(l => !l.includes("Remote")) || location[0] || "United States"
-  const primaryCountry = LOCATION_TO_COUNTRY[nonRemoteLocation] || "us"
-  const remoteTag = isRemote ? " remote" : ""
-
-  // Derive the exact set of countries from the user's location preferences — no cross-contamination
-  const selectedCountries = [...new Set(
-    location.map(l => LOCATION_TO_COUNTRY[l]).filter((c): c is string => Boolean(c))
-  )]
-  const countries = selectedCountries.length > 0 ? selectedCountries : ["us"]
-
-  const role0 = roleTypes[0] || "software"
-  const role1 = roleTypes[1] || ""
-
-  if (wantsInternship) {
-    // Fan out multiple query variations across ONLY the user's selected countries
-    const searches: Promise<AdzunaJob[]>[] = []
-    for (const country of countries) {
-      searches.push(adzunaSearch(appId, appKey, `intern ${role0}${remoteTag}`, country))
-      searches.push(adzunaSearch(appId, appKey, `internship ${role0}${remoteTag}`, country))
-      if (role1) searches.push(adzunaSearch(appId, appKey, `intern ${role1}${remoteTag}`, country))
-    }
-    // Extra query variations only on primary country for depth
-    searches.push(adzunaSearch(appId, appKey, `summer intern ${role0}`, countries[0]))
-    searches.push(adzunaSearch(appId, appKey, `graduate intern ${role0}`, countries[0]))
-    if (role1) searches.push(adzunaSearch(appId, appKey, `summer intern ${role1}`, countries[0]))
-    const results = await Promise.all(searches)
-    return dedupeJobs(results.flat())
-  }
-
-  // Standard full-time / either — fan out one query per role type × country (OR behavior)
-  const extra: Record<string, string> = {}
-  if (wantsFullTime) extra.full_time = "1"
-
-  const degreeTag = degreeTags[0] ? ` ${degreeTags[0]}` : ""
-  const searches: Promise<AdzunaJob[]>[] = []
-  for (const country of countries) {
-    for (const role of roleTypes.slice(0, 3)) {
-      const q = isRemote ? `${role} remote${degreeTag}` : `${role}${degreeTag}`
-      searches.push(adzunaSearch(appId, appKey, q, country, extra))
-      // Also search without the degree tag for broader coverage
-      if (degreeTag) searches.push(adzunaSearch(appId, appKey, isRemote ? `${role} remote` : role, country, extra))
-    }
-  }
-  const results = await Promise.all(searches)
-  return dedupeJobs(results.flat())
-}
-
 export async function GET(): Promise<NR> {
   try {
     const { userId } = await auth()
     if (!userId) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
-    const cached = liveJobsCache.get(userId)
-    if (cached && Date.now() - cached.cachedAt < CACHE_TTL_MS) {
-      return NextResponse.json({ success: true, data: cached })
-    }
-    return NextResponse.json({ success: false, data: null })
+    // Cached for a day per resume and set of preferences; a miss is not an error,
+    // the page runs the search (POST) itself.
+    const cached = await readLiveJobsCache<LiveJob>(userId, prefsKeyOf(await getUserPreferences(userId)))
+    return cached
+      ? NextResponse.json({ success: true, data: cached })
+      : NextResponse.json({ success: false, data: null })
   } catch {
     return NextResponse.json({ success: false, data: null })
   }
@@ -342,14 +156,22 @@ export async function POST(): Promise<NR> {
     const isRemote = (prefs.workEnvironment || []).some(e => (e || "").toLowerCase().includes("remote")) ||
       (prefs.location || []).includes("Remote (Anywhere)")
 
+    const levels = allowedLevels(prefs)
     const [adzunaJobs, museJobs] = await Promise.all([
       fetchAdzunaJobs(prefs),
-      fetchMuseJobs(prefs.roleTypes || [], isRemote),
+      fetchMuseJobs(prefs.roleTypes || [], isRemote, levels),
     ])
-    const allJobs = dedupeJobs([...adzunaJobs, ...museJobs])
+    // The boards' own filters are loose; every listing is checked against
+    // the level asked for before anything is ranked or scored.
+    const allJobs = dedupeJobs([...adzunaJobs, ...museJobs]).filter(job => keepListing(job.title, job.description, levels))
     if (allJobs.length === 0) {
       return NextResponse.json(
-        { success: false, error: "No listings found for your preferences. Try adjusting your questionnaire." },
+        {
+          success: false,
+          error: levels.has("intern") && levels.size === 1
+            ? "No internship listings found right now. Try more role types or locations in your preferences."
+            : "No listings found for your preferences. Try adjusting your questionnaire.",
+        },
         { status: 404 }
       )
     }
@@ -369,7 +191,7 @@ export async function POST(): Promise<NR> {
     // Resolved once, so the 10 calls count as a single paid request.
     const { provider } = await resolveAiProvider(userId)
     const analysisResults = await Promise.allSettled(
-      topMatches.map(m => analyzeJobFit(provider, resumeSummary, m.job, prefs.degreeLevel || []))
+      topMatches.map(m => analyzeJobFit(provider, resumeSummary, m.job, prefs.degreeLevel || [], prefs.jobType || []))
     )
     // A failed analysis falls back to the similarity score below; log why so it isn't silent.
     analysisResults.forEach((result, i) => {
@@ -414,8 +236,8 @@ export async function POST(): Promise<NR> {
     // Sort by matchScore (LLM score) descending
     liveJobs.sort((a, b) => b.matchScore - a.matchScore)
 
-    const result: CachedLiveJobs = { jobs: liveJobs, cachedAt: Date.now() }
-    liveJobsCache.set(userId, result)
+    const prefsKey = prefsKeyOf(prefs)
+    const result = (await writeLiveJobsCache(userId, liveJobs, prefsKey)) ?? { jobs: liveJobs, cachedAt: Date.now(), prefsKey, resumeKey: "" }
     return NextResponse.json({ success: true, data: result, aiProvider: provider })
   } catch (error) {
     console.error("match-live error:", error)

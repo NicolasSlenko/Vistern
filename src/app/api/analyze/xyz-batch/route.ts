@@ -8,9 +8,19 @@ import { calculateResumeScoreDetailed } from "@/lib/resumeScoring";
 import { createClerkSupabaseServerClient } from "@/lib/supabase/server";
 import { getCurrentResumeData } from "@/lib/supabase/user-data";
 import type { Json } from "@/lib/supabase/database.types";
+import { labelFeedback } from "@/lib/feedback-entries";
+
+/**
+ * A review of the master profile is kept apart from the current resume's:
+ * the two list entries in different orders, so one's notes would land on the
+ * wrong cards in the other, and the profile's must not set a resume's score.
+ */
+const FEEDBACK_TYPE = { resume: "xyz", profile: "xyz-profile" } as const;
+type Target = keyof typeof FEEDBACK_TYPE;
+const targetOf = (value: unknown): Target => (value === "profile" ? "profile" : "resume");
 
 // GET — serve cached XYZ feedback + insights
-export async function GET() {
+export async function GET(request: NextRequest) {
     try {
         const { userId } = await auth();
         if (!userId) {
@@ -26,7 +36,7 @@ export async function GET() {
             return NextResponse.json({ success: false, data: null });
         }
         const { data, error } = await supabase.from("resume_feedback").select("result")
-            .eq("clerk_user_id", userId).eq("resume_document_id", document.id).eq("feedback_type", "xyz")
+            .eq("clerk_user_id", userId).eq("resume_document_id", document.id).eq("feedback_type", FEEDBACK_TYPE[targetOf(request.nextUrl.searchParams.get("for"))])
             .order("created_at", { ascending: false }).limit(1).maybeSingle();
         if (error) throw error;
         return NextResponse.json({ success: true, data: data?.result ?? null });
@@ -69,7 +79,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { resumeData, graduationYear, currentYear, preferences } = await request.json() as { resumeData: Resume; graduationYear?: number; currentYear?: number; preferences?: Record<string, any> };
+        const { resumeData, graduationYear, currentYear, preferences, target: rawTarget } = await request.json() as { resumeData: Resume; graduationYear?: number; currentYear?: number; preferences?: Record<string, any>; target?: unknown };
+        const target = targetOf(rawTarget);
 
         if (!resumeData) {
             return NextResponse.json({ error: "No resume data provided" }, { status: 400 });
@@ -138,7 +149,7 @@ export async function POST(request: NextRequest) {
 
         if (projectItems.length === 0 && experienceItems.length === 0) {
             const emptyResult = { projects: {}, experience: {}, actionableInsights: [] };
-            await saveFeedback(userId, emptyResult, resumeData);
+            await saveFeedback(userId, emptyResult, resumeData, target);
 
             return NextResponse.json({ success: true, data: emptyResult });
         }
@@ -215,9 +226,11 @@ ${experienceItems.length > 0 ? "=== EXPERIENCE ===\n" + experienceItems.join("\n
             })),
         };
 
-        await saveFeedback(userId, indexed, resumeData);
+        // Each entry's feedback names the entry it's about, so it can be matched back by who, not where.
+        const labelled = labelFeedback(indexed, resumeData);
+        await saveFeedback(userId, labelled, resumeData, target);
 
-        return NextResponse.json({ success: true, data: indexed, aiProvider: provider });
+        return NextResponse.json({ success: true, data: labelled, aiProvider: provider });
 
     } catch (error) {
         console.error("Error in batch XYZ analysis:", error);
@@ -228,7 +241,7 @@ ${experienceItems.length > 0 ? "=== EXPERIENCE ===\n" + experienceItems.join("\n
     }
 }
 
-async function saveFeedback(userId: string, result: unknown, resumeData: Resume) {
+async function saveFeedback(userId: string, result: unknown, resumeData: Resume, target: Target) {
     const supabase = await createClerkSupabaseServerClient();
     await getCurrentResumeData(userId);
     const { data: document, error: documentError } = await supabase.from("resume_documents")
@@ -238,10 +251,12 @@ async function saveFeedback(userId: string, result: unknown, resumeData: Resume)
     const { error: feedbackError } = await supabase.from("resume_feedback").insert({
         clerk_user_id: userId,
         resume_document_id: document.id,
-        feedback_type: "xyz",
+        feedback_type: FEEDBACK_TYPE[target],
         result: result as Json,
     });
     if (feedbackError) throw feedbackError;
+    // Only a review of the resume itself scores the resume.
+    if (target === "profile") return;
     const newScore = calculateResumeScoreDetailed(resumeData, result).totalScore;
     const { error: scoreError } = await supabase.from("resume_documents").update({ score: newScore })
         .eq("id", document.id).eq("clerk_user_id", userId);

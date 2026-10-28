@@ -1,4 +1,4 @@
-import { generateObject } from "@/lib/ai";
+import { generateObject, aiErrorMessage } from "@/lib/ai";
 import { resolveAiProvider } from "@/lib/ai/resolve";
 import { z } from "zod";
 import { type NextRequest, NextResponse } from "next/server";
@@ -178,6 +178,6 @@ ${jobDescription}
 
     } catch (error) {
         console.error("Error in match API:", error);
-        return NextResponse.json({ success: false, error: "Failed to process match request" }, { status: 500 });
+        return NextResponse.json({ success: false, error: aiErrorMessage(error, "Failed to process match request") }, { status: 500 });
     }
 }

@@ -32,11 +32,48 @@
     -webkit-backdrop-filter: blur(1.5px) saturate(1.3) brightness(1.06);
     backdrop-filter: blur(1.5px) saturate(1.3) brightness(1.06);
   }
-  .dark .paper-frame::before {
+  /* On the desk the frost is painted, not a backdrop-filter. A backdrop-filter
+     this size is re-run over the whole screen for every frame the sheet's
+     contents scroll, which held the studio and master profile to ~20fps. The
+     band only ever shows sky, and what the filter did to it was a lift in green
+     and light; the 1.5px blur, on a smooth gradient, mostly hid the desk's dots.
+     Frames in dialogs, over page content rather than sky, keep the real thing.
+
+     Where the sheet's columns scroll (wide screens), the band paints the desk's
+     sky with every colour lifted the way the filter lifted it, pinned to the
+     viewport like the desk so the two line up (within a few levels of the old
+     band). Where the whole page scrolls instead, anything pinned to the viewport
+     is repainted every frame, so narrower screens get a plain tint fitted to the
+     same colour; the dots show through it faintly. */
+  .desk .paper-frame::before {
+    --frame-frost: rgb(255 255 255 / 0.26);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: rgb(199 255 237 / 0.33);
+  }
+  .dark .paper-frame::before,
+  .dark .desk .paper-frame::before {
+    --frame-frost: rgb(160 200 175 / 0.07);
     background: rgb(160 200 175 / 0.07);
     box-shadow:
       inset 0 0 0 1px rgb(160 200 175 / 0.14),
       inset 0 2px 0 rgb(160 200 175 / 0.18);
+  }
+  /* After the dark rule, so dark mode takes the painted sky on wide screens too. */
+  @media (min-width: 1400px) {
+    .desk .paper-frame::before,
+    .dark .desk .paper-frame::before {
+      background-color: oklch(from var(--color-sky-low) calc(l * 1.055) calc(c * 1.2) h);
+      background-image:
+        linear-gradient(var(--frame-frost), var(--frame-frost)),
+        linear-gradient(rgb(255 255 255 / var(--desk-wash)), rgb(255 255 255 / var(--desk-wash))),
+        radial-gradient(120% 85% at 78% 6%, oklch(from var(--color-sky-warm) calc(l * 1.055) calc(c * 1.2) h), transparent 60%),
+        radial-gradient(140% 100% at 12% 0%, oklch(from var(--color-sky-high) calc(l * 1.055) calc(c * 1.2) h), transparent 62%),
+        radial-gradient(130% 110% at 50% 115%, oklch(from var(--color-sky-deep) calc(l * 1.055) calc(c * 1.2) h), transparent 70%),
+        linear-gradient(170deg, oklch(from var(--color-sky-high) calc(l * 1.055) calc(c * 1.2) h), oklch(from var(--color-sky-low) calc(l * 1.055) calc(c * 1.2) h));
+      background-attachment: fixed;
+      background-size: cover;
+    }
   }
 
   /* The sheet itself. */
