@@ -12,7 +12,7 @@ export default async function CommunityPage() {
       <div className="zip-scope desk desk-bright min-h-[calc(100vh-var(--chrome-top,82px))] p-2 pb-10 sm:p-5 xl:p-6">
         <div className="paper-frame">
           <div className="paper flex min-h-[calc(100vh-var(--chrome-top,82px)-68px)] flex-col">
-            <header className="flex min-h-[72px] flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-hairline px-4 py-[13px] sm:px-6">
+            <header data-tour="community-header" className="flex min-h-[72px] flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-hairline px-4 py-[13px] sm:px-6">
               <h1 className="text-[17px] font-medium tracking-[-0.02em] text-ink sm:text-[18px]">Campus directory</h1>
               <div className="flex items-center gap-2.5">
                 <Link href="/community/feed" className={pill("white", "h-10 px-4 text-[15px] font-medium")}>
@@ -34,7 +34,7 @@ export default async function CommunityPage() {
                   </p>
                 </div>
 
-                <section className="flex flex-col gap-4">
+                <section data-tour="community-orgs" className="flex flex-col gap-4">
                   <h2 className="label-mono text-ink-2">Around UF and beyond</h2>
                   <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     {organizations.map((organization) => {
