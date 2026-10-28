@@ -8,10 +8,9 @@ import { searchSimilarDocuments } from "@/lib/vectorSearch"
 import { checkAndIncrementLimit } from "@/lib/usageLimits"
 import type { Resume } from "@/app/api/parse/resumeSchema"
 import { allowedLevels, keepListing } from "@/lib/jobs/listing-filter"
+import { readLiveJobsCache, writeLiveJobsCache } from "@/lib/jobs/live-cache"
 import { dedupeJobs, fetchAdzunaJobs, fetchMuseJobs, type AdzunaJob } from "@/lib/jobs/sources"
 
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000
-const liveJobsCache = new Map<string, CachedLiveJobs>()
 
 const CompareResultSchema = z.object({
   overallMatch: z.number().describe("0-100 overall alignment score"),
@@ -43,13 +42,6 @@ export interface LiveJob {
     gaps: string[]
     recommendations: string[]
   }
-}
-
-interface CachedLiveJobs {
-  jobs: LiveJob[]
-  cachedAt: number
-  /** The preferences these were found for: changing them means a new search. */
-  prefsKey?: string
 }
 
 const prefsKeyOf = (prefs: Record<string, string[]> | null) =>
@@ -122,12 +114,12 @@ export async function GET(): Promise<NR> {
   try {
     const { userId } = await auth()
     if (!userId) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
-    const cached = liveJobsCache.get(userId)
-    const prefsKey = cached ? prefsKeyOf(await getUserPreferences(userId)) : null
-    if (cached && Date.now() - cached.cachedAt < CACHE_TTL_MS && cached.prefsKey === prefsKey) {
-      return NextResponse.json({ success: true, data: cached })
-    }
-    return NextResponse.json({ success: false, data: null })
+    // Cached for a day per resume and set of preferences; a miss is not an error,
+    // the page runs the search (POST) itself.
+    const cached = await readLiveJobsCache<LiveJob>(userId, prefsKeyOf(await getUserPreferences(userId)))
+    return cached
+      ? NextResponse.json({ success: true, data: cached })
+      : NextResponse.json({ success: false, data: null })
   } catch {
     return NextResponse.json({ success: false, data: null })
   }
@@ -244,8 +236,8 @@ export async function POST(): Promise<NR> {
     // Sort by matchScore (LLM score) descending
     liveJobs.sort((a, b) => b.matchScore - a.matchScore)
 
-    const result: CachedLiveJobs = { jobs: liveJobs, cachedAt: Date.now(), prefsKey: prefsKeyOf(prefs) }
-    liveJobsCache.set(userId, result)
+    const prefsKey = prefsKeyOf(prefs)
+    const result = (await writeLiveJobsCache(userId, liveJobs, prefsKey)) ?? { jobs: liveJobs, cachedAt: Date.now(), prefsKey, resumeKey: "" }
     return NextResponse.json({ success: true, data: result, aiProvider: provider })
   } catch (error) {
     console.error("match-live error:", error)
