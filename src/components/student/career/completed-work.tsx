@@ -7,6 +7,7 @@ import { GARDEN_LEAF_LIMIT, GrowthGarden, type GardenLeaf } from "@/components/g
 import { completedTrackIds, roadmapProgress, roadmapStages, type TrackId } from "@/lib/career/roadmap"
 import { undergradPaths } from "@/lib/career/undergrad-paths"
 import type { CareerActivity, CareerWorkspace } from "@/lib/career/workspace"
+import { ActivityDetail } from "./activity-detail"
 
 const GROUP_PAGE = 20
 /** Below this many activities the list is short enough not to need a filter. */
@@ -151,13 +152,17 @@ export function CompletedWork({
             </GrowthGarden>
           </div>
         </div>
-        {selected ? (
+        {selected?.type === "activity" ? (
+          <div ref={detailRef} className="career-history-detail career-history-detail-activity" aria-live="polite">
+            <ActivityDetail key={selected.key} activity={selected.activity} onEdit={onChoose} />
+          </div>
+        ) : selected ? (
           <div ref={detailRef} className="career-history-detail" aria-live="polite">
             <span className="career-history-detail-icon">{selected.type === "track" ? <BookOpenCheck size={21} aria-hidden="true" /> : <CircleCheck size={21} aria-hidden="true" />}</span>
             <span className="career-eyebrow">{selected.type === "track" ? "Career track complete" : "Activity complete"}</span>
             <h3>{selected.title}</h3>
             <p className="career-history-summary">{selected.description}</p>
-            {selected.type === "track" ? (
+            {selected.type === "track" && (
               <>
                 <div className="career-history-detail-stat"><strong>{trackProgress?.completed} / {trackProgress?.total}</strong><span>roadmap steps completed</span></div>
                 <div className="career-history-stage-list">
@@ -169,12 +174,6 @@ export function CompletedWork({
                     </div>
                   ))}
                 </div>
-              </>
-            ) : (
-              <>
-                <div className="career-history-detail-stat"><strong>{selected.activity.steps.filter((step) => step.done).length} / {selected.activity.steps.length}</strong><span>steps completed · {dateLabel(selected.activity.completedAt)}</span></div>
-                {selected.activity.steps.length > 0 && <ul className="career-history-step-list">{selected.activity.steps.map((step, index) => <li key={`${selected.activity.id}-${index}`}><Check size={15} aria-hidden="true" />{step.title}</li>)}</ul>}
-                <button type="button" className="career-history-open" onClick={() => onChoose(selected.activity)}>Open activity <ArrowUpRight size={16} aria-hidden="true" /></button>
               </>
             )}
           </div>

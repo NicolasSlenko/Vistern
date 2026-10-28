@@ -1,5 +1,5 @@
 import { activityDraft } from "./templates"
-import type { ActivityFields } from "./workspace"
+import type { ActivityFields, CareerActivity } from "./workspace"
 
 export const projectPaths = [
   { id: "all", label: "All paths" },
@@ -147,5 +147,17 @@ export function careerProjectDraft(project: CareerProject): ActivityFields {
     title: project.title,
     notes: `${project.summary}\n\nPortfolio outcome: ${project.outcome}`,
     steps: project.steps.map((title) => ({ title, done: false })),
+    source: { type: "project", id: project.id },
   }
+}
+
+/**
+ * The catalog project an activity was started from. Activities added before
+ * projects were linked by id carry no source, so those match on the title the
+ * draft gave them.
+ */
+export function projectForActivity(activity: Pick<CareerActivity, "source" | "title">) {
+  if (activity.source?.type === "project") return careerProjects.find((project) => project.id === activity.source!.id) ?? null
+  if (activity.source) return null
+  return careerProjects.find((project) => project.title === activity.title) ?? null
 }

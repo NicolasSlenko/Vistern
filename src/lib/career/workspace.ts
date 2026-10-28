@@ -35,7 +35,7 @@ export const activityFieldsSchema = z.object({
     .max(6),
   source: z
     .object({
-      type: z.enum(["career", "guide", "organization"]),
+      type: z.enum(["career", "guide", "organization", "project"]),
       id: z.string().max(60),
     })
     .strict()

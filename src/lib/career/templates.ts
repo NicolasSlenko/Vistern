@@ -112,6 +112,7 @@ export function sourceDraft(
 
 export function sourceLink(source: ActivityFields["source"]) {
   if (!source) return null
+  if (source.type === "project") return null
   if (source.type === "organization") {
     const item = organizations.find((item) => item.id === source.id)
     return item ? { title: item.name, href: item.url, external: true } : null

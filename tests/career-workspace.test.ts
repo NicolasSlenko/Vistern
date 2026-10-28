@@ -11,6 +11,7 @@ import {
   studentDate,
   OPEN_ACTIVITY_LIMIT,
 } from "../src/lib/career/workspace"
+import { careerProjectDraft, careerProjects, projectForActivity } from "../src/lib/career/projects"
 import { careerGrowthProgress, completedTrackIds, roadmapStages, roadmapTaskKey } from "../src/lib/career/roadmap"
 
 const id = "96a81b0a-8799-459f-963b-5037eb09745a"
@@ -330,4 +331,15 @@ test("finished activities don't count against the limit on open ones", () => {
   const open = Array.from({ length: OPEN_ACTIVITY_LIMIT }, (_, index) => activity(1000 + index, "active"))
   const busy = workspaceSchema.parse({ activities: [...open, ...finished] })
   assert.throws(() => updateWorkspace(busy, create, id, now), /in progress/)
+})
+
+test("a project activity keeps its link to the catalog, so its tools can be shown", () => {
+  const project = careerProjects[0]
+  const fields = careerProjectDraft(project)
+  assert.deepEqual(fields.source, { type: "project", id: project.id })
+  const saved = updateWorkspace(workspaceSchema.parse({}), { intent: "create", revision: 0, activity: fields }, id, now)
+  assert.equal(projectForActivity(saved.activities[0])?.tools, project.tools)
+  // Added before projects were linked: no source, matched on the title.
+  assert.equal(projectForActivity({ title: project.title, source: null })?.id, project.id)
+  assert.equal(projectForActivity({ title: project.title, source: { type: "guide", id: "careers" } }), null)
 })
