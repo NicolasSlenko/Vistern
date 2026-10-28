@@ -1,6 +1,6 @@
-import { OpenAI } from "openai"
+import { generateObject, aiErrorMessage } from "@/lib/ai"
+import { resolveAiProvider } from "@/lib/ai/resolve"
 import { z } from "zod"
-import { zodTextFormat } from "openai/helpers/zod.mjs"
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import type { Resume } from "@/app/api/parse/resumeSchema"
@@ -18,7 +18,6 @@ import type { Json } from "@/lib/supabase/database.types"
  * whole entries and plans a career. Here: one bullet in, one bullet out.
  */
 
-const MODEL = "gpt-4.1-mini"
 const FEEDBACK_TYPE = "bullets"
 
 const RewriteSchema = z.object({
@@ -83,21 +82,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, data: empty })
     }
 
-    const client = new OpenAI()
-    const result = await client.responses.parse({
-      model: MODEL,
-      input: [
-        { role: "system", content: SYSTEM },
-        {
-          role: "user",
-          content: `Rewrite the weak bullets below. Each is tagged [section entryIndex field bulletIndex] — echo those back exactly.\n\n${lines.join("\n\n")}`,
-        },
-      ],
-      text: { format: zodTextFormat(ResultSchema, "bullet_rewrites") },
+    const { provider } = await resolveAiProvider(userId)
+    const result = await generateObject({
+      provider,
+      system: SYSTEM,
+      prompt: `Rewrite the weak bullets below. Each is tagged [section entryIndex field bulletIndex] — echo those back exactly.\n\n${lines.join("\n\n")}`,
+      schema: ResultSchema,
+      name: "bullet_rewrites",
       temperature: 0.3,
     })
 
-    const rewrites: BulletRewrite[] = (result.output_parsed?.rewrites ?? []).map((rewrite, index) => ({
+    const rewrites: BulletRewrite[] = (result.data?.rewrites ?? []).map((rewrite, index) => ({
       ...rewrite,
       // The model reuses ids across runs; the index and the clock make one that doesn't collide.
       id: `${rewrite.section}-${rewrite.entryIndex}-${rewrite.field}-${rewrite.bulletIndex}-${index}`,
@@ -105,10 +100,10 @@ export async function POST(request: NextRequest) {
     const data = { rewrites, generatedAt: new Date().toISOString() }
 
     await cacheReview(userId, resumeDocumentId, data)
-    return NextResponse.json({ success: true, data })
+    return NextResponse.json({ success: true, data, aiProvider: provider })
   } catch (error) {
     console.error("Error rewriting bullets:", error)
-    return NextResponse.json({ success: false, error: "Failed to review the bullets" }, { status: 500 })
+    return NextResponse.json({ success: false, error: aiErrorMessage(error, "Failed to review the bullets") }, { status: 500 })
   }
 }
 

@@ -14,6 +14,7 @@ import {
 import { pill } from "@/components/resume-studio/pills"
 import { Breakdown, FitNotes, Score, fitLabel, type FitAnalysis } from "@/components/match/fit"
 import { PrefsModal } from "@/components/match/prefs-modal"
+import { AiProviderPicker } from "@/components/ai-provider-picker"
 import { useResume } from "@/contexts/resume-context"
 import type { LiveJob } from "@/app/api/match-live/route"
 import type { SavedJob, JobBucket } from "@/app/api/job-board/route"
@@ -55,6 +56,9 @@ const BUCKET_META: Record<JobBucket, { label: string; next?: JobBucket }> = {
   rejected: { label: "Closed" },
 }
 const BUCKETS = Object.keys(BUCKET_META) as JobBucket[]
+
+/** Window name shared by the pre-opened tab and the form that posts the LaTeX into it. */
+const OVERLEAF_TAB = "vistern-overleaf"
 
 // ─── Shared pieces ───────────────────────────────────────────────────────────
 
@@ -168,6 +172,7 @@ export default function MatchPage() {
   const [compareResult, setCompareResult] = useState<(FitAnalysis & { overallMatch: number }) | null>(null)
   const [isCompareLoading, setIsCompareLoading] = useState(false)
 
+  // Runs the search and analysis (about 20s, counts toward the daily limit).
   const fetchLiveJobs = useCallback(async () => {
     setIsLiveLoading(true)
     try {
@@ -187,10 +192,28 @@ export default function MatchPage() {
     }
   }, [])
 
-  // Always fetch fresh on mount
+  // Matches found in the last day for this resume and these preferences are shown
+  // as they were; only a miss (or the refresh button) runs a new search.
+  const loadLiveJobs = useCallback(async () => {
+    setIsLiveLoading(true)
+    try {
+      const res = await fetch("/api/match-live")
+      const result = await res.json()
+      if (result.success && result.data?.jobs?.length) {
+        setLiveJobs(result.data.jobs)
+        setCurrentJobIdx(0)
+        setIsLiveLoading(false)
+        return
+      }
+    } catch {
+      // Fall through to a fresh search.
+    }
+    await fetchLiveJobs()
+  }, [fetchLiveJobs])
+
   useEffect(() => {
     if (!resumeData) return
-    fetchLiveJobs()
+    loadLiveJobs()
     fetch("/api/job-board").then(r => r.json()).then(r => { if (r.success) setSavedJobs(r.data) }).catch(() => {})
     fetch("/api/preferences").then(r => r.json()).then(r => { if (r.success && r.data) setPrefs(r.data) }).catch(() => {})
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -258,11 +281,21 @@ export default function MatchPage() {
     }
   }
 
+  // Browsers only let a page open a tab during the click itself, and the LaTeX
+  // takes seconds to generate, so open the Overleaf tab first and fill it later.
+  const openOverleafTab = () => {
+    const tab = window.open("", OVERLEAF_TAB)
+    tab?.document.write("<p style=\"font-family:sans-serif\">Preparing your resume for Overleaf…</p>")
+    return tab
+  }
+
   const tailorResume = async (job: LiveJob, action: "overleaf" | "download") => {
+    const overleafTab = action === "overleaf" ? openOverleafTab() : null
     setTailoringAction({ idx: currentJobIdx, action })
     try {
       await generateTailoredLatex(job.title, job.description, job.company, action)
     } catch (err) {
+      overleafTab?.close()
       toast.error(err instanceof Error ? err.message : "Failed to generate resume")
     } finally {
       setTailoringAction(null)
@@ -270,10 +303,12 @@ export default function MatchPage() {
   }
 
   const tailorFromAnalyzer = async (action: "overleaf" | "download") => {
+    const overleafTab = action === "overleaf" ? openOverleafTab() : null
     setTailoringAnalyzer(action)
     try {
       await generateTailoredLatex("", jobDescription, "", action)
     } catch (err) {
+      overleafTab?.close()
       toast.error(err instanceof Error ? err.message : "Failed to generate resume")
     } finally {
       setTailoringAnalyzer(null)
@@ -304,7 +339,10 @@ export default function MatchPage() {
         <div className="paper flex min-h-[calc(100vh-var(--chrome-top,82px)-68px)] flex-col">
           <header className="flex min-h-[72px] flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-hairline px-4 py-[13px] sm:px-6">
             <h1 className="text-[17px] font-medium tracking-[-0.02em] text-ink sm:text-[18px]">Job matches</h1>
-            <div className="flex items-center gap-2.5">{actions}</div>
+            <div className="flex items-center gap-2.5">
+              <AiProviderPicker />
+              {actions}
+            </div>
           </header>
           <div className="flex-1 px-4 py-9 sm:px-8 sm:py-12">
             <div className="mx-auto flex max-w-[1080px] flex-col gap-9">{children}</div>
@@ -351,7 +389,7 @@ export default function MatchPage() {
     <>
       <PrefsModal open={showPrefs} onClose={() => setShowPrefs(false)} currentPrefs={prefs}
         onSaved={(newPrefs) => { setPrefs(newPrefs); fetchLiveJobs() }} />
-      <form ref={overleafFormRef} action="https://www.overleaf.com/docs" method="POST" target="_blank" className="hidden">
+      <form ref={overleafFormRef} action="https://www.overleaf.com/docs" method="POST" target={OVERLEAF_TAB} className="hidden">
         <input ref={overleafInputRef} type="hidden" name="snip_uri" defaultValue="" />
       </form>
 

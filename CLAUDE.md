@@ -33,7 +33,7 @@ npm run start      # Start production server
 npm run lint       # Run ESLint
 ```
 
-Regression tests run with `npm run test:student`, `npm run test:resume`, and `npm run test:career`. Build before `npm run start:local` to run the authenticated app at `http://localhost:4191`.
+Regression tests run with `npm run test:student`, `npm run test:resume`, `npm run test:career`, `npm run test:bullets`, `npm run test:ai`, and `npm run test:jobs`. Build before `npm run start:local` to run the authenticated app at `http://localhost:4191`.
 
 ## Architecture Overview
 
@@ -70,6 +70,10 @@ All keys are prefixed by `uploads/{userId}/`:
 
 Home, Career, Community, and Jobs use server loaders for authenticated data. Career mutations validate Zod payloads and use revision checks with conditional S3 writes; they never modify the resume.
 
+### Resume workspace (front end only, mock data)
+
+`/resume` (generated resume with section review), `/resume/experience` (master profile editor) and `/resume/tailor` (per-role resumes) replace the old `/profile` page in the sidebar. They are not wired to Supabase yet: state comes from `src/lib/resume/mock-data.ts`, is reduced in `src/lib/resume/workspace.ts`, and persists to `localStorage` via `ResumeWorkspaceProvider`. Suggestions are mock rules, not AI. Model rules: the profile is the only source of truth; rejecting a suggestion leaves it unchanged; tailored wording never writes back; every level stores `visibility` (default `private`) but the Public option is hidden. Tests: `npx tsx --test tests/resume-workspace.test.ts`.
+
 ### API Route Conventions
 
 - Auth: every route calls Clerk's `auth()` and returns 401 if unauthenticated
@@ -84,9 +88,17 @@ Defined with Zod in `src/app/api/parse/resumeSchema.ts`. The `Resume` type is in
 
 Blends quality (60%) and quantity (40%) scores per category. Category weights differ for UF vs non-UF students (coursework is UF-only at 15%). Quality scores come from `src/lib/qualityAnalysis.ts` which uses heuristic analysis per section. The scoring runs entirely client-side.
 
+### AI Provider Layer (`src/lib/ai/index.ts`)
+
+All AI calls go through `generateObject` (Zod-validated JSON), `generateText`, and `embed`. Never construct an OpenAI/Anthropic client in a route. Providers: `hipergator` (UF LiteLLM proxy, `gemma-4-31b-it`, free), `openai` (`gpt-6-luna`) and `claude` (`claude-haiku-5-5`, via `@anthropic-ai/sdk`); the paid two use their cheapest current model.
+
+Each user picks a provider (Settings, or the `AiProviderPicker` quick switch), stored in `user_settings.ai_provider`; `AI_PROVIDER` is the default for everyone else. Routes call `resolveAiProvider(userId)` from `src/lib/ai/resolve.ts` **once per request, after any cache hit**, and pass the result as `provider`. A paid provider uses one `paidAi` daily request (`PAID_AI_DAILY_LIMIT`); over the limit the request falls back to HiPerGator.
+
+`embed` ignores the user's choice and uses the default provider's embedding model (Claude has none). Claude and OpenAI reasoning models (GPT-5+) don't get `temperature`. Every call logs tokens and estimated cost; prices live in `MODEL_PRICING`.
+
 ### XYZ Feedback Model
 
-Uses `gpt-4.1-mini`. Output is Zod-validated — if the schema changes, update both the Zod schema in the route and the `XyzFeedback` type used in context. Feedback is cached in S3; to force regeneration, delete `xyz-feedback.json` for that user.
+Uses the configured AI provider. Output is Zod-validated — if the schema changes, update both the Zod schema in the route and the `XyzFeedback` type used in context. Feedback is cached in S3; to force regeneration, delete `xyz-feedback.json` for that user.
 
 ### Course Matching (`src/lib/courseMatching.ts`)
 
@@ -144,7 +156,7 @@ npm run preview:studio    # the resume studio, shelf and master profile, :4192
 ## Environment Variables
 
 See `.env.example`. Required at runtime:
-- `OPENAI_API_KEY` — GPT calls
+- `HIPERGATOR_API_KEY` (+ `HIPERGATOR_EMBEDDING_MODEL`) for the default provider; `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` are optional and enable those choices in the model picker
 - `AWS_BUCKET_NAME`, `AWS_BUCKET_REGION`, `IAM_AWS_ACCESS_KEY`, `IAM_AWS_SECRET_ACCESS_KEY` — S3
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` — Clerk auth
 

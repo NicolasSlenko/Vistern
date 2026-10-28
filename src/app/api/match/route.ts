@@ -1,12 +1,10 @@
-import { OpenAI } from "openai";
+import { generateObject, aiErrorMessage } from "@/lib/ai";
+import { resolveAiProvider } from "@/lib/ai/resolve";
 import { z } from "zod";
-import { zodTextFormat } from "openai/helpers/zod.mjs";
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getCurrentResumeData, getUserPreferences } from "@/lib/supabase/user-data";
 import type { Resume } from "@/app/api/parse/resumeSchema";
-
-const MODEL = "gpt-4.1-mini";
 
 // --- Schemas ---
 
@@ -119,8 +117,6 @@ export async function POST(request: NextRequest) {
         } catch { /* no preferences, that's fine */ }
 
         const resumeSummary = buildResumeSummary(resume);
-        const client = new OpenAI();
-
         if (mode === "suggest") {
             const prompt = `
 Based on this resume and preferences, suggest the top 5 job roles that best match the candidate's profile.
@@ -133,19 +129,19 @@ ${resumeSummary}
 ${preferencesText ? `=== PREFERENCES ===\n${preferencesText}` : ""}
 `;
 
-            const result = await client.responses.parse({
-                model: MODEL,
-                input: [
-                    { role: "system", content: "You are a career advisor. Suggest the most realistic and well-matched job roles for this candidate. Be specific and practical." },
-                    { role: "user", content: prompt }
-                ],
-                text: { format: zodTextFormat(SuggestResultSchema, "role_suggestions") },
+            const { provider } = await resolveAiProvider(userId);
+            const result = await generateObject({
+                provider,
+                system: "You are a career advisor. Suggest the most realistic and well-matched job roles for this candidate. Be specific and practical.",
+                prompt,
+                schema: SuggestResultSchema,
+                name: "role_suggestions",
                 temperature: 0.4,
             });
 
-            const data = result.output_parsed;
+            const data = result.data;
 
-            return NextResponse.json({ success: true, data });
+            return NextResponse.json({ success: true, data, aiProvider: provider });
 
         } else if (mode === "compare") {
             const { jobDescription } = body as { mode: "compare"; jobDescription: string };
@@ -164,17 +160,17 @@ ${resumeSummary}
 ${jobDescription}
 `;
 
-            const result = await client.responses.parse({
-                model: MODEL,
-                input: [
-                    { role: "system", content: "You are an expert recruiter. Objectively score how well this candidate matches the job description. Be honest about gaps but also highlight genuine strengths." },
-                    { role: "user", content: prompt }
-                ],
-                text: { format: zodTextFormat(CompareResultSchema, "job_match") },
+            const { provider } = await resolveAiProvider(userId);
+            const result = await generateObject({
+                provider,
+                system: "You are an expert recruiter. Objectively score how well this candidate matches the job description. Be honest about gaps but also highlight genuine strengths.",
+                prompt,
+                schema: CompareResultSchema,
+                name: "job_match",
                 temperature: 0.3,
             });
 
-            return NextResponse.json({ success: true, data: result.output_parsed });
+            return NextResponse.json({ success: true, data: result.data, aiProvider: provider });
 
         } else {
             return NextResponse.json({ error: "Invalid mode. Use 'suggest' or 'compare'." }, { status: 400 });
@@ -182,6 +178,6 @@ ${jobDescription}
 
     } catch (error) {
         console.error("Error in match API:", error);
-        return NextResponse.json({ success: false, error: "Failed to process match request" }, { status: 500 });
+        return NextResponse.json({ success: false, error: aiErrorMessage(error, "Failed to process match request") }, { status: 500 });
     }
 }

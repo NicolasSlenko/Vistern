@@ -91,6 +91,7 @@ function Bullet({
   onRemove,
   onAccept,
   onReject,
+  onEnhance,
 }: {
   value: string
   rewrite: BulletRewrite | undefined
@@ -100,6 +101,8 @@ function Bullet({
   onRemove: () => void
   onAccept: () => void
   onReject: () => void
+  /** Opens three AI options for this line; absent where the section has no such bullets. */
+  onEnhance?: () => void
 }) {
   const details = useId()
   // Set for a moment after a rewrite is taken, to light the line up.
@@ -143,6 +146,18 @@ function Bullet({
           />
         </span>
 
+        {onEnhance && value.trim() && (
+          <button
+            type="button"
+            onClick={onEnhance}
+            aria-label="Improve this bullet with AI"
+            title="Improve with AI"
+            className="mt-[3px] flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-brand opacity-0 transition-opacity hover:bg-brand/10 focus-visible:opacity-100 group-hover/bullet:opacity-100 group-focus-within/bullet:opacity-100"
+          >
+            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+        )}
+
         <button
           type="button"
           onClick={onRemove}
@@ -161,14 +176,14 @@ function Bullet({
           </p>
           <p className="text-[15px] leading-relaxed text-ink">{rewrite!.suggested}</p>
           <p className="text-[13px] leading-snug text-ink-2">{rewrite!.why}</p>
-          <div className="flex items-center gap-2 pb-0.5">
+          <div className="flex flex-wrap items-center gap-2 pb-0.5">
             <button
               type="button"
               onClick={() => {
                 onAccept()
                 setJustChanged(true)
               }}
-              className="inline-flex h-8 items-center gap-1.5 rounded-full bg-brand px-3 text-[13px] font-medium text-sheet transition-[filter,scale] hover:brightness-110 active:scale-[0.97]"
+              className="inline-flex h-8 shrink-0 whitespace-nowrap items-center gap-1.5 rounded-full bg-brand px-3 text-[13px] font-medium text-sheet transition-[filter,scale] hover:brightness-110 active:scale-[0.97]"
             >
               <Check className="h-3.5 w-3.5" aria-hidden="true" />
               Use this
@@ -176,11 +191,21 @@ function Bullet({
             <button
               type="button"
               onClick={onReject}
-              className="inline-flex h-8 items-center gap-1.5 rounded-full bg-fill px-3 text-[13px] font-medium text-ink-2 transition-colors hover:text-ink"
+              className="inline-flex h-8 shrink-0 whitespace-nowrap items-center gap-1.5 rounded-full bg-fill px-3 text-[13px] font-medium text-ink-2 transition-colors hover:text-ink"
             >
               <X className="h-3.5 w-3.5" aria-hidden="true" />
               Keep mine
             </button>
+            {onEnhance && (
+              <button
+                type="button"
+                onClick={onEnhance}
+                className="inline-flex h-8 shrink-0 whitespace-nowrap items-center gap-1.5 rounded-full px-3 text-[13px] font-medium text-brand transition-colors hover:bg-brand/10"
+              >
+                <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                More options
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -199,6 +224,7 @@ export function BulletList({
   onChange,
   onAccept,
   onReject,
+  onEnhance,
 }: {
   label: string
   hint?: string
@@ -208,6 +234,8 @@ export function BulletList({
   onChange: (bullets: string[]) => void
   onAccept?: (rewrite: BulletRewrite) => void
   onReject?: (rewrite: BulletRewrite) => void
+  /** Opens three AI options for the line at this index. */
+  onEnhance?: (index: number) => void
 }) {
   const hintId = useId()
   const waiting = rewrites ? [...rewrites.keys()].filter((line) => !answered?.has(line)).length : 0
@@ -264,6 +292,7 @@ export function BulletList({
               const rewrite = rewrites?.get(index)
               if (rewrite) onReject?.(rewrite)
             }}
+            onEnhance={onEnhance ? () => onEnhance(index) : undefined}
           />
         ))}
       </ul>

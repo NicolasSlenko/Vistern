@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
-import { Check, X } from "lucide-react"
+import { Check, Sparkles, X } from "lucide-react"
 import { rewriteKey, type BulletRewrite, type Severity } from "@/lib/resume-suggestions"
 import { bracket, seedOf, underline, type Box } from "./rough"
 import { PAGE } from "./resume-paper"
@@ -64,6 +64,7 @@ function Tip({
   onLeave,
   onAccept,
   onReject,
+  onMore,
 }: {
   placed: Placed
   height: number
@@ -73,6 +74,8 @@ function Tip({
   onLeave: () => void
   onAccept: () => void
   onReject: () => void
+  /** Opens three AI options in place of this one suggestion. */
+  onMore?: () => void
 }) {
   const [left, top, right, bottom] = placed.area
   // Below the mark, unless that would hang off the foot of the page.
@@ -99,11 +102,11 @@ function Tip({
         <p className="mt-1 text-[13.5px] leading-snug text-ink">{placed.rewrite.suggested}</p>
         <p className="mt-1.5 text-[12px] leading-snug text-ink-2">{placed.rewrite.why}</p>
       </div>
-      <div className="mt-2.5 flex items-center gap-2">
+      <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
         <button
           type="button"
           onClick={onAccept}
-          className="inline-flex h-7 items-center gap-1.5 rounded-full bg-brand px-2.5 text-[12px] font-medium text-sheet transition-[filter,scale] hover:brightness-110 active:scale-[0.97]"
+          className="inline-flex h-7 shrink-0 whitespace-nowrap items-center gap-1.5 rounded-full bg-brand px-2.5 text-[12px] font-medium text-sheet transition-[filter,scale] hover:brightness-110 active:scale-[0.97]"
         >
           <Check className="h-3 w-3" aria-hidden="true" />
           Use this
@@ -111,11 +114,21 @@ function Tip({
         <button
           type="button"
           onClick={onReject}
-          className="inline-flex h-7 items-center gap-1.5 rounded-full bg-fill px-2.5 text-[12px] font-medium text-ink-2 transition-colors hover:text-ink"
+          className="inline-flex h-7 shrink-0 whitespace-nowrap items-center gap-1.5 rounded-full bg-fill px-2.5 text-[12px] font-medium text-ink-2 transition-colors hover:text-ink"
         >
           <X className="h-3 w-3" aria-hidden="true" />
           Keep mine
         </button>
+        {onMore && (
+          <button
+            type="button"
+            onClick={onMore}
+            className="inline-flex h-7 shrink-0 whitespace-nowrap items-center gap-1.5 rounded-full px-2.5 text-[12px] font-medium text-brand transition-colors hover:bg-brand/10"
+          >
+            <Sparkles className="h-3 w-3" aria-hidden="true" />
+            More options
+          </button>
+        )}
       </div>
     </div>
   )
@@ -130,6 +143,7 @@ export function ResumeMarks({
   onOpen,
   onAccept,
   onReject,
+  onMoreOptions,
 }: {
   /** The rewrites that still match the page. */
   rewrites: readonly BulletRewrite[]
@@ -143,6 +157,8 @@ export function ResumeMarks({
   onOpen: (key: string | null) => void
   onAccept: (rewrite: BulletRewrite) => void
   onReject: (rewrite: BulletRewrite) => void
+  /** When set, the card offers "More options": three AI rewrites to choose from. */
+  onMoreOptions?: (rewrite: BulletRewrite) => void
 }) {
   const describe = useId()
 
@@ -286,6 +302,14 @@ export function ResumeMarks({
             onReject(showing.rewrite)
             dismiss()
           }}
+          onMore={
+            onMoreOptions
+              ? () => {
+                  onMoreOptions(showing.rewrite)
+                  dismiss()
+                }
+              : undefined
+          }
         />
       )}
     </>

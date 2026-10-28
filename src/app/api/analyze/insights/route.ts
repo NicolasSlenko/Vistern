@@ -1,6 +1,6 @@
-import { OpenAI } from "openai";
+import { generateObject } from "@/lib/ai";
+import { resolveAiProvider } from "@/lib/ai/resolve";
 import { z } from "zod";
-import { zodTextFormat } from "openai/helpers/zod.mjs";
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
@@ -26,8 +26,6 @@ const InsightsResultSchema = z.object({
     careerGoals: z.array(CareerGoalSchema).describe("8-15 career development goals distributed across the student's remaining years"),
 });
 
-const MODEL = "gpt-4.1-mini";
-
 const YEAR_LABELS: Record<number, string> = {
     1: "Freshman",
     2: "Sophomore",
@@ -50,8 +48,6 @@ export async function POST(request: NextRequest) {
 
         const currentYear: number = yearInSchool || 1;
         const currentYearLabel = YEAR_LABELS[currentYear] || "Freshman";
-        const client = new OpenAI();
-
         // Build survey context
         let surveyContext = "The student has NOT completed a career preferences survey.";
         if (preferences) {
@@ -136,22 +132,17 @@ BE VERY SPECIFIC. Don't say "learn a new framework" — say "Learn React and Nex
 Use the survey data to make every suggestion directly relevant to their career goals.
 `;
 
-        const result = await client.responses.parse({
-            model: MODEL,
-            input: [
-                {
-                    role: "system",
-                    content: "You are an expert career advisor for CS students. Generate extremely specific, actionable recommendations. For resume tweaks, reference exact content from the resume. For career goals, use the student's survey preferences to suggest specific courses, technologies, clubs, and projects."
-                },
-                { role: "user", content: prompt }
-            ],
-            text: {
-                format: zodTextFormat(InsightsResultSchema, "insights")
-            },
+        const { provider } = await resolveAiProvider(userId);
+        const result = await generateObject({
+            provider,
+            system: "You are an expert career advisor for CS students. Generate extremely specific, actionable recommendations. For resume tweaks, reference exact content from the resume. For career goals, use the student's survey preferences to suggest specific courses, technologies, clubs, and projects.",
+            prompt,
+            schema: InsightsResultSchema,
+            name: "insights",
             temperature: 0.4,
         });
 
-        return NextResponse.json({ success: true, data: result.output_parsed });
+        return NextResponse.json({ success: true, data: result.data, aiProvider: provider });
 
     } catch (error) {
         console.error("Error generating insights:", error);

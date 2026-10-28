@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { extractWithChatGPT } from "./semanticParse"
+import { resolveAiProvider } from "@/lib/ai/resolve"
 import { parseFileContent, ResumeFileError } from "./parseContent"
 import { getBufferFromS3, objectExistsInS3 } from "@/lib/aws/s3"
 import type { Resume } from "./resumeSchema"
@@ -34,7 +35,8 @@ export async function POST(request: NextRequest) {
     console.log(`Parsing resume content, length: ${content.length}`)
 
     // extractWithChatGPT returns { details: Resume, missing: string[] }
-    const parseResult = (await extractWithChatGPT(content)) as {
+    const { provider } = await resolveAiProvider(userId)
+    const parseResult = (await extractWithChatGPT(content, provider)) as {
       details: Resume
       missing: string[]
     } | null
@@ -44,7 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("Parsing completed successfully")
-    return NextResponse.json(parseResult)
+    return NextResponse.json({ ...parseResult, aiProvider: provider })
   } catch (error) {
     if (error instanceof ResumeFileError) {
       return NextResponse.json({ error: error.message }, { status: 422 })

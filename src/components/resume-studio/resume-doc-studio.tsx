@@ -13,6 +13,7 @@ import { PreviewPane } from "./preview-pane"
 import { SyncToProfile } from "./sync-to-profile"
 import { ProfileForm, SkillsForm } from "./profile-form"
 import { SectionForm } from "./section-form"
+import { BulletOptionsDialog } from "./bullet-options"
 import { SectionNav } from "./section-nav"
 import { LIST_SECTIONS, type ListSection, type SectionRef } from "./sections"
 import { SaveNote, StudioShell, StudioTitle } from "./studio-shell"
@@ -88,6 +89,9 @@ export function ResumeDocStudio({ id }: { id: string }) {
     },
     [save],
   )
+
+  // The marked line whose three AI options are open, from the paper's "More options".
+  const [moreFor, setMoreFor] = useState<BulletRewrite | null>(null)
 
   const open = useCallback((next: SectionRef) => {
     setSection(next)
@@ -211,6 +215,7 @@ export function ResumeDocStudio({ id }: { id: string }) {
           answered={review.answered}
           onAccept={(rewrite) => review.accept(rewrite, edit)}
           onReject={review.reject}
+          onMoreOptions={setMoreFor}
           original={
             doc?.s3Key ? (
               <PreviewPane submission={{ id: doc.id, fileName: doc.fileName, s3Key: doc.s3Key, uploadedAt: doc.updatedAt, score: doc.score }} />
@@ -246,6 +251,18 @@ export function ResumeDocStudio({ id }: { id: string }) {
             />
           )}
         </div>
+      )}
+
+      {moreFor && content && (
+        <BulletOptionsDialog
+          open
+          onOpenChange={(next) => !next && setMoreFor(null)}
+          section={moreFor.section}
+          entry={((content[moreFor.section] ?? []) as Record<string, unknown>[])[moreFor.entryIndex] ?? {}}
+          bullet={moreFor.original}
+          // Taking an option answers the mark the same way taking its single suggestion would.
+          onChoose={(text) => review.accept({ ...moreFor, suggested: text }, edit)}
+        />
       )}
     </StudioShell>
   )

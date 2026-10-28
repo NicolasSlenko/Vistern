@@ -1,6 +1,6 @@
-import { OpenAI } from "openai";
+import { generateObject } from "@/lib/ai";
+import { resolveAiProvider } from "@/lib/ai/resolve";
 import { z } from "zod";
-import { zodTextFormat } from "openai/helpers/zod.mjs";
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import type { Resume } from "@/app/api/parse/resumeSchema";
@@ -8,9 +8,19 @@ import { calculateResumeScoreDetailed } from "@/lib/resumeScoring";
 import { createClerkSupabaseServerClient } from "@/lib/supabase/server";
 import { getCurrentResumeData } from "@/lib/supabase/user-data";
 import type { Json } from "@/lib/supabase/database.types";
+import { labelFeedback } from "@/lib/feedback-entries";
+
+/**
+ * A review of the master profile is kept apart from the current resume's:
+ * the two list entries in different orders, so one's notes would land on the
+ * wrong cards in the other, and the profile's must not set a resume's score.
+ */
+const FEEDBACK_TYPE = { resume: "xyz", profile: "xyz-profile" } as const;
+type Target = keyof typeof FEEDBACK_TYPE;
+const targetOf = (value: unknown): Target => (value === "profile" ? "profile" : "resume");
 
 // GET — serve cached XYZ feedback + insights
-export async function GET() {
+export async function GET(request: NextRequest) {
     try {
         const { userId } = await auth();
         if (!userId) {
@@ -26,7 +36,7 @@ export async function GET() {
             return NextResponse.json({ success: false, data: null });
         }
         const { data, error } = await supabase.from("resume_feedback").select("result")
-            .eq("clerk_user_id", userId).eq("resume_document_id", document.id).eq("feedback_type", "xyz")
+            .eq("clerk_user_id", userId).eq("resume_document_id", document.id).eq("feedback_type", FEEDBACK_TYPE[targetOf(request.nextUrl.searchParams.get("for"))])
             .order("created_at", { ascending: false }).limit(1).maybeSingle();
         if (error) throw error;
         return NextResponse.json({ success: true, data: data?.result ?? null });
@@ -62,8 +72,6 @@ const BatchResultSchema = z.object({
     actionableInsights: z.array(InsightSchema).describe("Actionable insights: 5-8 resume tweaks + 8-12 career goals distributed across remaining academic years"),
 });
 
-const MODEL = "gpt-4.1-mini";
-
 export async function POST(request: NextRequest) {
     try {
         const { userId } = await auth();
@@ -71,13 +79,12 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { resumeData, graduationYear, currentYear, preferences } = await request.json() as { resumeData: Resume; graduationYear?: number; currentYear?: number; preferences?: Record<string, any> };
+        const { resumeData, graduationYear, currentYear, preferences, target: rawTarget } = await request.json() as { resumeData: Resume; graduationYear?: number; currentYear?: number; preferences?: Record<string, any>; target?: unknown };
+        const target = targetOf(rawTarget);
 
         if (!resumeData) {
             return NextResponse.json({ error: "No resume data provided" }, { status: 400 });
         }
-
-        const client = new OpenAI();
 
         // Build a concise summary of all items to analyze
         const projectItems = (resumeData.projects || []).map((p, i) => {
@@ -142,7 +149,7 @@ export async function POST(request: NextRequest) {
 
         if (projectItems.length === 0 && experienceItems.length === 0) {
             const emptyResult = { projects: {}, experience: {}, actionableInsights: [] };
-            await saveFeedback(userId, emptyResult, resumeData);
+            await saveFeedback(userId, emptyResult, resumeData, target);
 
             return NextResponse.json({ success: true, data: emptyResult });
         }
@@ -191,19 +198,17 @@ ${projectItems.length > 0 ? "=== PROJECTS ===\n" + projectItems.join("\n\n") : "
 ${experienceItems.length > 0 ? "=== EXPERIENCE ===\n" + experienceItems.join("\n\n") : ""}
 `;
 
-        const result = await client.responses.parse({
-            model: MODEL,
-            input: [
-                { role: "system", content: "You are an expert resume consultant. Analyze each item for XYZ formula adherence, then synthesize findings into actionable insights. Be specific — reference actual content from the resume." },
-                { role: "user", content: prompt }
-            ],
-            text: {
-                format: zodTextFormat(BatchResultSchema, "batch_feedback")
-            },
+        const { provider } = await resolveAiProvider(userId);
+        const result = await generateObject({
+            provider,
+            system: "You are an expert resume consultant. Analyze each item for XYZ formula adherence, then synthesize findings into actionable insights. Be specific — reference actual content from the resume.",
+            prompt,
+            schema: BatchResultSchema,
+            name: "batch_feedback",
             temperature: 0.3,
         });
 
-        const feedbackData = result.output_parsed;
+        const feedbackData = result.data;
 
         // Transform to index-keyed maps for easy lookup
         const indexed = {
@@ -221,9 +226,11 @@ ${experienceItems.length > 0 ? "=== EXPERIENCE ===\n" + experienceItems.join("\n
             })),
         };
 
-        await saveFeedback(userId, indexed, resumeData);
+        // Each entry's feedback names the entry it's about, so it can be matched back by who, not where.
+        const labelled = labelFeedback(indexed, resumeData);
+        await saveFeedback(userId, labelled, resumeData, target);
 
-        return NextResponse.json({ success: true, data: indexed });
+        return NextResponse.json({ success: true, data: labelled, aiProvider: provider });
 
     } catch (error) {
         console.error("Error in batch XYZ analysis:", error);
@@ -234,7 +241,7 @@ ${experienceItems.length > 0 ? "=== EXPERIENCE ===\n" + experienceItems.join("\n
     }
 }
 
-async function saveFeedback(userId: string, result: unknown, resumeData: Resume) {
+async function saveFeedback(userId: string, result: unknown, resumeData: Resume, target: Target) {
     const supabase = await createClerkSupabaseServerClient();
     await getCurrentResumeData(userId);
     const { data: document, error: documentError } = await supabase.from("resume_documents")
@@ -244,10 +251,12 @@ async function saveFeedback(userId: string, result: unknown, resumeData: Resume)
     const { error: feedbackError } = await supabase.from("resume_feedback").insert({
         clerk_user_id: userId,
         resume_document_id: document.id,
-        feedback_type: "xyz",
+        feedback_type: FEEDBACK_TYPE[target],
         result: result as Json,
     });
     if (feedbackError) throw feedbackError;
+    // Only a review of the resume itself scores the resume.
+    if (target === "profile") return;
     const newScore = calculateResumeScoreDetailed(resumeData, result).totalScore;
     const { error: scoreError } = await supabase.from("resume_documents").update({ score: newScore })
         .eq("id", document.id).eq("clerk_user_id", userId);

@@ -14,7 +14,7 @@ Copy-Item .env.example .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Use `npm run build` to check the production build. The application uses Next.js, React, TypeScript, Clerk, Supabase, private AWS S3 storage, OpenAI, and Adzuna; see the public documentation for workflows and data boundaries.
+Open [http://localhost:3000](http://localhost:3000). Use `npm run build` to check the production build. The application uses Next.js, React, TypeScript, Clerk, Supabase, private AWS S3 storage, an AI provider layer (UF HiPerGator by default; OpenAI and Anthropic Claude optional, chosen per user), and Adzuna; see the public documentation for workflows and data boundaries.
 
 ## Checks
 
