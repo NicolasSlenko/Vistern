@@ -526,7 +526,7 @@
   border-radius: 16px;
   box-shadow:
     0 0 0 2px color-mix(in oklab, var(--color-brand) 70%, white),
-    0 0 0 200vmax rgb(3 8 6 / 0.84);
+    0 0 0 200vmax rgb(3 8 6 / 0.5);
   pointer-events: none;
   transition:
     top 420ms var(--ease-glide),
@@ -537,15 +537,15 @@
   animation: guided-tour-dim 300ms ease-out;
 }
 .guided-tour-spot[data-empty] {
-  box-shadow: 0 0 0 200vmax rgb(3 8 6 / 0.88);
+  box-shadow: 0 0 0 200vmax rgb(3 8 6 / 0.58);
 }
 .dark .guided-tour-spot {
   box-shadow:
     0 0 0 2px var(--color-brand),
-    0 0 0 200vmax rgb(0 0 0 / 0.86);
+    0 0 0 200vmax rgb(0 0 0 / 0.52);
 }
 .dark .guided-tour-spot[data-empty] {
-  box-shadow: 0 0 0 200vmax rgb(0 0 0 / 0.9);
+  box-shadow: 0 0 0 200vmax rgb(0 0 0 / 0.6);
 }
 @keyframes guided-tour-dim {
   from {
