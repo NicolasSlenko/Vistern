@@ -46,15 +46,26 @@
      is repainted every frame, so narrower screens get a plain tint fitted to the
      same colour; the dots show through it faintly. */
   .desk .paper-frame::before {
+    --frame-frost: rgb(255 255 255 / 0.26);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
     background: rgb(199 255 237 / 0.33);
   }
+  .dark .paper-frame::before,
+  .dark .desk .paper-frame::before {
+    --frame-frost: rgb(160 200 175 / 0.07);
+    background: rgb(160 200 175 / 0.07);
+    box-shadow:
+      inset 0 0 0 1px rgb(160 200 175 / 0.14),
+      inset 0 2px 0 rgb(160 200 175 / 0.18);
+  }
+  /* After the dark rule, so dark mode takes the painted sky on wide screens too. */
   @media (min-width: 1400px) {
-    .desk .paper-frame::before {
+    .desk .paper-frame::before,
+    .dark .desk .paper-frame::before {
       background-color: oklch(from var(--color-sky-low) calc(l * 1.055) calc(c * 1.2) h);
       background-image:
-        linear-gradient(rgb(255 255 255 / 0.26), rgb(255 255 255 / 0.26)),
+        linear-gradient(var(--frame-frost), var(--frame-frost)),
         linear-gradient(rgb(255 255 255 / var(--desk-wash)), rgb(255 255 255 / var(--desk-wash))),
         radial-gradient(120% 85% at 78% 6%, oklch(from var(--color-sky-warm) calc(l * 1.055) calc(c * 1.2) h), transparent 60%),
         radial-gradient(140% 100% at 12% 0%, oklch(from var(--color-sky-high) calc(l * 1.055) calc(c * 1.2) h), transparent 62%),
@@ -63,13 +74,6 @@
       background-attachment: fixed;
       background-size: cover;
     }
-  }
-  .dark .paper-frame::before,
-  .dark .desk .paper-frame::before {
-    background: rgb(160 200 175 / 0.07);
-    box-shadow:
-      inset 0 0 0 1px rgb(160 200 175 / 0.14),
-      inset 0 2px 0 rgb(160 200 175 / 0.18);
   }
 
   /* The sheet itself. */
