@@ -1,6 +1,14 @@
 import { createClerkSupabaseServerClient } from "@/lib/supabase/server"
 import { checkAndIncrementLimit } from "@/lib/usageLimits"
-import { DEFAULT_AI_PROVIDER, isAiProvider, isPaidProvider, listAiProviders, type AiProvider } from "./index"
+import { DEFAULT_AI_PROVIDER, hasApiKey, isAiProvider, isPaidProvider, listAiProviders, type AiProvider } from "./index"
+
+/** The day's paid AI requests are used up and no free provider is configured. */
+export class AiLimitReachedError extends Error {
+  constructor() {
+    super("You've used today's AI requests. They reset tomorrow.")
+    this.name = "AiLimitReachedError"
+  }
+}
 
 /** The provider the user picked in Settings, or null if they never chose (or it isn't configured). */
 export async function getChosenAiProvider(userId: string): Promise<AiProvider | null> {
@@ -32,5 +40,9 @@ export async function resolveAiProvider(userId: string): Promise<{ provider: AiP
   if (!isPaidProvider(chosen)) return { provider: chosen, fellBack: false }
 
   const { allowed } = await checkAndIncrementLimit(userId, "paidAi")
-  return allowed ? { provider: chosen, fellBack: false } : { provider: "hipergator", fellBack: true }
+  if (allowed) return { provider: chosen, fellBack: false }
+  // Over the paid limit, HiPerGator takes over when it's set up. Without it there's no
+  // free provider to fall back to, so the limit holds.
+  if (hasApiKey("hipergator")) return { provider: "hipergator", fellBack: true }
+  throw new AiLimitReachedError()
 }

@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { z } from "zod"
-import { generateObject } from "@/lib/ai"
+import { generateObject, aiErrorMessage } from "@/lib/ai"
 import { resolveAiProvider } from "@/lib/ai/resolve"
 import {
   BULLET_WRITING_SYSTEM,
@@ -89,6 +89,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, data: { bullets }, aiProvider: provider })
   } catch (error) {
     console.error("Error writing bullet options:", error)
-    return NextResponse.json({ success: false, error: "The AI couldn't write options this time. Try again." }, { status: 500 })
+    return NextResponse.json({ success: false, error: aiErrorMessage(error, "The AI couldn't write options this time. Try again.") }, { status: 500 })
   }
 }

@@ -14,10 +14,6 @@ export function isAiProvider(value: unknown): value is AiProvider {
   return AI_PROVIDERS.includes(value as AiProvider)
 }
 
-/** Provider for users who haven't chosen one. Set with AI_PROVIDER in .env. */
-export const DEFAULT_AI_PROVIDER: AiProvider = isAiProvider(process.env.AI_PROVIDER)
-  ? process.env.AI_PROVIDER
-  : "hipergator"
 
 // The cheapest current model for each provider; each can be overridden in .env.
 const MODELS: Record<AiProvider, string> = {
@@ -56,9 +52,29 @@ export interface AiProviderInfo {
 }
 
 // Empty keys and the "your-…" placeholders copied from .env.example don't count as configured.
-function hasApiKey(provider: AiProvider) {
+export function hasApiKey(provider: AiProvider) {
   const key = API_KEYS[provider]
   return Boolean(key) && !key!.startsWith("your-")
+}
+
+/**
+ * Provider for users who haven't chosen one: AI_PROVIDER, else HiPerGator — but only if
+ * its key is set. A deployment missing that key (a preview without HIPERGATOR_API_KEY)
+ * falls through to the first provider that is configured, rather than sending requests
+ * to a provider that can only refuse them.
+ */
+export const DEFAULT_AI_PROVIDER: AiProvider = (() => {
+  const wanted: AiProvider = isAiProvider(process.env.AI_PROVIDER) ? process.env.AI_PROVIDER : "hipergator"
+  if (hasApiKey(wanted)) return wanted
+  return AI_PROVIDERS.find(hasApiKey) ?? wanted
+})()
+
+/** A provider asked for whose API key isn't set. Routes can show its message as is. */
+export class AiNotConfiguredError extends Error {
+  constructor(provider: AiProvider) {
+    super(`${LABELS[provider]} isn't set up on this server, so AI features can't run. Ask an admin to add its API key.`)
+    this.name = "AiNotConfiguredError"
+  }
 }
 
 /** Every provider with its model, and whether its API key is configured. Safe to send to the browser. */
@@ -128,19 +144,23 @@ function outputCap(provider: AiProvider) {
 }
 
 function openAiCompatibleClient(provider: "hipergator" | "openai") {
+  // Checked here because the OpenAI SDK, given no key, quietly reads OPENAI_API_KEY —
+  // which sent our OpenAI key to UF's proxy and came back as a 401 on every request.
+  if (!hasApiKey(provider)) throw new AiNotConfiguredError(provider)
   if (provider === "hipergator") {
     return new OpenAI({
-      apiKey: process.env.HIPERGATOR_API_KEY,
+      apiKey: API_KEYS.hipergator,
       baseURL: process.env.HIPERGATOR_BASE_URL || process.env.LITELLM_BASE_URL || "https://api.ai.it.ufl.edu/v1",
       timeout: HIPERGATOR_TIMEOUT_MS,
       maxRetries: 1,
     })
   }
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  return new OpenAI({ apiKey: API_KEYS.openai })
 }
 
 function claudeClient() {
-  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  if (!hasApiKey("claude")) throw new AiNotConfiguredError("claude")
+  return new Anthropic({ apiKey: API_KEYS.claude })
 }
 
 // Reasoning models (OpenAI's GPT-5+ and o-series) and the current Claude API reject
@@ -267,4 +287,10 @@ export async function embed(inputs: string[]): Promise<number[][]> {
   })
   logUsage("embed", EMBEDDING_MODEL, { inputTokens: response.usage.prompt_tokens, outputTokens: 0 })
   return response.data.map(item => item.embedding)
+}
+
+/** What to tell the student when an AI call fails: the setup or limit message if that's why, else `fallback`. */
+export function aiErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && (error.name === "AiNotConfiguredError" || error.name === "AiLimitReachedError")) return error.message
+  return fallback
 }
