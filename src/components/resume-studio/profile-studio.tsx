@@ -1,12 +1,12 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { FileText, Loader2, PenLine, Sparkles, Trash2, Upload } from "lucide-react"
 import { toast } from "sonner"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import type { Resume } from "@/app/api/parse/resumeSchema"
-import { useResume } from "@/contexts/resume-context"
+import { alignFeedback } from "@/lib/feedback-entries"
 import type { ModeOption } from "./mode-tabs"
 import { pill } from "./pills"
 import { ProfileForm, SkillsForm } from "./profile-form"
@@ -34,8 +34,9 @@ import { useAutosave } from "./use-autosave"
 type Mode = "write" | "review"
 
 export function ProfileStudio() {
-  const { xyzFeedback, refreshResumeData } = useResume()
-  const feedback = (xyzFeedback ?? null) as XyzFeedback | null
+  // The profile's own review, not the current resume's: the two list entries
+  // in different orders, so a resume's notes would land on the wrong cards.
+  const [review, setReview] = useState<XyzFeedback | null>(null)
 
   const [profile, setProfile] = useState<Resume | null>(null)
   const [loading, setLoading] = useState(true)
@@ -61,6 +62,10 @@ export function ProfileStudio() {
       .then((result) => live && result.success && setProfile(result.data))
       .catch(() => {})
       .finally(() => live && setLoading(false))
+    fetch("/api/analyze/xyz-batch?for=profile")
+      .then((response) => response.json())
+      .then((result) => live && result.success && setReview(result.data ?? null))
+      .catch(() => {})
     // Only the count: this view links to the resumes rather than listing them.
     fetch("/api/resume-documents")
       .then((response) => response.json())
@@ -105,11 +110,11 @@ export function ProfileStudio() {
       const response = await fetch("/api/analyze/xyz-batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeData: profile }),
+        body: JSON.stringify({ resumeData: profile, target: "profile" }),
       })
       const result = await response.json()
       if (!result.success) throw new Error(result.error || "The AI couldn't read it this time")
-      await refreshResumeData()
+      setReview(result.data ?? null)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Couldn't get AI notes")
     } finally {
@@ -143,6 +148,8 @@ export function ProfileStudio() {
 
   // Ticked-off notes disappear from the panel, the section counts and the
   // dots on the cards together, because they are all the same list.
+  // Each entry's notes follow the entry they were written about, wherever it now sits.
+  const feedback = useMemo(() => alignFeedback(review, profile), [review, profile])
   const allNotes = reviewNotes(profile, feedback)
   const { open: notes, hidden, dismiss, restore } = useDismissedNotes(allNotes)
   const modes: ModeOption<Mode>[] = [
