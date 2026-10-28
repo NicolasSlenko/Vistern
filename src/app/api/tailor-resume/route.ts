@@ -10,10 +10,10 @@ import { getCurrentResumeData, getMasterProfileData } from "@/lib/supabase/user-
 const SelectionSchema = z.object({
   selectedExperienceIndices: z
     .array(z.number())
-    .describe("0-based indices into the experiences array — pick up to 3 most relevant"),
+    .describe("0-based indices into the experiences array, most relevant first"),
   selectedProjectIndices: z
     .array(z.number())
-    .describe("0-based indices into the projects array — pick up to 4 most relevant"),
+    .describe("0-based indices into the projects array, most relevant first. Never empty when the candidate has projects"),
   selectionReasoning: z
     .array(z.string())
     .describe("One short sentence per selected item explaining why it was chosen for this role"),
@@ -49,24 +49,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "No resume data found. Upload a resume first." }, { status: 400 })
     }
 
-    const experiences = bank.experience || []
-    const projects = bank.projects || []
+    // A master profile can be missing a section the latest resume has (e.g. its project
+    // items were never verified), so fall back per section rather than per document.
+    const experiences = bank.experience?.length ? bank.experience : currentResume?.experience || []
+    const projects = bank.projects?.length ? bank.projects : currentResume?.projects || []
+
+    // One page fits about six entries; students with little work history lean on projects.
+    const projectTarget = Math.min(projects.length, experiences.length >= 3 ? 2 : experiences.length === 2 ? 3 : 4)
+    const experienceTarget = Math.min(experiences.length, 3)
 
     const expList = experiences
       .map((e, i) => {
-        const bullets = [...(e.responsibilities || []), ...(e.achievements || [])].slice(0, 3).join("; ")
-        return `[${i}] ${e.position} at ${e.company} (${e.start_date || "?"} – ${e.end_date || "Present"})\n    Technologies: ${(e.technologies || []).join(", ") || "n/a"}\n    ${bullets}`
+        const bullets = [...(e.responsibilities || []), ...(e.achievements || [])].slice(0, 4).map((b) => `    - ${b}`).join("\n")
+        return `[${i}] ${e.position} at ${e.company} (${e.start_date || "?"} – ${e.end_date || "Present"})\n    Technologies: ${(e.technologies || []).join(", ") || "n/a"}\n${bullets}`
       })
       .join("\n\n")
 
+    // Parsed projects often keep their substance in highlights with a blank description,
+    // so show both; otherwise every project looks empty next to the experiences.
     const projList = projects
-      .map((p, i) => `[${i}] ${p.name} [${(p.technologies || []).join(", ")}]\n    ${p.description || ""}`)
+      .map((p, i) => {
+        const bullets = (p.highlights || []).slice(0, 4).map((h) => `    - ${h}`).join("\n")
+        return `[${i}] ${p.name}\n    Technologies: ${(p.technologies || []).join(", ") || "n/a"}${p.description ? `\n    ${p.description}` : ""}${bullets ? `\n${bullets}` : ""}`
+      })
       .join("\n\n")
 
     const { provider } = await resolveAiProvider(userId)
     const result = await generateObject({
       provider,
-      system: "You are an expert resume tailor. Select the optimal subset of a candidate's experiences and projects that maximally aligns with the given job role.",
+      system: `You are an expert technical recruiter tailoring a one-page resume for a student or early-career candidate.
+You choose which experiences AND which projects go on the page. A strong early-career resume always has a Projects section alongside Experience: projects show hands-on skill with the job's stack even when no job did. Never drop the Projects section when the candidate has projects.`,
       prompt: `TARGET ROLE: ${jobTitle || "Software Engineer"} at ${jobCompany || "the company"}
 JOB DESCRIPTION:
 ${jobDescription.slice(0, 1200)}
@@ -77,7 +89,13 @@ ${expList || "None listed"}
 CANDIDATE PROJECTS (all of them):
 ${projList || "None listed"}
 
-Select up to 3 experiences and up to 4 projects by index. Prefer technical alignment with the job description, recent experience, and demonstrated impact. Return your selections with a brief rationale for each.`,
+SELECTION RULES:
+- Select up to ${experienceTarget} experience(s) and EXACTLY ${projectTarget} project(s) by index${projectTarget > 0 ? ". The projects list must not be empty" : ""}.
+- Judge each item on its own merits: overlap between its technologies/bullets and the job description, demonstrated impact (metrics, users, scale), and recency.
+- A project that uses the job's languages, frameworks or domain usually beats an unrelated job; it is fine to pick fewer experiences when a project is the stronger evidence.
+- If no project is a close match, still pick the ${projectTarget} most technically impressive ones.
+- Order each list from most to least relevant.
+- Give one short reason per selected item, experiences first, then projects.`,
       schema: SelectionSchema,
       name: "selection",
       temperature: 0.3,
@@ -86,6 +104,16 @@ Select up to 3 experiences and up to 4 projects by index. Prefer technical align
     const selection = result.data
     if (!selection) return NextResponse.json({ success: false, error: "Selection failed" }, { status: 500 })
 
+    const pick = (indices: number[], length: number, max: number) =>
+      [...new Set(indices)].filter((i) => Number.isInteger(i) && i >= 0 && i < length).slice(0, max)
+    const experienceIndices = pick(selection.selectedExperienceIndices, experiences.length, experienceTarget)
+    const projectIndices = pick(selection.selectedProjectIndices, projects.length, projectTarget)
+    // The model sometimes still returns no projects; top up in profile order so the
+    // Projects section never silently disappears.
+    for (let i = 0; projectIndices.length < projectTarget && i < projects.length; i++) {
+      if (!projectIndices.includes(i)) projectIndices.push(i)
+    }
+
     // Build tailored resume: master profile items + current basics/education
     const tailoredResume: Resume = {
       ...bank,
@@ -93,12 +121,8 @@ Select up to 3 experiences and up to 4 projects by index. Prefer technical align
       basics: currentResume?.basics ?? bank.basics,
       education: currentResume?.education ?? bank.education,
       // Only include selected items
-      experience: selection.selectedExperienceIndices
-        .filter((i) => i >= 0 && i < experiences.length)
-        .map((i) => experiences[i]),
-      projects: selection.selectedProjectIndices
-        .filter((i) => i >= 0 && i < projects.length)
-        .map((i) => projects[i]),
+      experience: experienceIndices.map((i) => experiences[i]),
+      projects: projectIndices.map((i) => projects[i]),
     }
 
     return NextResponse.json({
@@ -108,8 +132,8 @@ Select up to 3 experiences and up to 4 projects by index. Prefer technical align
         tailoredResume,
         reasoning: selection.selectionReasoning,
         selected: {
-          experiences: selection.selectedExperienceIndices.map((i) => experiences[i]?.company + " – " + experiences[i]?.position).filter(Boolean),
-          projects: selection.selectedProjectIndices.map((i) => projects[i]?.name).filter(Boolean),
+          experiences: experienceIndices.map((i) => experiences[i].company + " – " + experiences[i].position),
+          projects: projectIndices.map((i) => projects[i].name),
         },
       },
     })
