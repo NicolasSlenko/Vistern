@@ -126,7 +126,7 @@ export function PaperPane({
 
       <div className="pointer-events-none absolute inset-x-0 bottom-3 flex flex-wrap items-center justify-center gap-2 px-3">
         {original && <ViewSwitch showing={showing} onChoose={setShowing} floating={false} />}
-        <div className="glass-float pointer-events-auto flex items-center gap-1 rounded-full p-1">
+        <div className="glass glass-float pointer-events-auto flex items-center gap-1 rounded-full p-1">
           <button
             type="button"
             onClick={() => step(-1)}
@@ -174,7 +174,7 @@ function ViewSwitch({
     <div
       role="group"
       aria-label="What to show"
-      className={`glass-float pointer-events-auto flex items-center gap-1 rounded-full p-1 ${
+      className={`glass glass-float pointer-events-auto flex items-center gap-1 rounded-full p-1 ${
         floating ? "absolute bottom-3 left-1/2 -translate-x-1/2" : ""
       }`}
     >

@@ -102,11 +102,11 @@ function Tip({
         <p className="mt-1 text-[13.5px] leading-snug text-ink">{placed.rewrite.suggested}</p>
         <p className="mt-1.5 text-[12px] leading-snug text-ink-2">{placed.rewrite.why}</p>
       </div>
-      <div className="mt-2.5 flex items-center gap-2">
+      <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
         <button
           type="button"
           onClick={onAccept}
-          className="inline-flex h-7 items-center gap-1.5 rounded-full bg-brand px-2.5 text-[12px] font-medium text-sheet transition-[filter,scale] hover:brightness-110 active:scale-[0.97]"
+          className="inline-flex h-7 shrink-0 whitespace-nowrap items-center gap-1.5 rounded-full bg-brand px-2.5 text-[12px] font-medium text-sheet transition-[filter,scale] hover:brightness-110 active:scale-[0.97]"
         >
           <Check className="h-3 w-3" aria-hidden="true" />
           Use this
@@ -114,7 +114,7 @@ function Tip({
         <button
           type="button"
           onClick={onReject}
-          className="inline-flex h-7 items-center gap-1.5 rounded-full bg-fill px-2.5 text-[12px] font-medium text-ink-2 transition-colors hover:text-ink"
+          className="inline-flex h-7 shrink-0 whitespace-nowrap items-center gap-1.5 rounded-full bg-fill px-2.5 text-[12px] font-medium text-ink-2 transition-colors hover:text-ink"
         >
           <X className="h-3 w-3" aria-hidden="true" />
           Keep mine
@@ -123,7 +123,7 @@ function Tip({
           <button
             type="button"
             onClick={onMore}
-            className="inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[12px] font-medium text-brand transition-colors hover:bg-brand/10"
+            className="inline-flex h-7 shrink-0 whitespace-nowrap items-center gap-1.5 rounded-full px-2.5 text-[12px] font-medium text-brand transition-colors hover:bg-brand/10"
           >
             <Sparkles className="h-3 w-3" aria-hidden="true" />
             More options

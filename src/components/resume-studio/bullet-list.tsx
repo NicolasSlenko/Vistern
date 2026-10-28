@@ -176,14 +176,14 @@ function Bullet({
           </p>
           <p className="text-[15px] leading-relaxed text-ink">{rewrite!.suggested}</p>
           <p className="text-[13px] leading-snug text-ink-2">{rewrite!.why}</p>
-          <div className="flex items-center gap-2 pb-0.5">
+          <div className="flex flex-wrap items-center gap-2 pb-0.5">
             <button
               type="button"
               onClick={() => {
                 onAccept()
                 setJustChanged(true)
               }}
-              className="inline-flex h-8 items-center gap-1.5 rounded-full bg-brand px-3 text-[13px] font-medium text-sheet transition-[filter,scale] hover:brightness-110 active:scale-[0.97]"
+              className="inline-flex h-8 shrink-0 whitespace-nowrap items-center gap-1.5 rounded-full bg-brand px-3 text-[13px] font-medium text-sheet transition-[filter,scale] hover:brightness-110 active:scale-[0.97]"
             >
               <Check className="h-3.5 w-3.5" aria-hidden="true" />
               Use this
@@ -191,7 +191,7 @@ function Bullet({
             <button
               type="button"
               onClick={onReject}
-              className="inline-flex h-8 items-center gap-1.5 rounded-full bg-fill px-3 text-[13px] font-medium text-ink-2 transition-colors hover:text-ink"
+              className="inline-flex h-8 shrink-0 whitespace-nowrap items-center gap-1.5 rounded-full bg-fill px-3 text-[13px] font-medium text-ink-2 transition-colors hover:text-ink"
             >
               <X className="h-3.5 w-3.5" aria-hidden="true" />
               Keep mine
@@ -200,7 +200,7 @@ function Bullet({
               <button
                 type="button"
                 onClick={onEnhance}
-                className="inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium text-brand transition-colors hover:bg-brand/10"
+                className="inline-flex h-8 shrink-0 whitespace-nowrap items-center gap-1.5 rounded-full px-3 text-[13px] font-medium text-brand transition-colors hover:bg-brand/10"
               >
                 <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
                 More options
