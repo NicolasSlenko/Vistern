@@ -1,60 +1,48 @@
-import { NextResponse } from "next/server"
-import { auth } from "@clerk/nextjs/server"
-import { deleteFromS3, getJsonFromS3, putJsonToS3 } from "@/lib/aws/s3"
+import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { createClerkSupabaseServerClient } from "@/lib/supabase/server";
 
-// GET - Retrieve cached matched courses
 export async function GET() {
   try {
-    const { userId } = await auth()
-    if (!userId) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
+    const { userId } = await auth();
+    if (!userId) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    const supabase = await createClerkSupabaseServerClient();
+    const { data, error } = await supabase.from("course_progress")
+      .select("course_code,course_name,category,match_score,match_details,is_selected,updated_at")
+      .eq("clerk_user_id", userId).order("category").order("course_name");
+    if (error) throw error;
+    const matches = data.map((row) => {
+      const details = row.match_details && typeof row.match_details === "object" && !Array.isArray(row.match_details)
+        ? row.match_details as Record<string, unknown> : {};
+      return {
+        resumeCourse: typeof details.resumeCourse === "string" ? details.resumeCourse : row.course_name,
+        ufCourse: { name: typeof details.ufCourseName === "string" ? details.ufCourseName : row.course_name, code: row.course_code },
+        score: row.match_score,
+        category: row.category,
+        isSelected: row.is_selected,
+      };
+    });
+    const byCategory: Record<string, typeof matches> = {};
+    for (const match of matches) {
+      if (match.isSelected) (byCategory[match.category] ??= []).push(match);
     }
-
-    const matchedCoursesData = await getJsonFromS3<Record<string, unknown>>(`uploads/${userId}/matched-courses.json`)
-    if (!matchedCoursesData) {
-      return NextResponse.json({
-        success: false,
-        error: "No matched courses found",
-        message: "Please upload and verify your resume first. Course matching will happen automatically."
-      }, { status: 404 })
-    }
-
-    return NextResponse.json(matchedCoursesData)
+    return NextResponse.json({ success: true, matches, byCategory, totalMatches: matches.length, lastUpdated: data[0]?.updated_at });
   } catch (error) {
-    console.error("Error reading matched courses:", error)
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: "Failed to read matched courses",
-        message: error instanceof Error ? error.message : "Unknown error"
-      },
-      { status: 500 }
-    )
+    console.error("Error reading matched courses:", error);
+    return NextResponse.json({ success: false, error: "Failed to read matched courses" }, { status: 500 });
   }
 }
 
-// DELETE - Clear cached matched courses
 export async function DELETE() {
   try {
-    const { userId } = await auth()
-    if (!userId) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
-    }
-    await deleteFromS3(`uploads/${userId}/matched-courses.json`)
-    
-    return NextResponse.json({ 
-      success: true,
-      message: "Matched courses cleared"
-    })
+    const { userId } = await auth();
+    if (!userId) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    const supabase = await createClerkSupabaseServerClient();
+    const { error } = await supabase.from("course_progress").delete().eq("clerk_user_id", userId);
+    if (error) throw error;
+    return NextResponse.json({ success: true, message: "Matched courses cleared" });
   } catch (error) {
-    console.error("Error deleting matched courses:", error)
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: "Failed to delete matched courses",
-        message: error instanceof Error ? error.message : "Unknown error"
-      },
-      { status: 500 }
-    )
+    console.error("Error deleting matched courses:", error);
+    return NextResponse.json({ success: false, error: "Failed to clear matched courses" }, { status: 500 });
   }
 }

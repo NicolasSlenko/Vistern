@@ -1,0 +1,141 @@
+/* The AI's marks on the resume page: the pen strokes, the areas that answer
+   to a pointer, and the card that opens.
+
+   Adapted from resumezip's review marks
+   (MIT, © 2025 Ian Hoang — https://github.com/ian-hoang/resumezip). */
+
+@layer components {
+  /* ---- The pen ---------------------------------------------------------- */
+
+  .paper-scribble path {
+    fill: none;
+    stroke: var(--mark-ink);
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.85;
+    transition:
+      opacity 200ms ease-out,
+      stroke-width 150ms ease-out;
+  }
+
+  /* Each severity in its own ink, so the page can be read at a glance. */
+  .paper-scribble[data-ink="fix"] {
+    --mark-ink: var(--color-alert);
+  }
+  .paper-scribble[data-ink="look"] {
+    --mark-ink: var(--color-caution);
+  }
+  .paper-scribble[data-ink="optional"] {
+    --mark-ink: var(--color-brand);
+  }
+
+  /* While one mark is open the rest step back, so the page does not compete
+     with the card being read. */
+  .paper-scribble[data-quiet] path {
+    opacity: 0.22;
+  }
+
+  /* The pen draws itself on, one mark after the next down the page. A mark
+     that is hovered thickens slightly, which is enough to show which of two
+     neighbouring lines is the one being answered. */
+  @media (prefers-reduced-motion: no-preference) {
+    .paper-scribble path {
+      animation: paper-ink 520ms ease-out backwards;
+      animation-delay: var(--delay, 0ms);
+    }
+  }
+  @keyframes paper-ink {
+    from {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+      opacity: 0;
+    }
+    to {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 0;
+      opacity: 0.85;
+    }
+  }
+
+  /* ---- What the pointer answers to -------------------------------------- */
+
+  .paper-hit {
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    /* No visible box of its own: the drawn mark underneath is the affordance.
+       Focus still needs to show, which the rule below does. */
+    transition: background 140ms ease-out;
+  }
+  .paper-hit:hover,
+  .paper-hit:focus-visible {
+    background: color-mix(in oklab, var(--color-caution) 13%, transparent);
+    outline: none;
+  }
+  .paper-hit:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-brand) 55%, transparent);
+  }
+
+  /* ---- The card --------------------------------------------------------- */
+
+  /* Translated back by half its width so the clamp in the inline style
+     positions its centre, not its leading edge. */
+  .paper-tip {
+    position: absolute;
+    z-index: 30;
+    width: 280px;
+    translate: -50% 0;
+    padding: 11px 13px 12px;
+    border-radius: 14px;
+    background: color-mix(in oklab, var(--color-sheet) 94%, transparent);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    backdrop-filter: blur(18px) saturate(1.4);
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.55),
+      0 1px 2px rgb(10 24 17 / 0.08),
+      0 16px 36px -14px rgb(10 24 17 / 0.45);
+    text-align: left;
+  }
+  .dark .paper-tip {
+    box-shadow:
+      inset 0 0 0 1px rgb(160 200 175 / 0.14),
+      0 16px 36px -14px rgb(0 0 0 / 0.7);
+  }
+  /* Clicked rather than hovered: it stays until dismissed, so it reads as
+     something to answer rather than something passing by. */
+  .paper-tip[data-pinned] {
+    background: var(--color-sheet);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--color-brand) 30%, transparent),
+      0 1px 2px rgb(10 24 17 / 0.1),
+      0 20px 44px -16px rgb(10 24 17 / 0.5);
+  }
+  .dark .paper-tip[data-pinned] {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--color-brand) 34%, transparent),
+      0 20px 44px -16px rgb(0 0 0 / 0.75);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .paper-tip {
+      animation: paper-tip-in 160ms ease-out;
+    }
+  }
+  @keyframes paper-tip-in {
+    from {
+      opacity: 0;
+      translate: -50% 4px;
+    }
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .paper-tip {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      background: var(--color-sheet);
+    }
+  }
+}

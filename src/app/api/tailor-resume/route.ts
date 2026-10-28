@@ -1,13 +1,11 @@
-import { OpenAI } from "openai"
+import { generateObject } from "@/lib/ai"
+import { resolveAiProvider } from "@/lib/ai/resolve"
 import { z } from "zod"
-import { zodTextFormat } from "openai/helpers/zod.mjs"
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
-import { getJsonFromS3 } from "@/lib/aws/s3"
 import { checkAndIncrementLimit } from "@/lib/usageLimits"
 import type { Resume } from "@/app/api/parse/resumeSchema"
-
-const MODEL = "gpt-4.1-mini"
+import { getCurrentResumeData, getMasterProfileData } from "@/lib/supabase/user-data"
 
 const SelectionSchema = z.object({
   selectedExperienceIndices: z
@@ -42,8 +40,8 @@ export async function POST(request: NextRequest) {
 
     // Master profile is the bank of all experiences; current resume has latest basics/education
     const [masterProfile, currentResume] = await Promise.all([
-      getJsonFromS3<Resume>(`uploads/${userId}/master-profile.json`),
-      getJsonFromS3<Resume>(`uploads/${userId}/resume-data.json`),
+      getMasterProfileData(userId),
+      getCurrentResumeData(userId),
     ])
 
     const bank = masterProfile || currentResume
@@ -65,18 +63,11 @@ export async function POST(request: NextRequest) {
       .map((p, i) => `[${i}] ${p.name} [${(p.technologies || []).join(", ")}]\n    ${p.description || ""}`)
       .join("\n\n")
 
-    const client = new OpenAI()
-
-    const result = await client.responses.parse({
-      model: MODEL,
-      input: [
-        {
-          role: "system",
-          content: "You are an expert resume tailor. Select the optimal subset of a candidate's experiences and projects that maximally aligns with the given job role.",
-        },
-        {
-          role: "user",
-          content: `TARGET ROLE: ${jobTitle || "Software Engineer"} at ${jobCompany || "the company"}
+    const { provider } = await resolveAiProvider(userId)
+    const result = await generateObject({
+      provider,
+      system: "You are an expert resume tailor. Select the optimal subset of a candidate's experiences and projects that maximally aligns with the given job role.",
+      prompt: `TARGET ROLE: ${jobTitle || "Software Engineer"} at ${jobCompany || "the company"}
 JOB DESCRIPTION:
 ${jobDescription.slice(0, 1200)}
 
@@ -87,13 +78,12 @@ CANDIDATE PROJECTS (all of them):
 ${projList || "None listed"}
 
 Select up to 3 experiences and up to 4 projects by index. Prefer technical alignment with the job description, recent experience, and demonstrated impact. Return your selections with a brief rationale for each.`,
-        },
-      ],
-      text: { format: zodTextFormat(SelectionSchema, "selection") },
+      schema: SelectionSchema,
+      name: "selection",
       temperature: 0.3,
     })
 
-    const selection = result.output_parsed
+    const selection = result.data
     if (!selection) return NextResponse.json({ success: false, error: "Selection failed" }, { status: 500 })
 
     // Build tailored resume: master profile items + current basics/education
@@ -113,6 +103,7 @@ Select up to 3 experiences and up to 4 projects by index. Prefer technical align
 
     return NextResponse.json({
       success: true,
+      aiProvider: provider,
       data: {
         tailoredResume,
         reasoning: selection.selectionReasoning,

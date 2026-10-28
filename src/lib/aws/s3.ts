@@ -1,6 +1,7 @@
 import { S3Client } from "@aws-sdk/client-s3";
 import {
   DeleteObjectCommand,
+  DeleteObjectsCommand,
   GetObjectCommand,
   HeadObjectCommand,
   ListObjectsV2Command,
@@ -57,7 +58,7 @@ async function streamToBuffer(body: GetObjectCommandOutput["Body"]): Promise<Buf
   throw new Error("Unsupported S3 body type")
 }
 
-export async function uploadToS3(key: string, body: Buffer | Uint8Array | string, contentType: string) {
+export async function uploadToS3(key: string, body: Buffer | Uint8Array, contentType: string) {
   await s3.send(
     new PutObjectCommand({
       Bucket: ensureBucket(),
@@ -66,10 +67,6 @@ export async function uploadToS3(key: string, body: Buffer | Uint8Array | string
       ContentType: contentType,
     }),
   )
-}
-
-export async function putJsonToS3(key: string, data: unknown) {
-  await uploadToS3(key, JSON.stringify(data), "application/json")
 }
 
 export async function getBufferFromS3(key: string): Promise<Buffer> {
@@ -128,18 +125,44 @@ export interface S3Object {
 }
 
 export async function listObjectsInS3(prefix: string): Promise<S3Object[]> {
-  const response = await s3.send(
-    new ListObjectsV2Command({
-      Bucket: ensureBucket(),
-      Prefix: prefix,
-    }),
-  )
+  const objects: S3Object[] = []
+  let continuationToken: string | undefined
 
-  return (response.Contents || []).map((obj) => ({
-    key: obj.Key || "",
-    lastModified: obj.LastModified,
-    size: obj.Size,
-  }))
+  do {
+    const response = await s3.send(
+      new ListObjectsV2Command({
+        Bucket: ensureBucket(),
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+      }),
+    )
+    objects.push(...(response.Contents || []).filter((obj) => obj.Key).map((obj) => ({
+      key: obj.Key!,
+      lastModified: obj.LastModified,
+      size: obj.Size,
+    })))
+    continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined
+    if (response.IsTruncated && !continuationToken) {
+      throw new Error("S3 returned an incomplete object listing")
+    }
+  } while (continuationToken)
+
+  return objects
+}
+
+export async function deleteObjectsInS3(keys: string[]): Promise<void> {
+  for (let index = 0; index < keys.length; index += 1000) {
+    const batch = keys.slice(index, index + 1000)
+    const response = await s3.send(
+      new DeleteObjectsCommand({
+        Bucket: ensureBucket(),
+        Delete: { Objects: batch.map((Key) => ({ Key })), Quiet: true },
+      }),
+    )
+    if (response.Errors?.length) {
+      throw new Error(`S3 could not delete ${response.Errors.length} uploaded file(s)`)
+    }
+  }
 }
 
 export async function getSignedUrlForObject(key: string, expiresIn: number = 3600): Promise<string> {

@@ -1,11 +1,8 @@
-import { OpenAI } from "openai";
+import { generateText } from "@/lib/ai";
+import { resolveAiProvider } from "@/lib/ai/resolve";
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import crypto from "crypto";
-import { getJsonFromS3, putJsonToS3 } from "@/lib/aws/s3";
 import { checkAndIncrementLimit } from "@/lib/usageLimits";
-
-const MODEL = "gpt-4.1-mini";
 
 const JAKE_TEMPLATE = String.raw`%-------------------------
 % Resume in LaTeX
@@ -148,23 +145,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "No resume data provided" }, { status: 400 });
         }
 
-        let cacheKey = "";
         if (isPreview) {
-            const payloadString = JSON.stringify({ version: "v9-instructions", resumeData, tweaks, xyzImprovements, customInstructions });
-            const hash = crypto.createHash("sha256").update(payloadString).digest("hex");
-            cacheKey = `uploads/${userId}/latex-cache-${hash}.json`;
-
-            try {
-                const cachedPreview = await getJsonFromS3<{ latex: string, diffs: BulletDiff[] }>(cacheKey);
-                if (cachedPreview) {
-                    console.log("Serving LaTeX preview from S3 cache");
-                    return NextResponse.json(cachedPreview);
-                }
-            } catch (err) {
-                console.error("Cache read error:", err);
-            }
-
-            // Cache miss — consume a daily credit before making the GPT call
+            // Preview data is ephemeral; generate it without persisting to S3.
             const { allowed } = await checkAndIncrementLimit(userId, "tailorResume");
             if (!allowed) {
                 return NextResponse.json(
@@ -173,8 +155,6 @@ export async function POST(request: NextRequest) {
                 );
             }
         }
-
-        const client = new OpenAI();
 
         // Build a summary of all improvements available
         const improvementsSummary: string[] = [];
@@ -244,26 +224,22 @@ ${customInstructions}
 === END UNTRUSTED USER INPUT ===\n` : ""}
 `;
 
-        const result = await client.responses.create({
-            model: MODEL,
-            input: [
-                {
-                    role: "system",
-                    content: `You are an expert LaTeX resume formatter. 
+        const { provider } = await resolveAiProvider(userId);
+        const result = await generateText({
+            provider,
+            system: `You are an expert LaTeX resume formatter.
 You must output ONLY valid, compilable LaTeX code using the EXACT template provided below. 
 Never output markdown fences or explanations.
 CRITICAL: Only include sections that exist in the provided resume data. Do NOT invent new sections like Summary, Objective, or Profile. Your ONLY job is to format the data into LaTeX and improve bullet point wording where suggestions are provided.
 
 === REQUIRED LATEX TEMPLATE TO FILL OUT ===
 ${JAKE_TEMPLATE}
-`
-                },
-                { role: "user", content: prompt }
-            ],
+`,
+            prompt,
             temperature: 0.2,
         });
 
-        let latex = result.output_text || "";
+        let latex = result;
 
         // Strip markdown fences if GPT added them
         latex = latex.replace(/^```(?:latex|tex)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
@@ -280,7 +256,7 @@ ${JAKE_TEMPLATE}
 
         // --- Overleaf mode: return raw latex for client-side base64 form POST ---
         if (isOverleaf) {
-            return NextResponse.json({ latex })
+            return NextResponse.json({ latex, aiProvider: provider })
         }
 
         // --- Preview mode: also compute diffs ---
@@ -345,12 +321,7 @@ ${JAKE_TEMPLATE}
                 }
             }
 
-            const previewPayload = { latex, diffs };
-            
-            // Fire and forget caching
-            putJsonToS3(cacheKey, previewPayload).catch(err => console.error("Failed to write LaTeX cache to S3:", err));
-
-            return NextResponse.json(previewPayload);
+            return NextResponse.json({ latex, diffs, aiProvider: provider });
         }
 
         // --- Download mode (default) ---

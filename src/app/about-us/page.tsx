@@ -135,31 +135,31 @@ function NodeCard({
 }) {
   const styles = {
     advisor: {
-      border: "border-zinc-700 dark:border-zinc-400",
-      bg: "bg-zinc-900 dark:bg-zinc-800",
-      text: "text-zinc-100",
-      subtitleText: "text-zinc-400",
-      descText: "text-zinc-300",
-      tagBg: "bg-zinc-700 text-zinc-200",
-      iconBg: "bg-zinc-700",
+      border: "border-[#d9e4da]",
+      bg: "bg-white",
+      text: "text-[#27332d]",
+      subtitleText: "text-[#4f705b]",
+      descText: "text-[#5c685f]",
+      tagBg: "bg-[#eaf1ec] text-[#246347]",
+      iconBg: "bg-[#eaf1ec]",
     },
     lead: {
-      border: "border-amber-500 dark:border-amber-400",
-      bg: "bg-gradient-to-br from-amber-950 via-yellow-950 to-amber-950 dark:from-amber-900/90 dark:via-yellow-900/80 dark:to-amber-900/90",
-      text: "text-amber-50",
-      subtitleText: "text-amber-300",
-      descText: "text-amber-200",
-      tagBg: "bg-amber-800/80 text-amber-100",
-      iconBg: "bg-amber-700",
+      border: "border-[#a6c9ad]",
+      bg: "bg-[#f2f7f1]",
+      text: "text-[#27332d]",
+      subtitleText: "text-[#246347]",
+      descText: "text-[#4f6555]",
+      tagBg: "bg-[#deecdf] text-[#246347]",
+      iconBg: "bg-[#d5e8d8]",
     },
     execution: {
-      border: "border-blue-600 dark:border-blue-400",
-      bg: "bg-blue-950 dark:bg-blue-900/80",
-      text: "text-blue-50",
-      subtitleText: "text-blue-300",
-      descText: "text-blue-200",
-      tagBg: "bg-blue-800 text-blue-200",
-      iconBg: "bg-blue-800",
+      border: "border-[#d9e4da]",
+      bg: "bg-white",
+      text: "text-[#27332d]",
+      subtitleText: "text-[#4f705b]",
+      descText: "text-[#5c685f]",
+      tagBg: "bg-[#eaf1ec] text-[#246347]",
+      iconBg: "bg-[#eaf1ec]",
     },
   }
 
@@ -169,16 +169,16 @@ function NodeCard({
   return (
     <div
       className={cn(
-        "relative rounded-xl border-2 p-5 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02]",
+        "relative rounded-2xl border p-5 shadow-sm transition-shadow duration-200 hover:shadow-md",
         s.border, s.bg,
-        variant === "lead" && "shadow-amber-500/20 ring-1 ring-amber-500/30",
+        variant === "lead" && "shadow-[0_12px_30px_#24634712]",
         !node.filled && "opacity-70 border-dashed"
       )}
     >
       {/* Bridge indicator */}
       {node.bridgeNode && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <Badge className="bg-emerald-500 text-emerald-950 hover:bg-emerald-400 text-[10px] gap-1 font-semibold">
+          <Badge className="bg-[#246347] text-white hover:bg-[#1b5038] text-[10px] gap-1 font-semibold">
             <Lightbulb className="h-3 w-3" /> Insights ↔ Requirements
           </Badge>
         </div>
@@ -187,7 +187,7 @@ function NodeCard({
       {/* Mentor link indicator */}
       {node.mentorLink && (
         <div className="absolute -top-3 right-3">
-          <Badge variant="outline" className="border-blue-400 text-blue-300 text-[10px] gap-1 bg-blue-950/80">
+          <Badge variant="outline" className="border-[#a6c9ad] text-[#246347] text-[10px] gap-1 bg-[#f2f7f1]">
             <GitPullRequest className="h-3 w-3" /> → Tech Lead
           </Badge>
         </div>
@@ -196,7 +196,7 @@ function NodeCard({
       {/* Header */}
       <div className="flex items-center gap-4 mb-4">
         {node.imageUrl ? (
-          <div className={cn("relative shrink-0 overflow-hidden rounded-full aspect-square border-2 border-background/10 shadow-sm", variant === "lead" ? "w-24 sm:w-28" : "w-16 sm:w-20")}>
+          <div className={cn("relative shrink-0 overflow-hidden rounded-full aspect-square border-2 border-[#d9e4da] shadow-sm", variant === "lead" ? "w-24 sm:w-28" : "w-16 sm:w-20")}>
             <Image
               src={node.imageUrl}
               alt={node.name}
@@ -207,7 +207,7 @@ function NodeCard({
           </div>
         ) : (
           <div className={cn("shrink-0 rounded-full flex items-center justify-center", s.iconBg, variant === "lead" ? "w-24 h-24 sm:w-28 sm:h-28" : "w-16 h-16 sm:w-20 sm:h-20")}>
-            <Icon className={cn("text-white", variant === "lead" ? "h-10 w-10" : "h-7 w-7")} />
+            <Icon className={cn("text-[#246347]", variant === "lead" ? "h-10 w-10" : "h-7 w-7")} />
           </div>
         )}
         <div className="min-w-0">
@@ -278,7 +278,7 @@ export default function AboutUsPage() {
         <div className="mb-16 max-w-5xl mx-auto relative z-10">
           <div className="text-center mb-6">
             <h2 className="text-3xl font-bold mb-3 tracking-tight">Faculty Advisor</h2>
-            <div className="w-16 h-1.5 bg-gradient-to-r from-zinc-700 to-zinc-500 mx-auto rounded-full" />
+            <div className="w-16 h-1.5 bg-[#8fba98] mx-auto rounded-full" />
           </div>
           <div className="max-w-xl mx-auto">
             <NodeCard node={advisors[0]} variant="advisor" />
@@ -289,7 +289,7 @@ export default function AboutUsPage() {
         <div className="max-w-6xl mx-auto mb-16">
           <div className="text-center mb-6">
             <h2 className="text-3xl font-bold mb-3 tracking-tight">Project Leadership</h2>
-            <div className="w-16 h-1.5 bg-gradient-to-r from-amber-600 to-amber-400 mx-auto rounded-full" />
+            <div className="w-16 h-1.5 bg-[#8fba98] mx-auto rounded-full" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-start">
             <NodeCard node={advisors[1]} variant="advisor" />
@@ -304,7 +304,7 @@ export default function AboutUsPage() {
         <div className="max-w-5xl mx-auto mb-16">
           <div className="text-center mb-6">
             <h2 className="text-3xl font-bold mb-3 tracking-tight">Execution Team</h2>
-            <div className="w-16 h-1.5 bg-gradient-to-r from-blue-600 to-blue-400 mx-auto rounded-full" />
+            <div className="w-16 h-1.5 bg-[#8fba98] mx-auto rounded-full" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-4xl mx-auto items-start">
             {executionTeam.slice(1).map((node, i) => (
@@ -318,27 +318,27 @@ export default function AboutUsPage() {
           <h3 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wider">Legend</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded border-2 border-zinc-700 bg-zinc-900 shrink-0" />
+              <div className="w-4 h-4 rounded border border-[#d9e4da] bg-white shrink-0" />
               <span className="text-muted-foreground">Advisory — Strategic Oversight</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded border-2 border-amber-500 bg-amber-950 shrink-0" />
+              <div className="w-4 h-4 rounded border border-[#a6c9ad] bg-[#f2f7f1] shrink-0" />
               <span className="text-muted-foreground">Project Lead — Central Hub</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded border-2 border-blue-600 bg-blue-950 shrink-0" />
+              <div className="w-4 h-4 rounded border border-[#d9e4da] bg-white shrink-0" />
               <span className="text-muted-foreground">Execution Team</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded border-2 border-dashed border-blue-600 bg-blue-950/50 shrink-0" />
+              <div className="w-4 h-4 rounded border border-dashed border-[#a6c9ad] bg-[#f2f7f1] shrink-0" />
               <span className="text-muted-foreground">Unfilled Position</span>
             </div>
             <div className="flex items-center gap-2">
-              <Badge className="bg-emerald-500 text-emerald-950 text-[9px] h-4 px-1.5">Bridge</Badge>
+              <Badge className="bg-[#246347] text-white text-[9px] h-4 px-1.5">Bridge</Badge>
               <span className="text-muted-foreground">Human Insights ↔ Technical Specs</span>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="border-blue-400 text-blue-400 text-[9px] h-4 px-1.5">→ Tech Lead</Badge>
+              <Badge variant="outline" className="border-[#a6c9ad] text-[#246347] text-[9px] h-4 px-1.5">→ Tech Lead</Badge>
               <span className="text-muted-foreground">Code Review Reporting Line</span>
             </div>
           </div>

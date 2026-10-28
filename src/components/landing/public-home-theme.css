@@ -1,0 +1,140 @@
+/* The paper theme on the public page. Loaded after public-home.css, so
+   these win.
+
+   The landing page keeps its layout; what changes is the voice. Its own
+   variables are re-pointed at the theme's tokens, the headlines take
+   Newsreader, the header becomes glass, and the hero sits on the same
+   painted sky the signed-in app does — so the first screen a student sees
+   and the first screen after they sign in are plainly the same product. */
+
+.public-home {
+  --public-ink: var(--color-ink);
+  --public-muted: var(--color-ink-2);
+  --public-green: var(--color-brand);
+  --public-line: var(--color-hairline);
+  background: var(--color-paper);
+}
+
+/* Headlines in the serif, as every page title in the app is. */
+.public-home :is(h1, h2) {
+  font-family: var(--font-newsreader), Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.035em;
+}
+.public-home h1 em,
+.public-home h2 em {
+  color: var(--color-brand);
+}
+.public-home :is(h3, .public-brand) {
+  letter-spacing: -0.03em;
+}
+
+/* The eyebrows are the theme's one label style. */
+.public-home :is(.public-eyebrow) {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* The header floats as glass over whatever scrolls under it. */
+.public-home .public-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid color-mix(in oklab, var(--color-hairline) 70%, transparent);
+  background: color-mix(in oklab, var(--color-sheet) 78%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  backdrop-filter: blur(20px) saturate(1.5);
+}
+
+.public-home .public-hero-description,
+.public-home .public-hero-note {
+  color: var(--color-ink-2);
+}
+.public-home .public-hero-note svg {
+  color: var(--color-brand);
+}
+/* Buttons take the theme's two looks. */
+.public-home .public-button {
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  background-image: var(--brand-gradient);
+  box-shadow: var(--brand-halo);
+  transition:
+    filter 150ms,
+    scale 120ms ease-out;
+}
+.public-home .public-button:hover {
+  filter: brightness(1.08);
+}
+.public-home .public-button:active {
+  scale: 0.97;
+}
+.public-home .public-button-light {
+  background-image: linear-gradient(180deg, #ffffff, #f6f8f6);
+  color: var(--color-ink);
+  box-shadow:
+    inset 0 0 0 1px #e4e9e5,
+    0 3px 8px -3px rgb(10 24 17 / 0.14);
+}
+
+.public-home a:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--color-brand) 55%, transparent);
+  outline-offset: 3px;
+}
+
+/* Dark marketing surfaces keep the same layout with readable ink and green accents. */
+.dark .public-home { --public-ink: #e8efea; --public-muted: #b5c1b9; --public-green: #a4dfb4; color: var(--public-ink); background: #0b0e0c; }
+.dark .public-home .public-header { border-color: #29342c; background: rgb(15 20 17 / .94); }
+.dark .public-home .public-nav a, .dark .public-home .public-login { color: #c3d0c7; }
+.dark .public-home .public-nav a:hover, .dark .public-home .public-login:hover { color: var(--public-green); }
+.dark .public-home .public-brand-mark { color: #102016; background: #a4dfb4; }
+.dark .public-home :is(.public-eyebrow, .public-secondary-link) { color: var(--public-green); }
+.dark .public-home .public-eyebrow-dot { background: #a4dfb4; box-shadow: 0 0 0 5px rgb(164 223 180 / .15); }
+.dark .public-home :is(.public-hero-note) { color: #b4c2b8; }
+.dark .public-home .public-hero-note svg { color: #a4dfb4; }
+.dark .public-home .public-button { color: #102016; }
+.dark .public-home .public-button-light { color: #102016; background-image: linear-gradient(180deg, #f4f9f4, #dfecdf); box-shadow: none; }
+.dark .public-home .public-context-chip { border-color: #45604a; color: #e3f0e5; background: #2c4032; box-shadow: none; }
+.dark .public-home .public-closing { background: #193422; }
+.dark .public-home .public-closing p { color: #d5e8d9; }
+.dark .public-home .public-footer { background: #111713; }
+.dark .public-home .public-footer span:not(.public-brand-mark), .dark .public-home .public-footer a:last-child { color: #b5c2b8; }
+.dark .public-home .public-footer .public-brand span:last-child { color: var(--public-ink); }
+
+.public-home .public-theme-toggle {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  place-items: center;
+  border: 1px solid var(--color-rule-strong);
+  border-radius: 14px;
+  color: var(--public-ink);
+  background: var(--color-sheet);
+  transition: background-color 150ms, border-color 150ms, color 150ms;
+}
+.public-home .public-theme-toggle:hover {
+  border-color: var(--public-green);
+  color: var(--public-green);
+}
+.public-home .public-theme-toggle:focus-visible {
+  outline: 2px solid var(--public-green);
+  outline-offset: 3px;
+}
+.dark .public-home .public-theme-toggle {
+  border-color: #45554a;
+  color: #d9e8dc;
+  background: #202a23;
+}
+.dark .public-home .public-theme-toggle:hover {
+  border-color: #a4dfb4;
+  color: #a4dfb4;
+}
+@media (max-width: 390px) {
+  .public-home .public-header-actions { gap: 7px; }
+  .public-home .public-theme-toggle { width: 38px; height: 38px; }
+}

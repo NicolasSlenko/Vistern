@@ -1,0 +1,21 @@
+VISTERN TEST STUDENT
+QA fixture — fictional resume for upload testing only
+Email: vistern-test@example.com
+
+EDUCATION
+Example University
+Bachelor of Science in Computer Science, expected May 2027
+Relevant coursework: Data Structures, Software Engineering
+
+PROJECTS
+QA Study Planner | January 2026 - April 2026
+Built a Python command-line application to organize coursework deadlines.
+Implemented task creation, completion, and filtering using SQLite.
+Wrote 12 automated tests for task creation and date validation.
+
+SKILLS
+Programming languages: Python, JavaScript
+Databases: SQLite
+Tools: Git, pytest
+
+This document contains fictional test data and is not Pablo Pupo's resume.

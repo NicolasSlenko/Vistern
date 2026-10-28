@@ -2,7 +2,30 @@
 
 import { AnimatedCard } from "./animated-card";
 import { FileSearch, Target, Route, Users, Sparkles, TrendingUp } from "lucide-react";
-import { motion } from "framer-motion";
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
+
+// Spinning rings only animate while visible so they don't run during scroll off-screen
+function SpinningRings() {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref);
+
+  return (
+    <div ref={ref} className="hidden md:flex w-32 h-32 relative items-center justify-center">
+      <motion.div
+        className="absolute inset-0 border-2 border-primary/30 rounded-xl"
+        animate={inView ? { rotate: 360 } : { rotate: 0 }}
+        transition={inView ? { duration: 10, repeat: Infinity, ease: "linear" } : { duration: 0 }}
+      />
+      <motion.div
+        className="absolute inset-2 border-2 border-primary/20 rounded-xl"
+        animate={inView ? { rotate: -360 } : { rotate: 0 }}
+        transition={inView ? { duration: 15, repeat: Infinity, ease: "linear" } : { duration: 0 }}
+      />
+      <Sparkles className={`w-8 h-8 text-primary absolute ${inView ? "animate-pulse" : ""}`} />
+    </div>
+  );
+}
 
 export function FeatureBentoGrid() {
   return (
@@ -32,19 +55,7 @@ export function FeatureBentoGrid() {
             </div>
             
             {/* Animated mini visual */}
-            <div className="hidden md:flex w-32 h-32 relative items-center justify-center">
-              <motion.div 
-                className="absolute inset-0 border-2 border-primary/30 rounded-xl"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-              />
-              <motion.div 
-                className="absolute inset-2 border-2 border-primary/20 rounded-xl"
-                animate={{ rotate: -360 }}
-                transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-              />
-              <Sparkles className="w-8 h-8 text-primary absolute animate-pulse" />
-            </div>
+            <SpinningRings />
           </div>
         </AnimatedCard>
 

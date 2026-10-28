@@ -1,0 +1,493 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2800" height="2800" viewBox="0 0 2800 2800" role="img" aria-labelledby="title description">
+<title id="title">Vistern data model entity relationship diagram</title>
+<desc id="description">Color grouped ER diagram of profile, resume, opportunity and user state tables, with their fields, key types and foreign key relationships.</desc>
+<defs>
+<marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+<path d="M0,0 L10,5 L0,10 z" fill="#64748B"/>
+</marker>
+<marker id="arrowblue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+<path d="M0,0 L10,5 L0,10 z" fill="#0EA5E9"/>
+</marker>
+<filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+<feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#0F172A" flood-opacity=".08"/>
+</filter>
+</defs>
+<rect width="2800" height="2800" fill="#FFFFFF"/>
+<text x="70" y="70" font-family="Inter,Segoe UI,sans-serif" font-size="38" font-weight="750" fill="#0F172A">Vistern data model</text>
+<text x="70" y="108" font-family="Inter,Segoe UI,sans-serif" font-size="18" fill="#475569">Entity relationship diagram · schema tables, key columns, and ownership links</text>
+<rect x="70" y="132" width="2660" height="82" rx="16" fill="#F8FAFC" stroke="#CBD5E1"/>
+<text x="94" y="166" font-family="Inter,Segoe UI,sans-serif" font-size="18" font-weight="700" fill="#1E293B">Identity &amp; storage</text>
+<text x="94" y="194" font-family="Inter,Segoe UI,sans-serif" font-size="16" fill="#475569">Clerk provides user identity. Every Supabase row is scoped by clerk_user_id + RLS. S3 stores resume file bytes; Supabase stores structured content and metadata.</text>
+<rect x="40" y="232" width="820" height="1510" rx="24" fill="#F7F8FF" stroke="#6366F1" stroke-opacity=".34"/>
+<text x="66" y="253" font-family="Inter,Segoe UI,sans-serif" font-size="18" font-weight="750" letter-spacing=".7" fill="#3730A3">01 · VERIFIED STUDENT PROFILE</text>
+<rect x="920" y="232" width="960" height="1890" rx="24" fill="#F5FAFF" stroke="#3B82F6" stroke-opacity=".34"/>
+<text x="946" y="253" font-family="Inter,Segoe UI,sans-serif" font-size="18" font-weight="750" letter-spacing=".7" fill="#1D4ED8">02 · RESUME VERSIONS &amp; REVIEW</text>
+<rect x="1950" y="232" width="820" height="990" rx="24" fill="#F4FBF7" stroke="#22A06B" stroke-opacity=".34"/>
+<text x="1976" y="253" font-family="Inter,Segoe UI,sans-serif" font-size="18" font-weight="750" letter-spacing=".7" fill="#146C43">03 · OPPORTUNITIES &amp; ACTIVITY</text>
+<rect x="40" y="2160" width="2730" height="530" rx="24" fill="#FFFAF2" stroke="#E99A2B" stroke-opacity=".34"/>
+<text x="66" y="2198" font-family="Inter,Segoe UI,sans-serif" font-size="18" font-weight="750" letter-spacing=".7" fill="#9A5700">04 · USER PREFERENCES &amp; APP STATE</text>
+<path d="M450 612 V690" fill="none" stroke="#64748B" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M830 435 H960" fill="none" stroke="#64748B" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M450 1129 V1280" fill="none" stroke="#64748B" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M1405 844 V890" fill="none" stroke="#64748B" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M830 850 C890 850 900 1020 960 1020" fill="none" stroke="#64748B" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M830 910 C900 910 900 1500 960 1500" fill="none" stroke="#64748B" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M1850 600 H1870 V1520 H1850" fill="none" stroke="#64748B" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M960 540 H860 V1450 H830" fill="none" stroke="#64748B" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M1850 690 H1900 V1940 H1850" fill="none" stroke="#64748B" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M2360 873 V910" fill="none" stroke="#64748B" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="1990" y="1370" width="740" height="180" rx="18" fill="#F0F9FF" stroke="#0EA5E9" stroke-width="2.5" stroke-dasharray="8 6"/>
+<text x="2020" y="1412" font-family="Inter,Segoe UI,sans-serif" font-size="22" font-weight="750" fill="#075985">Amazon S3 · resume files</text>
+<text x="2020" y="1450" font-family="Inter,Segoe UI,sans-serif" font-size="17" fill="#334155">Private uploaded PDF / DOCX bytes</text>
+<text x="2020" y="1480" font-family="Inter,Segoe UI,sans-serif" font-size="16" fill="#475569">Referenced by resume_documents.s3_object_key</text>
+<path d="M1850 490 C1920 490 1920 1460 1990 1460" fill="none" stroke="#0EA5E9" stroke-width="2.5" stroke-dasharray="8 6" marker-end="url(#arrowblue)"/>
+<text x="2020" y="1522" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#0369A1">S3 key reference · not a database FK</text>
+<rect x="456" y="643" width="90" height="26" rx="7" fill="#FFFFFF" fill-opacity=".96"/>
+<text x="464" y="663" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">1 : many</text>
+<rect x="830" y="399" width="90" height="26" rx="7" fill="#FFFFFF" fill-opacity=".96"/>
+<text x="838" y="419" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">1 : many</text>
+<rect x="456" y="1143" width="90" height="26" rx="7" fill="#FFFFFF" fill-opacity=".96"/>
+<text x="464" y="1163" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">1 : many</text>
+<rect x="1410" y="817" width="90" height="26" rx="7" fill="#FFFFFF" fill-opacity=".96"/>
+<text x="1418" y="837" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">1 : many</text>
+<rect x="830" y="956" width="112" height="26" rx="7" fill="#FFFFFF" fill-opacity=".96"/>
+<text x="838" y="976" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">proposed match</text>
+<rect x="830" y="1190" width="112" height="26" rx="7" fill="#FFFFFF" fill-opacity=".96"/>
+<text x="838" y="1210" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">selected items</text>
+<rect x="1410" y="1060" width="90" height="26" rx="7" fill="#FFFFFF" fill-opacity=".96"/>
+<text x="1418" y="1080" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">many : many</text>
+<rect x="830" y="1430" width="120" height="26" rx="7" fill="#FFFFFF" fill-opacity=".96"/>
+<text x="838" y="1450" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">source evidence</text>
+<rect x="1410" y="1745" width="90" height="26" rx="7" fill="#FFFFFF" fill-opacity=".96"/>
+<text x="1418" y="1765" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">1 : many</text>
+<rect x="2366" y="804" width="90" height="26" rx="7" fill="#FFFFFF" fill-opacity=".96"/>
+<text x="2374" y="824" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">1 : many</text>
+<g filter="url(#shadow)">
+<rect x="70" y="260" width="760" height="352" rx="16" fill="#FFFFFF" stroke="#6366F1" stroke-width="2"/>
+<path d="M86 260 H814 Q830 260 830 276 V326 H70 V276 Q70 260 86 260" fill="#EEF2FF"/>
+<text x="92" y="290" font-family="Inter,Segoe UI,sans-serif" font-size="21" font-weight="750" fill="#3730A3">student_profiles</text>
+<text x="92" y="313" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">One canonical profile per Clerk user</text>
+<line x1="86" y1="355" x2="814" y2="355" stroke="#E2E8F0"/>
+<text x="92" y="370" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">id</text>
+<rect x="772" y="336" width="38" height="23" rx="7" fill="#FEF3C7"/>
+<text x="779" y="352" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#92400E">PK</text>
+<line x1="86" y1="384" x2="814" y2="384" stroke="#E2E8F0"/>
+<text x="92" y="399" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">clerk_user_id</text>
+<rect x="772" y="365" width="38" height="23" rx="7" fill="#EDE9FE"/>
+<text x="779" y="381" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#5B21B6">UQ</text>
+<line x1="86" y1="413" x2="814" y2="413" stroke="#E2E8F0"/>
+<text x="92" y="428" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">basics</text>
+<line x1="86" y1="442" x2="814" y2="442" stroke="#E2E8F0"/>
+<text x="92" y="457" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">university_id</text>
+<line x1="86" y1="471" x2="814" y2="471" stroke="#E2E8F0"/>
+<text x="92" y="486" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">goals</text>
+<line x1="86" y1="500" x2="814" y2="500" stroke="#E2E8F0"/>
+<text x="92" y="515" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">created_at</text>
+<line x1="86" y1="529" x2="814" y2="529" stroke="#E2E8F0"/>
+<text x="92" y="544" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">updated_at</text>
+<line x1="86" y1="558" x2="814" y2="558" stroke="#E2E8F0"/>
+<text x="92" y="573" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">(id, clerk_user_id)</text>
+<rect x="772" y="539" width="38" height="23" rx="7" fill="#EDE9FE"/>
+<text x="779" y="555" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#5B21B6">UQ</text>
+<text x="90" y="601" font-family="Inter,Segoe UI,sans-serif" font-size="13" fill="#64748B">Column names · key badges identify constraints</text>
+</g>
+<g filter="url(#shadow)">
+<rect x="70" y="690" width="760" height="439" rx="16" fill="#FFFFFF" stroke="#6366F1" stroke-width="2"/>
+<path d="M86 690 H814 Q830 690 830 706 V756 H70 V706 Q70 690 86 690" fill="#EEF2FF"/>
+<text x="92" y="720" font-family="Inter,Segoe UI,sans-serif" font-size="21" font-weight="750" fill="#3730A3">profile_items</text>
+<text x="92" y="743" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">Verified facts and evidence units</text>
+<line x1="86" y1="785" x2="814" y2="785" stroke="#E2E8F0"/>
+<text x="92" y="800" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">id</text>
+<rect x="772" y="766" width="38" height="23" rx="7" fill="#FEF3C7"/>
+<text x="779" y="782" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#92400E">PK</text>
+<line x1="86" y1="814" x2="814" y2="814" stroke="#E2E8F0"/>
+<text x="92" y="829" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">profile_id</text>
+<rect x="772" y="795" width="38" height="23" rx="7" fill="#E0F2FE"/>
+<text x="779" y="811" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#075985">FK</text>
+<line x1="86" y1="843" x2="814" y2="843" stroke="#E2E8F0"/>
+<text x="92" y="858" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">clerk_user_id</text>
+<line x1="86" y1="872" x2="814" y2="872" stroke="#E2E8F0"/>
+<text x="92" y="887" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">item_type</text>
+<line x1="86" y1="901" x2="814" y2="901" stroke="#E2E8F0"/>
+<text x="92" y="916" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">title</text>
+<line x1="86" y1="930" x2="814" y2="930" stroke="#E2E8F0"/>
+<text x="92" y="945" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">content</text>
+<line x1="86" y1="959" x2="814" y2="959" stroke="#E2E8F0"/>
+<text x="92" y="974" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">verification_status</text>
+<line x1="86" y1="988" x2="814" y2="988" stroke="#E2E8F0"/>
+<text x="92" y="1003" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">sort_order</text>
+<line x1="86" y1="1017" x2="814" y2="1017" stroke="#E2E8F0"/>
+<text x="92" y="1032" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">identity_key</text>
+<rect x="772" y="998" width="38" height="23" rx="7" fill="#EDE9FE"/>
+<text x="779" y="1014" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#5B21B6">UQ</text>
+<line x1="86" y1="1046" x2="814" y2="1046" stroke="#E2E8F0"/>
+<text x="92" y="1061" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">created_at</text>
+<line x1="86" y1="1075" x2="814" y2="1075" stroke="#E2E8F0"/>
+<text x="92" y="1090" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">updated_at</text>
+<text x="90" y="1118" font-family="Inter,Segoe UI,sans-serif" font-size="13" fill="#64748B">Column names · key badges identify constraints</text>
+</g>
+<g filter="url(#shadow)">
+<rect x="70" y="1280" width="760" height="352" rx="16" fill="#FFFFFF" stroke="#6366F1" stroke-width="2"/>
+<path d="M86 1280 H814 Q830 1280 830 1296 V1346 H70 V1296 Q70 1280 86 1280" fill="#EEF2FF"/>
+<text x="92" y="1310" font-family="Inter,Segoe UI,sans-serif" font-size="21" font-weight="750" fill="#3730A3">profile_item_sources</text>
+<text x="92" y="1333" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">Provenance for accepted profile facts</text>
+<line x1="86" y1="1375" x2="814" y2="1375" stroke="#E2E8F0"/>
+<text x="92" y="1390" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">id</text>
+<rect x="772" y="1356" width="38" height="23" rx="7" fill="#FEF3C7"/>
+<text x="779" y="1372" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#92400E">PK</text>
+<line x1="86" y1="1404" x2="814" y2="1404" stroke="#E2E8F0"/>
+<text x="92" y="1419" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">profile_item_id</text>
+<rect x="772" y="1385" width="38" height="23" rx="7" fill="#E0F2FE"/>
+<text x="779" y="1401" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#075985">FK</text>
+<line x1="86" y1="1433" x2="814" y2="1433" stroke="#E2E8F0"/>
+<text x="92" y="1448" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">profile_id</text>
+<rect x="772" y="1414" width="38" height="23" rx="7" fill="#E0F2FE"/>
+<text x="779" y="1430" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#075985">FK</text>
+<line x1="86" y1="1462" x2="814" y2="1462" stroke="#E2E8F0"/>
+<text x="92" y="1477" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">resume_document_id</text>
+<rect x="772" y="1443" width="38" height="23" rx="7" fill="#E0F2FE"/>
+<text x="779" y="1459" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#075985">FK</text>
+<line x1="86" y1="1491" x2="814" y2="1491" stroke="#E2E8F0"/>
+<text x="92" y="1506" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">clerk_user_id</text>
+<line x1="86" y1="1520" x2="814" y2="1520" stroke="#E2E8F0"/>
+<text x="92" y="1535" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">source_excerpt</text>
+<line x1="86" y1="1549" x2="814" y2="1549" stroke="#E2E8F0"/>
+<text x="92" y="1564" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">created_at</text>
+<line x1="86" y1="1578" x2="814" y2="1578" stroke="#E2E8F0"/>
+<text x="92" y="1593" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="14" fill="#1E293B">(profile_item_id, resume_document_id)</text>
+<rect x="772" y="1559" width="38" height="23" rx="7" fill="#EDE9FE"/>
+<text x="779" y="1575" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#5B21B6">UQ</text>
+<text x="90" y="1621" font-family="Inter,Segoe UI,sans-serif" font-size="13" fill="#64748B">Column names · key badges identify constraints</text>
+</g>
+<g filter="url(#shadow)">
+<rect x="960" y="260" width="890" height="584" rx="16" fill="#FFFFFF" stroke="#3B82F6" stroke-width="2"/>
+<path d="M976 260 H1834 Q1850 260 1850 276 V326 H960 V276 Q960 260 976 260" fill="#EAF4FF"/>
+<text x="982" y="290" font-family="Inter,Segoe UI,sans-serif" font-size="21" font-weight="750" fill="#1D4ED8">resume_documents</text>
+<text x="982" y="313" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">Uploaded, generated, or tailored snapshot</text>
+<line x1="976" y1="355" x2="1834" y2="355" stroke="#E2E8F0"/>
+<text x="982" y="370" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">id</text>
+<rect x="1792" y="336" width="38" height="23" rx="7" fill="#FEF3C7"/>
+<text x="1799" y="352" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#92400E">PK</text>
+<line x1="976" y1="384" x2="1834" y2="384" stroke="#E2E8F0"/>
+<text x="982" y="399" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">profile_id</text>
+<rect x="1792" y="365" width="38" height="23" rx="7" fill="#E0F2FE"/>
+<text x="1799" y="381" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#075985">FK</text>
+<line x1="976" y1="413" x2="1834" y2="413" stroke="#E2E8F0"/>
+<text x="982" y="428" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">clerk_user_id</text>
+<line x1="976" y1="442" x2="1834" y2="442" stroke="#E2E8F0"/>
+<text x="982" y="457" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">source_type</text>
+<line x1="976" y1="471" x2="1834" y2="471" stroke="#E2E8F0"/>
+<text x="982" y="486" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">target_role</text>
+<line x1="976" y1="500" x2="1834" y2="500" stroke="#E2E8F0"/>
+<text x="982" y="515" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">file_name</text>
+<line x1="976" y1="529" x2="1834" y2="529" stroke="#E2E8F0"/>
+<text x="982" y="544" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">content_type</text>
+<line x1="976" y1="558" x2="1834" y2="558" stroke="#E2E8F0"/>
+<text x="982" y="573" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">s3_object_key</text>
+<rect x="1792" y="539" width="38" height="23" rx="7" fill="#EDE9FE"/>
+<text x="1799" y="555" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#5B21B6">UQ</text>
+<line x1="976" y1="587" x2="1834" y2="587" stroke="#E2E8F0"/>
+<text x="982" y="602" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">structured_content</text>
+<line x1="976" y1="616" x2="1834" y2="616" stroke="#E2E8F0"/>
+<text x="982" y="631" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">score</text>
+<line x1="976" y1="645" x2="1834" y2="645" stroke="#E2E8F0"/>
+<text x="982" y="660" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">status</text>
+<line x1="976" y1="674" x2="1834" y2="674" stroke="#E2E8F0"/>
+<text x="982" y="689" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">is_current</text>
+<rect x="1792" y="655" width="38" height="23" rx="7" fill="#EDE9FE"/>
+<text x="1799" y="671" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#5B21B6">UQ*</text>
+<line x1="976" y1="703" x2="1834" y2="703" stroke="#E2E8F0"/>
+<text x="982" y="718" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">is_starred</text>
+<line x1="976" y1="732" x2="1834" y2="732" stroke="#E2E8F0"/>
+<text x="982" y="747" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">created_at</text>
+<line x1="976" y1="761" x2="1834" y2="761" stroke="#E2E8F0"/>
+<text x="982" y="776" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">updated_at</text>
+<line x1="976" y1="790" x2="1834" y2="790" stroke="#E2E8F0"/>
+<text x="982" y="805" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="14" fill="#1E293B">(id, profile_id, clerk_user_id)</text>
+<rect x="1792" y="771" width="38" height="23" rx="7" fill="#EDE9FE"/>
+<text x="1799" y="787" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#5B21B6">UQ</text>
+<text x="980" y="833" font-family="Inter,Segoe UI,sans-serif" font-size="13" fill="#64748B">Column names · key badges identify constraints</text>
+</g>
+<g filter="url(#shadow)">
+<rect x="960" y="890" width="890" height="410" rx="16" fill="#FFFFFF" stroke="#3B82F6" stroke-width="2"/>
+<path d="M976 890 H1834 Q1850 890 1850 906 V956 H960 V906 Q960 890 976 890" fill="#EAF4FF"/>
+<text x="982" y="920" font-family="Inter,Segoe UI,sans-serif" font-size="21" font-weight="750" fill="#1D4ED8">profile_import_proposals</text>
+<text x="982" y="943" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">Resume suggestions awaiting a decision</text>
+<line x1="976" y1="985" x2="1834" y2="985" stroke="#E2E8F0"/>
+<text x="982" y="1000" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">id</text>
+<rect x="1792" y="966" width="38" height="23" rx="7" fill="#FEF3C7"/>
+<text x="1799" y="982" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#92400E">PK</text>
+<line x1="976" y1="1014" x2="1834" y2="1014" stroke="#E2E8F0"/>
+<text x="982" y="1029" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">profile_id</text>
+<rect x="1792" y="995" width="38" height="23" rx="7" fill="#E0F2FE"/>
+<text x="1799" y="1011" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#075985">FK</text>
+<line x1="976" y1="1043" x2="1834" y2="1043" stroke="#E2E8F0"/>
+<text x="982" y="1058" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">clerk_user_id</text>
+<line x1="976" y1="1072" x2="1834" y2="1072" stroke="#E2E8F0"/>
+<text x="982" y="1087" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">source_resume_document_id</text>
+<rect x="1792" y="1053" width="38" height="23" rx="7" fill="#E0F2FE"/>
+<text x="1799" y="1069" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#075985">FK</text>
+<line x1="976" y1="1101" x2="1834" y2="1101" stroke="#E2E8F0"/>
+<text x="982" y="1116" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">target_profile_item_id</text>
+<rect x="1712" y="1082" width="118" height="23" rx="7" fill="#E0F2FE"/>
+<text x="1719" y="1098" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#075985">FK · optional</text>
+<line x1="976" y1="1130" x2="1834" y2="1130" stroke="#E2E8F0"/>
+<text x="982" y="1145" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">item_type</text>
+<line x1="976" y1="1159" x2="1834" y2="1159" stroke="#E2E8F0"/>
+<text x="982" y="1174" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">proposed_data</text>
+<line x1="976" y1="1188" x2="1834" y2="1188" stroke="#E2E8F0"/>
+<text x="982" y="1203" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">decision</text>
+<line x1="976" y1="1217" x2="1834" y2="1217" stroke="#E2E8F0"/>
+<text x="982" y="1232" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">decided_at</text>
+<line x1="976" y1="1246" x2="1834" y2="1246" stroke="#E2E8F0"/>
+<text x="982" y="1261" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">created_at</text>
+<text x="980" y="1289" font-family="Inter,Segoe UI,sans-serif" font-size="13" fill="#64748B">Column names · key badges identify constraints</text>
+</g>
+<g filter="url(#shadow)">
+<rect x="960" y="1370" width="890" height="352" rx="16" fill="#FFFFFF" stroke="#3B82F6" stroke-width="2"/>
+<path d="M976 1370 H1834 Q1850 1370 1850 1386 V1436 H960 V1386 Q960 1370 976 1370" fill="#EAF4FF"/>
+<text x="982" y="1400" font-family="Inter,Segoe UI,sans-serif" font-size="21" font-weight="750" fill="#1D4ED8">resume_document_items</text>
+<text x="982" y="1423" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">Profile facts selected for a resume</text>
+<line x1="976" y1="1465" x2="1834" y2="1465" stroke="#E2E8F0"/>
+<text x="982" y="1480" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">id</text>
+<rect x="1792" y="1446" width="38" height="23" rx="7" fill="#FEF3C7"/>
+<text x="1799" y="1462" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#92400E">PK</text>
+<line x1="976" y1="1494" x2="1834" y2="1494" stroke="#E2E8F0"/>
+<text x="982" y="1509" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">resume_document_id</text>
+<rect x="1792" y="1475" width="38" height="23" rx="7" fill="#E0F2FE"/>
+<text x="1799" y="1491" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#075985">FK</text>
+<line x1="976" y1="1523" x2="1834" y2="1523" stroke="#E2E8F0"/>
+<text x="982" y="1538" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">profile_item_id</text>
+<rect x="1792" y="1504" width="38" height="23" rx="7" fill="#E0F2FE"/>
+<text x="1799" y="1520" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#075985">FK</text>
+<line x1="976" y1="1552" x2="1834" y2="1552" stroke="#E2E8F0"/>
+<text x="982" y="1567" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">profile_id, clerk_user_id</text>
+<line x1="976" y1="1581" x2="1834" y2="1581" stroke="#E2E8F0"/>
+<text x="982" y="1596" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">position</text>
+<rect x="1792" y="1562" width="38" height="23" rx="7" fill="#EDE9FE"/>
+<text x="1799" y="1578" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#5B21B6">UQ</text>
+<line x1="976" y1="1610" x2="1834" y2="1610" stroke="#E2E8F0"/>
+<text x="982" y="1625" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">tailored_content</text>
+<line x1="976" y1="1639" x2="1834" y2="1639" stroke="#E2E8F0"/>
+<text x="982" y="1654" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">created_at</text>
+<line x1="976" y1="1668" x2="1834" y2="1668" stroke="#E2E8F0"/>
+<text x="982" y="1683" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="14" fill="#1E293B">(resume_document_id, profile_item_id)</text>
+<rect x="1792" y="1649" width="38" height="23" rx="7" fill="#EDE9FE"/>
+<text x="1799" y="1665" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#5B21B6">UQ</text>
+<text x="980" y="1711" font-family="Inter,Segoe UI,sans-serif" font-size="13" fill="#64748B">Column names · key badges identify constraints</text>
+</g>
+<g filter="url(#shadow)">
+<rect x="960" y="1810" width="890" height="294" rx="16" fill="#FFFFFF" stroke="#3B82F6" stroke-width="2"/>
+<path d="M976 1810 H1834 Q1850 1810 1850 1826 V1876 H960 V1826 Q960 1810 976 1810" fill="#EAF4FF"/>
+<text x="982" y="1840" font-family="Inter,Segoe UI,sans-serif" font-size="21" font-weight="750" fill="#1D4ED8">resume_feedback</text>
+<text x="982" y="1863" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">Feedback attached to one resume version</text>
+<line x1="976" y1="1905" x2="1834" y2="1905" stroke="#E2E8F0"/>
+<text x="982" y="1920" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">id</text>
+<rect x="1792" y="1886" width="38" height="23" rx="7" fill="#FEF3C7"/>
+<text x="1799" y="1902" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#92400E">PK</text>
+<line x1="976" y1="1934" x2="1834" y2="1934" stroke="#E2E8F0"/>
+<text x="982" y="1949" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">resume_document_id</text>
+<rect x="1792" y="1915" width="38" height="23" rx="7" fill="#E0F2FE"/>
+<text x="1799" y="1931" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#075985">FK</text>
+<line x1="976" y1="1963" x2="1834" y2="1963" stroke="#E2E8F0"/>
+<text x="982" y="1978" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">clerk_user_id</text>
+<line x1="976" y1="1992" x2="1834" y2="1992" stroke="#E2E8F0"/>
+<text x="982" y="2007" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">feedback_type</text>
+<line x1="976" y1="2021" x2="1834" y2="2021" stroke="#E2E8F0"/>
+<text x="982" y="2036" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">result</text>
+<line x1="976" y1="2050" x2="1834" y2="2050" stroke="#E2E8F0"/>
+<text x="982" y="2065" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">created_at</text>
+<text x="980" y="2093" font-family="Inter,Segoe UI,sans-serif" font-size="13" fill="#64748B">Column names · key badges identify constraints</text>
+</g>
+<g filter="url(#shadow)">
+<rect x="1990" y="260" width="740" height="613" rx="16" fill="#FFFFFF" stroke="#22A06B" stroke-width="2"/>
+<path d="M2006 260 H2714 Q2730 260 2730 276 V326 H1990 V276 Q1990 260 2006 260" fill="#E9F8F1"/>
+<text x="2012" y="290" font-family="Inter,Segoe UI,sans-serif" font-size="21" font-weight="750" fill="#146C43">saved_jobs</text>
+<text x="2012" y="313" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">Saved opportunity and current application stage</text>
+<line x1="2006" y1="355" x2="2714" y2="355" stroke="#E2E8F0"/>
+<text x="2012" y="370" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">id</text>
+<rect x="2672" y="336" width="38" height="23" rx="7" fill="#FEF3C7"/>
+<text x="2679" y="352" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#92400E">PK</text>
+<line x1="2006" y1="384" x2="2714" y2="384" stroke="#E2E8F0"/>
+<text x="2012" y="399" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">clerk_user_id</text>
+<line x1="2006" y1="413" x2="2714" y2="413" stroke="#E2E8F0"/>
+<text x="2012" y="428" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">provider</text>
+<line x1="2006" y1="442" x2="2714" y2="442" stroke="#E2E8F0"/>
+<text x="2012" y="457" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">external_id</text>
+<line x1="2006" y1="471" x2="2714" y2="471" stroke="#E2E8F0"/>
+<text x="2012" y="486" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">title</text>
+<line x1="2006" y1="500" x2="2714" y2="500" stroke="#E2E8F0"/>
+<text x="2012" y="515" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">company</text>
+<line x1="2006" y1="529" x2="2714" y2="529" stroke="#E2E8F0"/>
+<text x="2012" y="544" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">location</text>
+<line x1="2006" y1="558" x2="2714" y2="558" stroke="#E2E8F0"/>
+<text x="2012" y="573" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">apply_url</text>
+<line x1="2006" y1="587" x2="2714" y2="587" stroke="#E2E8F0"/>
+<text x="2012" y="602" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">match_score</text>
+<line x1="2006" y1="616" x2="2714" y2="616" stroke="#E2E8F0"/>
+<text x="2012" y="631" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">contract_type</text>
+<line x1="2006" y1="645" x2="2714" y2="645" stroke="#E2E8F0"/>
+<text x="2012" y="660" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">stage</text>
+<line x1="2006" y1="674" x2="2714" y2="674" stroke="#E2E8F0"/>
+<text x="2012" y="689" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">job_snapshot</text>
+<line x1="2006" y1="703" x2="2714" y2="703" stroke="#E2E8F0"/>
+<text x="2012" y="718" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">saved_at</text>
+<line x1="2006" y1="732" x2="2714" y2="732" stroke="#E2E8F0"/>
+<text x="2012" y="747" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">applied_at</text>
+<line x1="2006" y1="761" x2="2714" y2="761" stroke="#E2E8F0"/>
+<text x="2012" y="776" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">created_at</text>
+<line x1="2006" y1="790" x2="2714" y2="790" stroke="#E2E8F0"/>
+<text x="2012" y="805" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">updated_at</text>
+<line x1="2006" y1="819" x2="2714" y2="819" stroke="#E2E8F0"/>
+<text x="2012" y="834" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="14" fill="#1E293B">(clerk_user_id, provider, external_id)</text>
+<rect x="2672" y="800" width="38" height="23" rx="7" fill="#EDE9FE"/>
+<text x="2679" y="816" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#5B21B6">UQ</text>
+<text x="2010" y="862" font-family="Inter,Segoe UI,sans-serif" font-size="13" fill="#64748B">Column names · key badges identify constraints</text>
+</g>
+<g transform="translate(0 60)">
+<g filter="url(#shadow)">
+<rect x="1990" y="850" width="740" height="294" rx="16" fill="#FFFFFF" stroke="#22A06B" stroke-width="2"/>
+<path d="M2006 850 H2714 Q2730 850 2730 866 V916 H1990 V866 Q1990 850 2006 850" fill="#E9F8F1"/>
+<text x="2012" y="880" font-family="Inter,Segoe UI,sans-serif" font-size="21" font-weight="750" fill="#146C43">application_events</text>
+<text x="2012" y="903" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">Chronological application and activity history</text>
+<line x1="2006" y1="945" x2="2714" y2="945" stroke="#E2E8F0"/>
+<text x="2012" y="960" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">id</text>
+<rect x="2672" y="926" width="38" height="23" rx="7" fill="#FEF3C7"/>
+<text x="2679" y="942" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#92400E">PK</text>
+<line x1="2006" y1="974" x2="2714" y2="974" stroke="#E2E8F0"/>
+<text x="2012" y="989" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">clerk_user_id</text>
+<line x1="2006" y1="1003" x2="2714" y2="1003" stroke="#E2E8F0"/>
+<text x="2012" y="1018" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">saved_job_id</text>
+<rect x="2592" y="984" width="118" height="23" rx="7" fill="#E0F2FE"/>
+<text x="2599" y="1000" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#075985">FK · optional</text>
+<line x1="2006" y1="1032" x2="2714" y2="1032" stroke="#E2E8F0"/>
+<text x="2012" y="1047" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">event_type</text>
+<line x1="2006" y1="1061" x2="2714" y2="1061" stroke="#E2E8F0"/>
+<text x="2012" y="1076" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">details</text>
+<line x1="2006" y1="1090" x2="2714" y2="1090" stroke="#E2E8F0"/>
+<text x="2012" y="1105" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">occurred_at</text>
+<text x="2010" y="1133" font-family="Inter,Segoe UI,sans-serif" font-size="13" fill="#64748B">Column names · key badges identify constraints</text>
+</g>
+</g>
+<g transform="translate(0 60)">
+<g filter="url(#shadow)">
+<rect x="55" y="2170" width="500" height="265" rx="16" fill="#FFFFFF" stroke="#E99A2B" stroke-width="2"/>
+<path d="M71 2170 H539 Q555 2170 555 2186 V2236 H55 V2186 Q55 2170 71 2170" fill="#FFF5E8"/>
+<text x="77" y="2200" font-family="Inter,Segoe UI,sans-serif" font-size="21" font-weight="750" fill="#9A5700">user_preferences</text>
+<text x="77" y="2223" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">Career targets and preferences</text>
+<line x1="71" y1="2265" x2="539" y2="2265" stroke="#E2E8F0"/>
+<text x="77" y="2280" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">id</text>
+<rect x="497" y="2246" width="38" height="23" rx="7" fill="#FEF3C7"/>
+<text x="504" y="2262" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#92400E">PK</text>
+<line x1="71" y1="2294" x2="539" y2="2294" stroke="#E2E8F0"/>
+<text x="77" y="2309" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">clerk_user_id</text>
+<rect x="497" y="2275" width="38" height="23" rx="7" fill="#EDE9FE"/>
+<text x="504" y="2291" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#5B21B6">UQ</text>
+<line x1="71" y1="2323" x2="539" y2="2323" stroke="#E2E8F0"/>
+<text x="77" y="2338" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">preferences</text>
+<line x1="71" y1="2352" x2="539" y2="2352" stroke="#E2E8F0"/>
+<text x="77" y="2367" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">created_at</text>
+<line x1="71" y1="2381" x2="539" y2="2381" stroke="#E2E8F0"/>
+<text x="77" y="2396" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">updated_at</text>
+<text x="75" y="2424" font-family="Inter,Segoe UI,sans-serif" font-size="13" fill="#64748B">Column names · key badges identify constraints</text>
+</g>
+<g filter="url(#shadow)">
+<rect x="590" y="2230" width="500" height="265" rx="16" fill="#FFFFFF" stroke="#E99A2B" stroke-width="2"/>
+<path d="M606 2170 H1074 Q1090 2170 1090 2186 V2236 H590 V2186 Q590 2170 606 2170" fill="#FFF5E8"/>
+<text x="612" y="2200" font-family="Inter,Segoe UI,sans-serif" font-size="21" font-weight="750" fill="#9A5700">user_settings</text>
+<text x="612" y="2223" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">Privacy and app settings</text>
+<line x1="606" y1="2265" x2="1074" y2="2265" stroke="#E2E8F0"/>
+<text x="612" y="2280" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">id</text>
+<rect x="1032" y="2246" width="38" height="23" rx="7" fill="#FEF3C7"/>
+<text x="1039" y="2262" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#92400E">PK</text>
+<line x1="606" y1="2294" x2="1074" y2="2294" stroke="#E2E8F0"/>
+<text x="612" y="2309" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">clerk_user_id</text>
+<rect x="1032" y="2275" width="38" height="23" rx="7" fill="#EDE9FE"/>
+<text x="1039" y="2291" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#5B21B6">UQ</text>
+<line x1="606" y1="2323" x2="1074" y2="2323" stroke="#E2E8F0"/>
+<text x="612" y="2338" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">data_sharing</text>
+<line x1="606" y1="2352" x2="1074" y2="2352" stroke="#E2E8F0"/>
+<text x="612" y="2367" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">created_at</text>
+<line x1="606" y1="2381" x2="1074" y2="2381" stroke="#E2E8F0"/>
+<text x="612" y="2396" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">updated_at</text>
+<text x="610" y="2424" font-family="Inter,Segoe UI,sans-serif" font-size="13" fill="#64748B">Column names · key badges identify constraints</text>
+</g>
+<g filter="url(#shadow)">
+<rect x="1125" y="2230" width="500" height="265" rx="16" fill="#FFFFFF" stroke="#E99A2B" stroke-width="2"/>
+<path d="M1141 2170 H1609 Q1625 2170 1625 2186 V2236 H1125 V2186 Q1125 2170 1141 2170" fill="#FFF5E8"/>
+<text x="1147" y="2200" font-family="Inter,Segoe UI,sans-serif" font-size="21" font-weight="750" fill="#9A5700">daily_usage</text>
+<text x="1147" y="2223" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">Daily per-feature usage counters</text>
+<line x1="1141" y1="2265" x2="1609" y2="2265" stroke="#E2E8F0"/>
+<text x="1147" y="2280" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">clerk_user_id</text>
+<rect x="1567" y="2246" width="38" height="23" rx="7" fill="#FEF3C7"/>
+<text x="1574" y="2262" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#92400E">PK*</text>
+<line x1="1141" y1="2294" x2="1609" y2="2294" stroke="#E2E8F0"/>
+<text x="1147" y="2309" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">usage_date</text>
+<rect x="1567" y="2275" width="38" height="23" rx="7" fill="#FEF3C7"/>
+<text x="1574" y="2291" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#92400E">PK*</text>
+<line x1="1141" y1="2323" x2="1609" y2="2323" stroke="#E2E8F0"/>
+<text x="1147" y="2338" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">feature</text>
+<rect x="1567" y="2304" width="38" height="23" rx="7" fill="#FEF3C7"/>
+<text x="1574" y="2320" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#92400E">PK*</text>
+<line x1="1141" y1="2352" x2="1609" y2="2352" stroke="#E2E8F0"/>
+<text x="1147" y="2367" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">count</text>
+<line x1="1141" y1="2381" x2="1609" y2="2381" stroke="#E2E8F0"/>
+<text x="1147" y="2396" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">updated_at</text>
+<text x="1145" y="2424" font-family="Inter,Segoe UI,sans-serif" font-size="13" fill="#64748B">Column names · key badges identify constraints</text>
+</g>
+<g filter="url(#shadow)">
+<rect x="1660" y="2230" width="500" height="352" rx="16" fill="#FFFFFF" stroke="#E99A2B" stroke-width="2"/>
+<path d="M1676 2170 H2144 Q2160 2170 2160 2186 V2236 H1660 V2186 Q1660 2170 1676 2170" fill="#FFF5E8"/>
+<text x="1682" y="2200" font-family="Inter,Segoe UI,sans-serif" font-size="21" font-weight="750" fill="#9A5700">course_progress</text>
+<text x="1682" y="2223" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">Course matches and student selections</text>
+<line x1="1676" y1="2265" x2="2144" y2="2265" stroke="#E2E8F0"/>
+<text x="1682" y="2280" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">clerk_user_id</text>
+<rect x="2102" y="2246" width="38" height="23" rx="7" fill="#FEF3C7"/>
+<text x="2109" y="2262" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#92400E">PK*</text>
+<line x1="1676" y1="2294" x2="2144" y2="2294" stroke="#E2E8F0"/>
+<text x="1682" y="2309" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">course_code</text>
+<rect x="2102" y="2275" width="38" height="23" rx="7" fill="#FEF3C7"/>
+<text x="2109" y="2291" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#92400E">PK*</text>
+<line x1="1676" y1="2323" x2="2144" y2="2323" stroke="#E2E8F0"/>
+<text x="1682" y="2338" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">category</text>
+<line x1="1676" y1="2352" x2="2144" y2="2352" stroke="#E2E8F0"/>
+<text x="1682" y="2367" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">course_name</text>
+<line x1="1676" y1="2381" x2="2144" y2="2381" stroke="#E2E8F0"/>
+<text x="1682" y="2396" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">match_score</text>
+<line x1="1676" y1="2410" x2="2144" y2="2410" stroke="#E2E8F0"/>
+<text x="1682" y="2425" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">is_selected</text>
+<line x1="1676" y1="2439" x2="2144" y2="2439" stroke="#E2E8F0"/>
+<text x="1682" y="2454" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">match_details</text>
+<line x1="1676" y1="2468" x2="2144" y2="2468" stroke="#E2E8F0"/>
+<text x="1682" y="2483" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">updated_at</text>
+<text x="1680" y="2511" font-family="Inter,Segoe UI,sans-serif" font-size="13" fill="#64748B">Column names · key badges identify constraints</text>
+</g>
+<g filter="url(#shadow)">
+<rect x="2195" y="2230" width="500" height="236" rx="16" fill="#FFFFFF" stroke="#E99A2B" stroke-width="2"/>
+<path d="M2211 2170 H2679 Q2695 2170 2695 2186 V2236 H2195 V2186 Q2195 2170 2211 2170" fill="#FFF5E8"/>
+<text x="2217" y="2200" font-family="Inter,Segoe UI,sans-serif" font-size="21" font-weight="750" fill="#9A5700">legacy_import_state</text>
+<text x="2217" y="2223" font-family="Inter,Segoe UI,sans-serif" font-size="14" fill="#475569">One-time legacy import markers</text>
+<line x1="2211" y1="2265" x2="2679" y2="2265" stroke="#E2E8F0"/>
+<text x="2217" y="2280" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">clerk_user_id</text>
+<rect x="2637" y="2246" width="38" height="23" rx="7" fill="#FEF3C7"/>
+<text x="2644" y="2262" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#92400E">PK*</text>
+<line x1="2211" y1="2294" x2="2679" y2="2294" stroke="#E2E8F0"/>
+<text x="2217" y="2309" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">dataset</text>
+<rect x="2637" y="2275" width="38" height="23" rx="7" fill="#FEF3C7"/>
+<text x="2644" y="2291" font-family="Inter,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#92400E">PK*</text>
+<line x1="2211" y1="2323" x2="2679" y2="2323" stroke="#E2E8F0"/>
+<text x="2217" y="2338" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">rows_imported</text>
+<line x1="2211" y1="2352" x2="2679" y2="2352" stroke="#E2E8F0"/>
+<text x="2217" y="2367" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" fill="#1E293B">completed_at</text>
+<text x="2215" y="2395" font-family="Inter,Segoe UI,sans-serif" font-size="13" fill="#64748B">Column names · key badges identify constraints</text>
+</g>
+</g>
+<g transform="translate(80 2730)">
+<text x="0" y="0" font-family="Inter,Segoe UI,sans-serif" font-size="15" font-weight="700" fill="#334155">KEY</text>
+<text x="55" y="0" font-family="Inter,Segoe UI,sans-serif" font-size="15" fill="#475569">PK primary key</text>
+<text x="205" y="0" font-family="Inter,Segoe UI,sans-serif" font-size="15" fill="#475569">FK foreign key</text>
+<text x="350" y="0" font-family="Inter,Segoe UI,sans-serif" font-size="15" fill="#475569">UQ unique</text>
+<text x="470" y="0" font-family="Inter,Segoe UI,sans-serif" font-size="15" fill="#475569">* partial or composite key</text>
+<text x="720" y="0" font-family="Inter,Segoe UI,sans-serif" font-size="15" fill="#475569">Dotted arrows show a proposed link or S3 object reference.</text>
+</g>
+</svg>

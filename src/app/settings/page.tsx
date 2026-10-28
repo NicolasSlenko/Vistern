@@ -3,35 +3,30 @@
 import { useState, useEffect } from "react"
 import { useUser, useClerk } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
-import { useTheme } from "next-themes"
-import { Header } from "@/components/header"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog"
-import { cn } from "@/lib/utils"
 import {
-  User,
-  Palette,
-  Shield,
-  ShieldAlert,
-  Save,
-  Loader2,
-  AlertTriangle,
-  Trash2,
-  UserX,
-  Sun,
-  Moon,
-  Monitor,
-  BrainCircuit,
-  Database,
-  Check,
-  Settings,
-} from "lucide-react"
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog"
+import { Field } from "@/components/resume-studio/fields"
+import { pill } from "@/components/resume-studio/pills"
+import { AiProviderPicker } from "@/components/ai-provider-picker"
+import { cn } from "@/lib/utils"
+import { Save, Loader2, AlertTriangle, Trash2, UserX, Check } from "lucide-react"
 import { toast } from "sonner"
 
-// ─── Delete Account Dialog ─────────────────────────────────────────────────────
+/**
+ * Settings: the handful of things about an account that aren't work.
+ *
+ * Name and email sit with Clerk, the AI-feedback switch with the browser, and
+ * data sharing on the server — three different homes, so each panel says
+ * where what you change is kept.
+ */
 
 function DeleteAccountDialog() {
   const { signOut } = useClerk()
@@ -43,11 +38,16 @@ function DeleteAccountDialog() {
   const handleDelete = async () => {
     setIsDeleting(true)
     try {
-      const res = await fetch("/api/delete-account", { method: "DELETE" })
+      const res = await fetch("/api/delete-account", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ confirmation: confirmText }) })
       const result = await res.json()
       if (result.success) {
         toast.success("Account deleted successfully.")
-        await signOut()
+        for (const key of Object.keys(localStorage)) {
+          if (key === "showAiFeedback" || key.startsWith("vistern-notes-dismissed:") || key.startsWith("vistern-rewrites-answered:")) localStorage.removeItem(key)
+        }
+        sessionStorage.removeItem("hasLoggedSignIn")
+        sessionStorage.removeItem("vistern-sidebar-expanded")
+        await signOut().catch(() => {})
         router.push("/")
       } else {
         toast.error(result.error || "Failed to delete account")
@@ -62,81 +62,63 @@ function DeleteAccountDialog() {
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setConfirmText(""); }}>
       <DialogTrigger asChild>
-        <Button variant="destructive" className="gap-2">
-          <UserX className="h-4 w-4" /> Delete Account
-        </Button>
+        <button type="button" className={pill("danger")}>
+          <UserX aria-hidden="true" /> Delete account
+        </button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-destructive">
-            <AlertTriangle className="h-5 w-5" /> Delete Your Account
+      <DialogContent className="zip-scope flex flex-col gap-5 border-hairline bg-sheet p-6 rounded-[18px] sm:max-w-md sm:rounded-[18px]">
+        <DialogHeader className="flex flex-col gap-2">
+          <DialogTitle className="flex items-center gap-2 font-serif text-[26px] leading-tight font-normal tracking-[-0.025em] text-ink">
+            <AlertTriangle className="h-5 w-5 shrink-0 text-alert" aria-hidden="true" /> Delete your account
           </DialogTitle>
-          <DialogDescription>
-            This action is <strong>permanent and irreversible</strong>. All your resumes, preferences, scores, and data will be deleted. Your Clerk account will also be removed.
+          <DialogDescription className="text-[15px] leading-relaxed text-ink-2">
+            This is permanent. Every resume, preference and score goes with it, and your Clerk account is removed too.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-3 pt-2">
-          <p className="text-sm text-muted-foreground">
-            Type <span className="font-mono font-bold text-destructive">DELETE</span> below to confirm:
-          </p>
-          <Input
+        <div className="flex flex-col gap-2">
+          <label htmlFor="delete-confirm" className="label-mono text-ink-2">
+            Type DELETE to confirm
+          </label>
+          <input
+            id="delete-confirm"
             value={confirmText}
             onChange={(e) => setConfirmText(e.target.value)}
-            placeholder="Type DELETE to confirm"
-            className="font-mono"
+            placeholder="DELETE"
             disabled={isDeleting}
+            autoComplete="off"
+            className="h-10 w-full rounded-[12px] border border-rule-strong bg-sheet px-3 font-mono text-[14px] tracking-[0.04em] text-ink outline-none transition-colors placeholder:text-ink-2/50 focus-visible:border-brand disabled:opacity-50"
           />
         </div>
-        <DialogFooter>
-          <DialogClose asChild><Button variant="outline" disabled={isDeleting}>Cancel</Button></DialogClose>
-          <Button
-            variant="destructive"
+        <DialogFooter className="gap-2 sm:gap-2.5">
+          <DialogClose asChild>
+            <button type="button" disabled={isDeleting} className={pill("white")}>
+              Cancel
+            </button>
+          </DialogClose>
+          <button
+            type="button"
             onClick={handleDelete}
             disabled={confirmText !== "DELETE" || isDeleting}
+            className={`${pill("danger")} disabled:opacity-50`}
           >
-            {isDeleting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
-            {isDeleting ? "Deleting..." : "Permanently Delete"}
-          </Button>
+            {isDeleting ? <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Trash2 aria-hidden="true" />}
+            {isDeleting ? "Deleting…" : "Permanently delete"}
+          </button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   )
 }
 
-// ─── Theme Selector ────────────────────────────────────────────────────────────
-
-function ThemeSelector() {
-  const { theme, setTheme, resolvedTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- needed for hydration safety with next-themes
-  useEffect(() => { setMounted(true) }, [])
-
-  const options = [
-    { value: "light", label: "Light", icon: Sun },
-    { value: "dark", label: "Dark", icon: Moon },
-    { value: "system", label: "System", icon: Monitor },
-  ] as const
-
+/** A panel on the sheet: a hairline card under a small monospace heading. */
+function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="flex gap-2">
-      {options.map(({ value, label, icon: Icon }) => (
-        <Button
-          key={value}
-          variant={theme === value ? "default" : "outline"}
-          size="sm"
-          className="gap-2 flex-1"
-          onClick={() => setTheme(value)}
-        >
-          <Icon className="h-4 w-4" />
-          {label}
-        </Button>
-      ))}
-    </div>
+    <section className="flex flex-col gap-4 rounded-[18px] border border-hairline bg-sheet p-5 shadow-card-rest sm:p-6">
+      <h2 className="label-mono text-ink-2">{title}</h2>
+      {children}
+    </section>
   )
 }
-
-// ─── Toggle Row ────────────────────────────────────────────────────────────────
 
 function ToggleRow({
   label,
@@ -152,35 +134,34 @@ function ToggleRow({
   disabled?: boolean
 }) {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <div className="space-y-0.5">
-        <p className="text-sm font-medium">{label}</p>
-        <p className="text-xs text-muted-foreground">{description}</p>
+    <div className="flex items-start justify-between gap-5">
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <p className="text-[15px] font-medium tracking-[-0.01em] text-ink">{label}</p>
+        <p className="max-w-[58ch] text-[13px] leading-relaxed text-ink-3">{description}</p>
       </div>
       <button
         type="button"
         role="switch"
+        aria-label={label}
         aria-checked={checked}
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={cn(
-          "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-          checked ? "bg-primary" : "bg-input",
-          disabled && "opacity-50 cursor-not-allowed"
+          "relative mt-0.5 inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full p-[3px] transition-colors duration-200",
+          checked ? "bg-brand" : "bg-rule",
+          disabled && "cursor-not-allowed opacity-50",
         )}
       >
         <span
           className={cn(
-            "pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform",
-            checked ? "translate-x-4" : "translate-x-0"
+            "pointer-events-none block h-[18px] w-[18px] rounded-full bg-sheet shadow-[0_1px_2px_rgb(10_24_17/0.25)] transition-transform duration-200 ease-glide motion-reduce:transition-none",
+            checked ? "translate-x-5" : "translate-x-0",
           )}
         />
       </button>
     </div>
   )
 }
-
-// ─── Settings Page ─────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
   const { user, isLoaded } = useUser()
@@ -231,8 +212,6 @@ export default function SettingsPage() {
     if (isLoaded) loadSettings()
   }, [isLoaded])
 
-  // ─── Handlers ──────────────────────────────────────────────────────────
-
   const handleSaveProfile = async () => {
     if (!user) return
     setIsSavingProfile(true)
@@ -280,151 +259,111 @@ export default function SettingsPage() {
     }
   }
 
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Header />
-        <main className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </main>
-      </div>
-    )
-  }
-
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <Header />
-      <main className="flex-1 container mx-auto px-4 pt-24 pb-12 max-w-2xl">
-        {/* Page Title */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="p-2 rounded-lg bg-muted">
-            <Settings className="h-6 w-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Settings</h1>
-            <p className="text-sm text-muted-foreground">Manage your profile and preferences</p>
+    <div className="zip-scope desk desk-bright min-h-[calc(100vh-var(--chrome-top,82px))] p-2 pb-10 sm:p-5 xl:p-6">
+      <div className="paper-frame">
+        <div className="paper flex min-h-[calc(100vh-var(--chrome-top,82px)-68px)] flex-col">
+          <header className="flex min-h-[72px] flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-hairline px-4 py-[13px] sm:px-6">
+            <h1 className="text-[17px] font-medium tracking-[-0.02em] text-ink sm:text-[18px]">Settings</h1>
+          </header>
+
+          <div className="flex-1 px-4 py-9 sm:px-8 sm:py-12">
+            {!isLoaded ? (
+              <div role="status" className="flex min-h-48 items-center justify-center gap-3 text-[15px] text-ink-2">
+                <Loader2 className="h-5 w-5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                Loading your settings…
+              </div>
+            ) : (
+              <div className="mx-auto flex max-w-[1000px] flex-col gap-9">
+                <div className="flex flex-col gap-2">
+                  <p className="max-w-[58ch] font-serif text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
+                    Your account, <em className="text-brand">your rules</em>
+                  </p>
+                  <p className="max-w-[60ch] text-[15px] leading-relaxed text-ink-2">
+                    Your name, what the app shows you, and what happens to your data.
+                  </p>
+                </div>
+
+                <Panel title="Profile">
+                  <p className="max-w-[60ch] text-[14px] leading-relaxed text-ink-2">
+                    Your display name. Email and profile picture are handled by your Clerk account.
+                  </p>
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    <Field
+                      label="First name"
+                      value={firstName}
+                      placeholder="First name"
+                      autoComplete="given-name"
+                      onChange={(value) => { setFirstName(value); setProfileDirty(true); }}
+                    />
+                    <Field
+                      label="Last name"
+                      value={lastName}
+                      placeholder="Last name"
+                      autoComplete="family-name"
+                      onChange={(value) => { setLastName(value); setProfileDirty(true); }}
+                    />
+                  </div>
+
+                  <dl className="flex flex-col gap-1.5">
+                    <dt className="label-mono text-ink-2">Email</dt>
+                    <dd className="rounded-[12px] bg-fill px-3 py-2 text-[15px] wrap-anywhere text-ink">
+                      {user?.primaryEmailAddress?.emailAddress ?? "—"}
+                    </dd>
+                    <dd className="text-[13px] leading-normal text-ink-3">
+                      Managed by Clerk. Open your profile avatar to change your email or password.
+                    </dd>
+                  </dl>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveProfile}
+                    disabled={!profileDirty || isSavingProfile}
+                    className={`${pill("brand")} self-start`}
+                  >
+                    {isSavingProfile ? (
+                      <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                    ) : profileDirty ? (
+                      <Save aria-hidden="true" />
+                    ) : (
+                      <Check aria-hidden="true" />
+                    )}
+                    {isSavingProfile ? "Saving…" : profileDirty ? "Save changes" : "Saved"}
+                  </button>
+                </Panel>
+
+                <Panel title="Preferences">
+                  <AiProviderPicker variant="full" />
+                  <hr className="border-t border-hairline" />
+                  <ToggleRow
+                    label="AI feedback"
+                    description="Show AI-written suggestions for your resume."
+                    checked={showAiFeedback}
+                    onChange={handleAiFeedbackChange}
+                  />
+                  <hr className="border-t border-hairline" />
+                  <ToggleRow
+                    label="Data sharing for research"
+                    description="Let the Grasshopper Labs team use your anonymised resume data for academic research."
+                    checked={dataSharing}
+                    onChange={handleDataSharingChange}
+                    disabled={isLoadingSettings || isSavingSettings}
+                  />
+                </Panel>
+
+                <Panel title="Delete account">
+                  <p className="max-w-[60ch] text-[14px] leading-relaxed text-ink-2">
+                    Remove your account and everything stored with it. There’s no way back from this.
+                  </p>
+                  <div className="self-start">
+                    <DeleteAccountDialog />
+                  </div>
+                </Panel>
+              </div>
+            )}
           </div>
         </div>
-
-        <div className="space-y-6">
-          {/* ─── Section 1: Profile Information ─────────────────────────── */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" /> Profile Information
-              </CardTitle>
-              <CardDescription>
-                Update your display name. Email and profile picture are managed through your Clerk account.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label htmlFor="firstName" className="text-sm font-medium">First Name</label>
-                  <Input
-                    id="firstName"
-                    value={firstName}
-                    onChange={(e) => { setFirstName(e.target.value); setProfileDirty(true); }}
-                    placeholder="First name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="lastName" className="text-sm font-medium">Last Name</label>
-                  <Input
-                    id="lastName"
-                    value={lastName}
-                    onChange={(e) => { setLastName(e.target.value); setProfileDirty(true); }}
-                    placeholder="Last name"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Email</label>
-                <div className="text-sm px-3 py-2 rounded-md border bg-muted/50">
-                  {user?.primaryEmailAddress?.emailAddress ?? "—"}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Managed by Clerk. Click your profile avatar to change email or password.
-                </p>
-              </div>
-
-              <Button
-                onClick={handleSaveProfile}
-                disabled={!profileDirty || isSavingProfile}
-                className="gap-2"
-              >
-                {isSavingProfile ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : profileDirty ? (
-                  <Save className="h-4 w-4" />
-                ) : (
-                  <Check className="h-4 w-4" />
-                )}
-                {isSavingProfile ? "Saving..." : profileDirty ? "Save Changes" : "Saved"}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* ─── Section 2: App Preferences ─────────────────────────────── */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Palette className="h-5 w-5" /> Preferences
-              </CardTitle>
-              <CardDescription>
-                Customize your app experience.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Theme */}
-              <div className="space-y-3">
-                <div className="space-y-0.5">
-                  <p className="text-sm font-medium">Theme</p>
-                  <p className="text-xs text-muted-foreground">Choose your preferred color scheme</p>
-                </div>
-                <ThemeSelector />
-              </div>
-
-              <Separator />
-
-              {/* AI Feedback */}
-              <ToggleRow
-                label="AI Feedback"
-                description="Show AI-generated resume improvement suggestions on the dashboard"
-                checked={showAiFeedback}
-                onChange={handleAiFeedbackChange}
-              />
-
-              <Separator />
-
-              {/* Data Sharing */}
-              <ToggleRow
-                label="Data Sharing for Research"
-                description="Allow your anonymized resume data to be used for academic research by the Grasshopper Labs team"
-                checked={dataSharing}
-                onChange={handleDataSharingChange}
-                disabled={isLoadingSettings || isSavingSettings}
-              />
-            </CardContent>
-          </Card>
-
-          {/* ─── Section 3: Danger Zone ─────────────────────────────────── */}
-          <Card className="border-destructive/30">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-destructive">
-                <ShieldAlert className="h-5 w-5" /> Danger Zone
-              </CardTitle>
-              <CardDescription>
-                Permanently delete your account and all associated data. This cannot be undone.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <DeleteAccountDialog />
-            </CardContent>
-          </Card>
-        </div>
-      </main>
+      </div>
     </div>
   )
 }

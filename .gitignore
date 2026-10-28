@@ -15,6 +15,7 @@
 
 # next.js
 /.next/
+/.next-dev/
 /out/
 
 # production
@@ -51,3 +52,12 @@ data/resume-data.json
 # clerk configuration (can include secrets)
 /.clerk/
 .claude/
+# Local meeting preview build
+.student-preview
+.studio-preview/
+.codex-build/
+/supabase/.temp/
+.agents/
+# Internal working notes and prototypes stay local. Publish reviewed material in public_docs/.
+/docs/
+skills-lock.json

@@ -1,0 +1,104 @@
+/* The tree on the home page: one leaf per finished activity.
+   Tree art adapted from Pablo's student-experience prototype. */
+
+@layer components {
+  .garden {
+    --leaf-deep: #1f5a3f;
+    --leaf-mid: #35936a;
+    --leaf-light: #6fbd8a;
+    --leaf-pale: #a4dcbe;
+    --wood: #5c4a36;
+  }
+  .dark .garden {
+    --leaf-deep: #4e9e74;
+    --leaf-mid: #6fbd8a;
+    --leaf-light: #9ddfb2;
+    --leaf-pale: #c3ecd5;
+    --wood: #8a7257;
+  }
+
+  .garden-wood path {
+    fill: none;
+    stroke: var(--wood);
+    stroke-width: 3.4;
+    stroke-linecap: round;
+  }
+  .garden-soil {
+    fill: color-mix(in oklab, var(--wood) 22%, transparent);
+  }
+  .garden-ground {
+    fill: none;
+    stroke: color-mix(in oklab, var(--wood) 45%, transparent);
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+  .garden-seed {
+    fill: var(--wood);
+  }
+  .garden-seed-line {
+    fill: none;
+    stroke: color-mix(in oklab, #fff 55%, transparent);
+    stroke-width: 1.2;
+  }
+
+  /* ---- Leaves ----------------------------------------------------------- */
+
+  .garden-leaf {
+    transition: opacity 200ms ease-out;
+  }
+  /* The drawing grows; its target does not. Keeping the two apart is what
+     stops a hovered leaf oscillating. */
+  .garden-leaf-art {
+    transform-box: fill-box;
+    transform-origin: 0 50%;
+    transition: scale 180ms var(--ease-glide, cubic-bezier(0.2, 0.8, 0.2, 1));
+  }
+  .garden-leaf .garden-vein {
+    fill: none;
+    stroke: color-mix(in oklab, #ffffff 42%, transparent);
+    stroke-width: 1.1;
+    stroke-linecap: round;
+  }
+
+  /* The target over each leaf: invisible until the leaf is pointed at or
+     focused, when a soft disc shows which one will answer. */
+  .garden-hit {
+    fill: transparent;
+    cursor: pointer;
+    outline: none;
+    transition: fill 140ms ease-out;
+  }
+  .garden-leaf:hover .garden-hit,
+  .garden-hit:focus-visible {
+    fill: color-mix(in oklab, var(--color-brand) 16%, transparent);
+  }
+  .garden-hit:focus-visible {
+    stroke: color-mix(in oklab, var(--color-brand) 60%, transparent);
+    stroke-width: 2;
+  }
+
+  .garden-leaf:hover .garden-leaf-art,
+  .garden-leaf:focus-within .garden-leaf-art,
+  .garden-leaf[data-open] .garden-leaf-art {
+    scale: 1.09;
+  }
+  /* While one leaf is chosen the others step back, so the tree does not
+     compete with what is being read underneath it. */
+  .garden-leaf[data-quiet] {
+    opacity: 0.32;
+  }
+
+  /* Each leaf unfurls in turn, so the newest is visibly the newest. */
+  @media (prefers-reduced-motion: no-preference) {
+    .garden-leaf-art {
+      animation: garden-unfurl 420ms var(--ease-glide, cubic-bezier(0.2, 0.8, 0.2, 1)) backwards;
+      animation-delay: var(--delay, 0ms);
+    }
+  }
+  @keyframes garden-unfurl {
+    from {
+      opacity: 0;
+      scale: 0.3;
+    }
+  }
+}

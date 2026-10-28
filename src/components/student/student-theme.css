@@ -1,0 +1,697 @@
+/* The paper theme, applied to the student shell and everything inside it.
+   Loaded after student.css, so these win.
+
+   Rather than rewrite 1,500 lines of student.css, this re-points the
+   variables that file already reads (--student-* and the shadcn --card,
+   --primary and friends) at the tokens in app/styles/zip-tokens.css. Every
+   page in the shell picks up the new palette, light and dark, from one
+   place; the rules below that are the chrome itself — the sidebar, the top
+   bar and the headings. */
+
+.student-app {
+  /* How much vertical room the chrome takes above a page. The floating
+     topbar reserves 82px on narrow screens; on wide ones it is gone and
+     the page runs to the top. Pages size themselves against this rather
+     than a hard-coded 82px. */
+  --chrome-top: 82px;
+
+  --background: var(--color-paper);
+  --foreground: var(--color-ink);
+  --card: var(--color-sheet);
+  --card-foreground: var(--color-ink);
+  --popover: var(--color-sheet);
+  --popover-foreground: var(--color-ink);
+  --primary: var(--color-brand);
+  --primary-foreground: var(--color-sheet);
+  --secondary: var(--color-fill);
+  --secondary-foreground: var(--color-brand);
+  --muted: var(--color-fill);
+  --muted-foreground: var(--color-ink-2);
+  --accent: var(--color-fill);
+  --accent-foreground: var(--color-brand);
+  --border: var(--color-hairline);
+  --input: var(--color-rule-strong);
+  --ring: var(--color-brand);
+
+  --student-ink: var(--color-ink);
+  --student-muted: var(--color-ink-2);
+  --student-accent: var(--color-brand);
+  --student-brand: var(--color-brand);
+  --student-line: var(--color-hairline);
+  --student-canvas: var(--color-paper);
+  --student-shadow: 0 1px 2px rgb(10 24 17 / 0.04), 0 4px 12px -4px rgb(10 24 17 / 0.08);
+
+  /* Geist throughout, as the studio uses, rather than the system stack:
+     the two sit side by side on every tool page. */
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  color-scheme: light;
+}
+
+.dark .student-app {
+  color-scheme: dark;
+  --student-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 12px -4px rgb(0 0 0 / 0.5);
+}
+
+/* Titles are Newsreader, as they are in the studio. Headings inside a card
+   or a control stay in the sans face; only page titles change voice. */
+:where(.student-app) h1,
+:where(.student-app) .student-tool-page h1 {
+  font-family: var(--font-newsreader), Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+}
+
+/* Focus: the theme's soft ink tint, not a thick outline ring. */
+.student-app :is(button, a, input, textarea, select):focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--color-brand) 55%, transparent);
+  outline-offset: 2px;
+}
+
+/* ---- The chrome ------------------------------------------------------- */
+
+/* The sidebar and the top bar are the sheet; the page between them is the
+   paper the tool pages' own sheets sit on. */
+.student-sidebar {
+  background: var(--color-sheet);
+  border-right: 1px solid var(--color-hairline);
+}
+
+/* Account controls at the foot of the sidebar: theme toggle, user button,
+   sign-out. Laid out as a column, each full-width, since the topbar no
+   longer holds them. */
+.student-account-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-hairline);
+}
+.student-account-nav > * {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 13px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--color-ink-2);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  transition: background 120ms, color 120ms;
+}
+.student-account-nav > *:hover {
+  background: var(--color-fill);
+  color: var(--color-ink);
+}
+
+/* The topbar no longer carries the controls, so on wide screens it is gone
+   entirely — it only held the mobile menu toggle, and the sidebar is
+   already on screen there. The 82px it used to reserve goes with it. */
+@media (min-width: 1150px) {
+  .student-workspace {
+    --chrome-top: 0px;
+  }
+  .student-workspace .student-topbar {
+    display: none;
+  }
+  .student-workspace .student-main {
+    padding-top: 0;
+  }
+}
+
+.student-brand {
+  font-family: var(--font-newsreader), Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  color: var(--color-ink);
+}
+.student-brand > span {
+  background: var(--color-fill);
+  color: var(--color-brand);
+}
+
+/* The nav reads in Newsreader, as the page titles do — it is a list of
+   places, which is closer to prose than to a control. The size is nudged up
+   because the serif runs smaller than Geist at the same point size. */
+.student-sidebar nav a,
+.student-nav-disclosure > span,
+.student-nav-disclosure,
+.student-subnav a,
+.student-mobile-nav a,
+.student-mobile-subnav a,
+.student-account-nav > * {
+  font-family: var(--font-newsreader), Georgia, serif;
+  font-size: 16px;
+  font-weight: 450;
+  letter-spacing: -0.012em;
+}
+.student-subnav a,
+.student-mobile-subnav a {
+  font-size: 15px;
+}
+
+.student-nav-disclosure[aria-current],
+.student-sidebar nav a[aria-current],
+.student-mobile-nav a[aria-current] {
+  background: var(--color-fill);
+  color: var(--color-ink);
+  font-weight: 600;
+}
+/* The green is the marker, not the whole row: a bar down its leading edge. */
+.student-nav-disclosure[aria-current],
+.student-sidebar nav a[aria-current] {
+  box-shadow: inset 2px 0 0 var(--color-brand);
+}
+.student-nav-disclosure:hover:not([aria-current]),
+.student-sidebar nav a:hover:not([aria-current]),
+.student-mobile-nav a:hover:not([aria-current]) {
+  background: color-mix(in oklab, var(--color-fill) 70%, transparent);
+  color: var(--color-ink);
+}
+.student-subnav a[aria-current],
+.student-mobile-subnav a[aria-current] {
+  color: var(--color-brand);
+  font-weight: 600;
+}
+
+.student-sidebar-bottom {
+  border-top: 1px solid var(--color-hairline);
+  color: var(--color-ink-2);
+}
+
+/* The top bar floats over the page as glass, rather than sitting on a white
+   slab: the page scrolls under it and is softened, not hidden. */
+.student-topbar {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+.student-topbar > * {
+  position: relative;
+}
+.student-topbar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 999px;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.82), rgb(255 255 255 / 0.66));
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.7),
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    0 1px 2px rgb(10 24 17 / 0.06),
+    0 10px 28px -14px rgb(10 24 17 / 0.35);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  backdrop-filter: blur(20px) saturate(1.5);
+}
+.dark .student-topbar::before {
+  background: linear-gradient(180deg, rgb(30 40 35 / 0.88), rgb(20 28 24 / 0.76));
+  box-shadow:
+    inset 0 0 0 1px rgb(160 200 175 / 0.12),
+    0 10px 28px -14px rgb(0 0 0 / 0.7);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .student-topbar::before {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: var(--color-sheet);
+  }
+}
+
+.student-theme-toggle,
+.student-account > button {
+  color: var(--color-ink-2);
+}
+.student-theme-toggle:hover,
+.student-account > button:hover {
+  color: var(--color-ink);
+}
+
+/* ---- Buttons ---------------------------------------------------------- */
+
+/* The older pages call their buttons .student-button / .student-secondary.
+   Rather than rewrite every call site, those classes are re-cut here as the
+   theme's pill buttons, so "Add an activity" and its kin match the ones on
+   the resume pages without touching the markup. */
+.student-app .student-button {
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: #fff;
+  background: none;
+  background-image: var(--brand-gradient);
+  box-shadow: var(--brand-halo);
+  transition:
+    filter 150ms,
+    box-shadow 200ms,
+    scale 120ms ease-out;
+}
+.student-app .student-button:hover {
+  background-image: var(--brand-gradient);
+  filter: brightness(1.08);
+  box-shadow: var(--brand-halo);
+}
+.student-app .student-button:active {
+  filter: brightness(0.93);
+  scale: 0.97;
+}
+.student-app .student-button:disabled {
+  filter: saturate(0.6);
+  opacity: 0.6;
+}
+
+/* The quiet one: white, its edge drawn by a shadow rather than a border, so
+   it sits level with the brand pill rather than a pixel taller. */
+.student-app .student-button.student-secondary {
+  color: var(--color-ink);
+  background: none;
+  background-image: linear-gradient(180deg, #ffffff, #f6f8f6);
+  box-shadow:
+    inset 0 0 0 1px #e4e9e5,
+    0 1px 2px rgb(10 24 17 / 0.05),
+    0 3px 8px -3px rgb(10 24 17 / 0.14);
+}
+.student-app .student-button.student-secondary:hover {
+  background-image: linear-gradient(180deg, #ffffff, #f1f5f2);
+  filter: none;
+}
+.dark .student-app .student-button {
+  color: #0f1a14;
+}
+.dark .student-app .student-button.student-secondary {
+  color: var(--color-ink);
+  background-image: linear-gradient(180deg, #2a332e, #222a25);
+  box-shadow:
+    inset 0 0 0 1px rgb(160 200 175 / 0.14),
+    0 3px 8px -3px rgb(0 0 0 / 0.5);
+}
+.dark .student-app .student-button.student-secondary:hover {
+  background-image: linear-gradient(180deg, #313b35, #28312b);
+}
+
+/* ---- Quiet links ------------------------------------------------------ */
+
+/* The inline "Add to my plan", "Browse all data and AI projects", "Back to
+   my plan" links. They were 12px bold accent with !important, which read
+   like shouting next to the theme's buttons. One treatment for all of them:
+   the same size and weight as a text link elsewhere, with the arrow nudging
+   forward on hover so it still feels like a way through. */
+.student-app :is(
+    .career-plan-suggestion button,
+    .career-plan-suggestions > a,
+    .career-plan-work-heading > a,
+    .career-plan-work-empty a,
+    .career-plan-history-link,
+    .career-history-back,
+    .career-history-open,
+    .career-history-empty a,
+    .student-text-link
+  ) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-brand) !important;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  cursor: pointer;
+}
+.student-app :is(
+    .career-plan-suggestion button,
+    .career-plan-suggestions > a,
+    .career-plan-work-heading > a,
+    .career-plan-work-empty a,
+    .career-plan-history-link,
+    .career-history-back,
+    .career-history-open,
+    .career-history-empty a,
+    .student-text-link
+  ):hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.student-app :is(
+    .career-plan-suggestion button,
+    .career-plan-suggestions > a,
+    .career-plan-work-heading > a,
+    .career-plan-history-link,
+    .career-history-open
+  ) svg {
+  transition: translate 150ms var(--ease-glide, cubic-bezier(0.2, 0.8, 0.2, 1));
+}
+.student-app :is(
+    .career-plan-suggestion button,
+    .career-plan-suggestions > a,
+    .career-plan-work-heading > a,
+    .career-plan-history-link,
+    .career-history-open
+  ):hover svg {
+  translate: 2px 0;
+}
+/* The one that goes back leads with its arrow, so it nudges the other way. */
+.student-app .career-history-back:hover svg {
+  translate: -2px 0;
+}
+
+/* ---- Tool pages ------------------------------------------------------- */
+
+/* A tool page that hasn't been rebuilt as a sheet still reads as part of the
+   theme: paper behind it, hairline cards, the serif title. */
+.student-tool-page [data-slot="card"] {
+  border-color: var(--color-hairline);
+  border-radius: 18px;
+  background: var(--color-sheet);
+  box-shadow: var(--shadow-card-rest);
+}
+.student-tool-page [data-slot="card"]:hover {
+  box-shadow: var(--shadow-card-rest);
+}
+
+/* Pages that draw their own full-bleed surface (the studio, the shelf, the
+   home page) sit flush in the shell rather than inside the tool page's
+   padding. */
+.student-workspace .student-main > .zip-scope,
+.student-workspace .student-main > .zip-page {
+  display: block;
+}
+
+/* ---- Career and other pages still on their own layout ----------------- */
+
+/* Career and the older tool pages keep their markup — career.css and
+   student.css lay out a lot of it — but gain the same sheet-over-sky as the
+   rest: the shell paints the sky, and the page's own wrapper becomes the
+   sheet. :has means only those pages get it; anything already drawing its
+   own desk (.zip-scope) is left alone. */
+.student-workspace .student-main:has(> .career-page),
+.student-workspace .student-main:has(> .student-tool-page) {
+  --desk-wash: 0.05;
+  background-color: var(--color-sky-low);
+  background-image:
+    linear-gradient(rgb(255 255 255 / var(--desk-wash)), rgb(255 255 255 / var(--desk-wash))),
+    radial-gradient(120% 85% at 78% 6%, var(--color-sky-warm), transparent 60%),
+    radial-gradient(140% 100% at 12% 0%, var(--color-sky-high), transparent 62%),
+    radial-gradient(130% 110% at 50% 115%, var(--color-sky-deep), transparent 70%),
+    linear-gradient(170deg, var(--color-sky-high), var(--color-sky-low));
+  background-attachment: fixed;
+  background-size: cover;
+  padding: var(--chrome-top) 24px 24px;
+  min-height: 100vh;
+}
+.dark .student-workspace .student-main:has(> .career-page),
+.dark .student-workspace .student-main:has(> .student-tool-page) {
+  --desk-wash: 0;
+}
+@media (max-width: 1150px) {
+  .student-workspace .student-main:has(> .career-page),
+  .student-workspace .student-main:has(> .student-tool-page) {
+    padding: var(--chrome-top) 10px 10px;
+  }
+}
+
+.student-main > .career-page,
+.student-main > .student-tool-page {
+  width: 100%;
+  max-width: none;
+  min-height: calc(100vh - var(--chrome-top) - 48px);
+  padding: 34px 40px 56px;
+  border-radius: 28px;
+  background: var(--color-sheet);
+  box-shadow:
+    0 1px 2px rgb(10 24 17 / 0.05),
+    0 10px 24px -14px rgb(10 24 17 / 0.22),
+    /* The frosted band round the sheet, as .paper-frame draws it elsewhere. */ 0 0 0 13px rgb(255 255 255 / 0.26);
+}
+.dark .student-main > .career-page,
+.dark .student-main > .student-tool-page {
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.5),
+    0 10px 30px -12px rgb(0 0 0 / 0.6),
+    0 0 0 13px rgb(160 200 175 / 0.07);
+}
+@media (max-width: 1150px) {
+  .student-main > .career-page,
+  .student-main > .student-tool-page {
+    padding: 26px 22px 44px;
+    border-radius: 21px;
+    box-shadow:
+      0 1px 2px rgb(10 24 17 / 0.05),
+      0 0 0 7px rgb(255 255 255 / 0.26);
+  }
+}
+
+/* Inside it, the career page's own cards take the theme's hairline and
+   corner rather than their old heavier border. */
+.career-page :is(.career-card, .career-list-row, .career-panel, .home-section, .home-current) {
+  border-color: var(--color-hairline);
+}
+
+/* ---- Onboarding ------------------------------------------------------- */
+
+/* The way in has no sidebar, so the sky runs the whole width and the two
+   panels float on it as sheets of their own. */
+.student-entry {
+  --desk-wash: 0.05;
+  background-color: var(--color-sky-low);
+  background-image:
+    linear-gradient(rgb(255 255 255 / var(--desk-wash)), rgb(255 255 255 / var(--desk-wash))),
+    radial-gradient(120% 85% at 78% 6%, var(--color-sky-warm), transparent 60%),
+    radial-gradient(140% 100% at 12% 0%, var(--color-sky-high), transparent 62%),
+    radial-gradient(130% 110% at 50% 115%, var(--color-sky-deep), transparent 70%),
+    linear-gradient(170deg, var(--color-sky-high), var(--color-sky-low));
+  background-attachment: fixed;
+  background-size: cover;
+}
+.dark .student-entry {
+  --desk-wash: 0;
+}
+.student-entry .student-entry-header {
+  background: transparent;
+  border: 0;
+}
+.student-entry :is(.student-growth-panel, .student-onboarding-content) {
+  border: 0;
+  border-radius: 28px;
+  background: var(--color-sheet);
+  box-shadow:
+    0 1px 2px rgb(10 24 17 / 0.05),
+    0 10px 24px -14px rgb(10 24 17 / 0.22),
+    0 0 0 13px rgb(255 255 255 / 0.26);
+}
+.dark .student-entry :is(.student-growth-panel, .student-onboarding-content) {
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.5),
+    0 10px 30px -12px rgb(0 0 0 / 0.6),
+    0 0 0 13px rgb(160 200 175 / 0.07);
+}
+.student-entry .student-growth-kicker {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-2);
+}
+
+/* The guided tour. Everything but the part of the page a step is about goes
+   dark: the cut-out is one element whose enormous shadow is the dark, so it
+   can glide from one part of the page to the next. A layer under it catches
+   clicks, so the page is shown rather than used while the tour is open. */
+.guided-tour-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  pointer-events: none;
+}
+.guided-tour-blocker {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+}
+.guided-tour-spot {
+  position: fixed;
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 2px color-mix(in oklab, var(--color-brand) 70%, white),
+    0 0 0 200vmax rgb(3 8 6 / 0.84);
+  pointer-events: none;
+  transition:
+    top 420ms var(--ease-glide),
+    left 420ms var(--ease-glide),
+    width 420ms var(--ease-glide),
+    height 420ms var(--ease-glide),
+    box-shadow 300ms;
+  animation: guided-tour-dim 300ms ease-out;
+}
+.guided-tour-spot[data-empty] {
+  box-shadow: 0 0 0 200vmax rgb(3 8 6 / 0.88);
+}
+.dark .guided-tour-spot {
+  box-shadow:
+    0 0 0 2px var(--color-brand),
+    0 0 0 200vmax rgb(0 0 0 / 0.86);
+}
+.dark .guided-tour-spot[data-empty] {
+  box-shadow: 0 0 0 200vmax rgb(0 0 0 / 0.9);
+}
+@keyframes guided-tour-dim {
+  from {
+    opacity: 0;
+  }
+}
+
+.guided-tour {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(392px, calc(100vw - 24px)); /* CARD_WIDTH in guided-tour.tsx */
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  padding: 16px 20px 20px;
+  border: 1px solid var(--color-hairline);
+  border-radius: 20px;
+  background: var(--color-sheet);
+  box-shadow: var(--shadow-card-lifted);
+  pointer-events: auto;
+  transition:
+    top 420ms var(--ease-glide),
+    left 420ms var(--ease-glide);
+  animation: guided-tour-in 360ms var(--ease-glide);
+}
+.guided-tour[style] {
+  translate: none;
+}
+.guided-tour[data-phone] {
+  top: auto;
+  right: 10px;
+  bottom: 10px;
+  left: 10px;
+  width: auto;
+  max-height: 58vh;
+  translate: none;
+}
+@keyframes guided-tour-in {
+  from {
+    opacity: 0;
+    scale: 0.97;
+  }
+}
+.guided-tour-copy {
+  animation: guided-tour-copy 260ms ease-out;
+}
+@keyframes guided-tour-copy {
+  from {
+    opacity: 0;
+    translate: 0 4px;
+  }
+}
+.guided-tour-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--color-fill);
+  color: var(--color-ink-2);
+  font-size: 12px;
+  font-weight: 500;
+  transition: background 120ms, color 120ms;
+}
+.guided-tour-chip:hover {
+  color: var(--color-ink);
+}
+.guided-tour-chip[data-done] {
+  color: var(--color-brand);
+}
+.guided-tour-chip[aria-current] {
+  background: var(--color-ink);
+  color: var(--color-sheet);
+}
+.guided-tour-close {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin: -2px -8px 0 0;
+  border-radius: 999px;
+  color: var(--color-ink-3);
+  transition: background 120ms, color 120ms;
+}
+.guided-tour-close:hover {
+  background: var(--color-fill);
+  color: var(--color-ink);
+}
+.guided-tour-skip {
+  height: 40px;
+  padding: 0 4px;
+  color: var(--color-ink-2);
+  font-size: 14px;
+  font-weight: 500;
+  text-underline-offset: 4px;
+}
+.guided-tour-skip:hover {
+  color: var(--color-ink);
+  text-decoration: underline;
+}
+.guided-tour-track {
+  display: flex;
+  gap: 4px;
+}
+.guided-tour-track span {
+  flex: 1;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--color-fill);
+  transition: background 300ms var(--ease-glide);
+}
+.guided-tour-track span[data-done] {
+  background: var(--color-brand);
+}
+.student-mobile-tour {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 12px 13px;
+  border-radius: 11px;
+  color: var(--student-muted);
+  font-family: var(--font-newsreader), Georgia, serif;
+  font-size: 16px;
+  font-weight: 450;
+  letter-spacing: -0.012em;
+  text-align: left;
+}
+.student-mobile-tour:hover {
+  background: color-mix(in oklab, var(--color-fill) 70%, transparent);
+  color: var(--color-ink);
+}
+@media (prefers-reduced-motion: reduce) {
+  .guided-tour,
+  .guided-tour-spot {
+    transition: none;
+    animation: none;
+  }
+  .guided-tour-copy,
+  .guided-tour-track span {
+    animation: none;
+    transition: none;
+  }
+}

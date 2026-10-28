@@ -1,11 +1,13 @@
-import { OpenAI } from "openai";
+import { generateObject } from "@/lib/ai";
+import { resolveAiProvider } from "@/lib/ai/resolve";
 import { z } from "zod";
-import { zodTextFormat } from "openai/helpers/zod.mjs";
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { getJsonFromS3, putJsonToS3 } from "@/lib/aws/s3";
 import type { Resume } from "@/app/api/parse/resumeSchema";
 import { calculateResumeScoreDetailed } from "@/lib/resumeScoring";
+import { createClerkSupabaseServerClient } from "@/lib/supabase/server";
+import { getCurrentResumeData } from "@/lib/supabase/user-data";
+import type { Json } from "@/lib/supabase/database.types";
 
 // GET — serve cached XYZ feedback + insights
 export async function GET() {
@@ -15,11 +17,19 @@ export async function GET() {
             return NextResponse.json({ success: false, data: null, error: "Unauthorized" }, { status: 401 });
         }
 
-        const data = await getJsonFromS3(`uploads/${userId}/xyz-feedback.json`);
-        if (!data) {
+        const supabase = await createClerkSupabaseServerClient();
+        await getCurrentResumeData(userId);
+        const { data: document, error: documentError } = await supabase.from("resume_documents")
+            .select("id").eq("clerk_user_id", userId).eq("is_current", true).maybeSingle();
+        if (documentError) throw documentError;
+        if (!document) {
             return NextResponse.json({ success: false, data: null });
         }
-        return NextResponse.json({ success: true, data });
+        const { data, error } = await supabase.from("resume_feedback").select("result")
+            .eq("clerk_user_id", userId).eq("resume_document_id", document.id).eq("feedback_type", "xyz")
+            .order("created_at", { ascending: false }).limit(1).maybeSingle();
+        if (error) throw error;
+        return NextResponse.json({ success: true, data: data?.result ?? null });
     } catch (error) {
         return NextResponse.json({ success: false, data: null });
     }
@@ -52,8 +62,6 @@ const BatchResultSchema = z.object({
     actionableInsights: z.array(InsightSchema).describe("Actionable insights: 5-8 resume tweaks + 8-12 career goals distributed across remaining academic years"),
 });
 
-const MODEL = "gpt-4.1-mini";
-
 export async function POST(request: NextRequest) {
     try {
         const { userId } = await auth();
@@ -66,8 +74,6 @@ export async function POST(request: NextRequest) {
         if (!resumeData) {
             return NextResponse.json({ error: "No resume data provided" }, { status: 400 });
         }
-
-        const client = new OpenAI();
 
         // Build a concise summary of all items to analyze
         const projectItems = (resumeData.projects || []).map((p, i) => {
@@ -132,13 +138,7 @@ export async function POST(request: NextRequest) {
 
         if (projectItems.length === 0 && experienceItems.length === 0) {
             const emptyResult = { projects: {}, experience: {}, actionableInsights: [] };
-            await putJsonToS3(`uploads/${userId}/xyz-feedback.json`, emptyResult);
-            
-            const metadataKey = `uploads/${userId}/submissions-metadata.json`;
-            const metadata = await getJsonFromS3<{submissions: any[]}>(metadataKey);
-            if (metadata && metadata.submissions.length > 0) {
-                await putJsonToS3(`uploads/${userId}/xyz-feedback-${metadata.submissions[0].id}.json`, emptyResult);
-            }
+            await saveFeedback(userId, emptyResult, resumeData);
 
             return NextResponse.json({ success: true, data: emptyResult });
         }
@@ -187,19 +187,17 @@ ${projectItems.length > 0 ? "=== PROJECTS ===\n" + projectItems.join("\n\n") : "
 ${experienceItems.length > 0 ? "=== EXPERIENCE ===\n" + experienceItems.join("\n\n") : ""}
 `;
 
-        const result = await client.responses.parse({
-            model: MODEL,
-            input: [
-                { role: "system", content: "You are an expert resume consultant. Analyze each item for XYZ formula adherence, then synthesize findings into actionable insights. Be specific — reference actual content from the resume." },
-                { role: "user", content: prompt }
-            ],
-            text: {
-                format: zodTextFormat(BatchResultSchema, "batch_feedback")
-            },
+        const { provider } = await resolveAiProvider(userId);
+        const result = await generateObject({
+            provider,
+            system: "You are an expert resume consultant. Analyze each item for XYZ formula adherence, then synthesize findings into actionable insights. Be specific — reference actual content from the resume.",
+            prompt,
+            schema: BatchResultSchema,
+            name: "batch_feedback",
             temperature: 0.3,
         });
 
-        const feedbackData = result.output_parsed;
+        const feedbackData = result.data;
 
         // Transform to index-keyed maps for easy lookup
         const indexed = {
@@ -217,24 +215,9 @@ ${experienceItems.length > 0 ? "=== EXPERIENCE ===\n" + experienceItems.join("\n
             })),
         };
 
-        // Cache to S3
-        await putJsonToS3(`uploads/${userId}/xyz-feedback.json`, indexed);
+        await saveFeedback(userId, indexed, resumeData);
 
-        const metadataKey = `uploads/${userId}/submissions-metadata.json`;
-        const metadata = await getJsonFromS3<{submissions: any[]}>(metadataKey);
-        if (metadata && metadata.submissions.length > 0) {
-            await putJsonToS3(`uploads/${userId}/xyz-feedback-${metadata.submissions[0].id}.json`, indexed);
-            
-            // Re-calculate score with the new feedback
-            const resumeData = await getJsonFromS3<Resume>(`uploads/${userId}/resume-data.json`);
-            if (resumeData) {
-                const newScore = calculateResumeScoreDetailed(resumeData, indexed).totalScore;
-                metadata.submissions[0].score = newScore;
-                await putJsonToS3(metadataKey, metadata);
-            }
-        }
-
-        return NextResponse.json({ success: true, data: indexed });
+        return NextResponse.json({ success: true, data: indexed, aiProvider: provider });
 
     } catch (error) {
         console.error("Error in batch XYZ analysis:", error);
@@ -243,4 +226,24 @@ ${experienceItems.length > 0 ? "=== EXPERIENCE ===\n" + experienceItems.join("\n
             error: "Failed to generate batch analysis"
         }, { status: 500 });
     }
+}
+
+async function saveFeedback(userId: string, result: unknown, resumeData: Resume) {
+    const supabase = await createClerkSupabaseServerClient();
+    await getCurrentResumeData(userId);
+    const { data: document, error: documentError } = await supabase.from("resume_documents")
+        .select("id").eq("clerk_user_id", userId).eq("is_current", true).maybeSingle();
+    if (documentError) throw documentError;
+    if (!document) throw new Error("No current resume found");
+    const { error: feedbackError } = await supabase.from("resume_feedback").insert({
+        clerk_user_id: userId,
+        resume_document_id: document.id,
+        feedback_type: "xyz",
+        result: result as Json,
+    });
+    if (feedbackError) throw feedbackError;
+    const newScore = calculateResumeScoreDetailed(resumeData, result).totalScore;
+    const { error: scoreError } = await supabase.from("resume_documents").update({ score: newScore })
+        .eq("id", document.id).eq("clerk_user_id", userId);
+    if (scoreError) throw scoreError;
 }
