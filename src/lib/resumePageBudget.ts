@@ -16,10 +16,10 @@ const MIN_BULLETS = 2
 type Experience = Resume["experience"][number]
 type Project = Resume["projects"][number]
 
-const textLines = (text: string) => Math.max(1, Math.ceil(text.length / CHARS_PER_LINE))
+export const textLines = (text: string) => Math.max(1, Math.ceil(text.length / CHARS_PER_LINE))
 const bulletLines = (bullets: string[]) => bullets.reduce((sum, b) => sum + textLines(b) + 0.15, 0)
 
-const experienceBullets = (e: Experience) => [...(e.responsibilities || []), ...(e.achievements || [])]
+export const experienceBullets = (e: Experience) => [...(e.responsibilities || []), ...(e.achievements || [])]
 const projectBullets = (p: Project) =>
   p.highlights?.length ? p.highlights : p.description ? [p.description] : []
 
