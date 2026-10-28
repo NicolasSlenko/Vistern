@@ -53,6 +53,7 @@ function Notice({
   return (
     <section
       role={role}
+      data-tour="apps-empty"
       className="flex flex-col items-start gap-4 rounded-[18px] border border-dashed border-rule-strong px-6 py-12"
     >
       <span className="flex h-11 w-11 items-center justify-center rounded-full bg-fill text-brand">
@@ -352,7 +353,7 @@ export function ApplicationsBoard({ initialJobs }: { initialJobs: SavedJob[] | n
     <div className="zip-scope desk desk-bright min-h-[calc(100vh-var(--chrome-top,82px))] p-2 pb-10 sm:p-5 xl:p-6">
       <div className="paper-frame">
         <div className="paper flex min-h-[calc(100vh-var(--chrome-top,82px)-68px)] flex-col">
-          <header className="flex min-h-[72px] flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-hairline px-4 py-[13px] sm:px-6">
+          <header data-tour="apps-header" className="flex min-h-[72px] flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-hairline px-4 py-[13px] sm:px-6">
             <h1 className="text-[17px] font-medium tracking-[-0.02em] text-ink sm:text-[18px]">Applications</h1>
             <div className="flex items-center gap-2.5">
               <Link href="/match#job-board" className={pill("white", "h-10 px-4 text-[15px] font-medium")}>
@@ -371,7 +372,7 @@ export function ApplicationsBoard({ initialJobs }: { initialJobs: SavedJob[] | n
                 </p>
               </div>
 
-              <dl aria-label="Application summary" className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <dl data-tour="apps-summary" aria-label="Application summary" className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 {summary.map((item) => (
                   <div
                     key={item.label}
@@ -413,7 +414,7 @@ export function ApplicationsBoard({ initialJobs }: { initialJobs: SavedJob[] | n
                     <p className="text-[14px] text-ink-2">
                       {jobs.length} {jobs.length === 1 ? "role" : "roles"} in your tracker
                     </p>
-                    <div ref={thumb.group} role="group" aria-label="Application view" className={SEGMENTS}>
+                    <div ref={thumb.group} data-tour="apps-view" role="group" aria-label="Application view" className={SEGMENTS}>
                       <span ref={thumb.thumb} aria-hidden="true" className={`segment-thumb ${thumb.placed ? "" : "invisible"}`} />
                       <button
                         type="button"
@@ -448,6 +449,7 @@ export function ApplicationsBoard({ initialJobs }: { initialJobs: SavedJob[] | n
                     <div
                       tabIndex={0}
                       role="region"
+                      data-tour="apps-board"
                       aria-label="Application board"
                       className="overflow-x-auto pb-2 focus-visible:outline-none"
                     >

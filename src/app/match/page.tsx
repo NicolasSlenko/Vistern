@@ -172,6 +172,7 @@ export default function MatchPage() {
   const [compareResult, setCompareResult] = useState<(FitAnalysis & { overallMatch: number }) | null>(null)
   const [isCompareLoading, setIsCompareLoading] = useState(false)
 
+  // Runs the search and analysis (about 20s, counts toward the daily limit).
   const fetchLiveJobs = useCallback(async () => {
     setIsLiveLoading(true)
     try {
@@ -191,10 +192,28 @@ export default function MatchPage() {
     }
   }, [])
 
-  // Always fetch fresh on mount
+  // Matches found in the last day for this resume and these preferences are shown
+  // as they were; only a miss (or the refresh button) runs a new search.
+  const loadLiveJobs = useCallback(async () => {
+    setIsLiveLoading(true)
+    try {
+      const res = await fetch("/api/match-live")
+      const result = await res.json()
+      if (result.success && result.data?.jobs?.length) {
+        setLiveJobs(result.data.jobs)
+        setCurrentJobIdx(0)
+        setIsLiveLoading(false)
+        return
+      }
+    } catch {
+      // Fall through to a fresh search.
+    }
+    await fetchLiveJobs()
+  }, [fetchLiveJobs])
+
   useEffect(() => {
     if (!resumeData) return
-    fetchLiveJobs()
+    loadLiveJobs()
     fetch("/api/job-board").then(r => r.json()).then(r => { if (r.success) setSavedJobs(r.data) }).catch(() => {})
     fetch("/api/preferences").then(r => r.json()).then(r => { if (r.success && r.data) setPrefs(r.data) }).catch(() => {})
   // eslint-disable-next-line react-hooks/exhaustive-deps
