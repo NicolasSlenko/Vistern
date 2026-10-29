@@ -59,12 +59,12 @@ function Suggestion({
           <span className="text-[12px] leading-snug text-ink-2">{rewrite.why}</span>
         </span>
       </button>
-      <div className="flex items-center gap-2 pl-[17px]">
+      <div className="flex flex-wrap items-center gap-2 pl-[17px]">
         <button
           type="button"
           onClick={onAccept}
           aria-describedby={details}
-          className="inline-flex h-7 items-center gap-1.5 rounded-full bg-brand px-2.5 text-[12px] font-medium text-sheet transition-[filter,scale] hover:brightness-110 active:scale-[0.97]"
+          className="inline-flex h-7 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-brand px-2.5 text-[12px] font-medium text-sheet transition-[filter,scale] hover:brightness-110 active:scale-[0.97]"
         >
           <Check className="h-3 w-3" aria-hidden="true" />
           Use this
@@ -73,7 +73,7 @@ function Suggestion({
           type="button"
           onClick={onReject}
           aria-describedby={details}
-          className="inline-flex h-7 items-center gap-1.5 rounded-full bg-fill px-2.5 text-[12px] font-medium text-ink-2 transition-colors hover:text-ink"
+          className="inline-flex h-7 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-fill px-2.5 text-[12px] font-medium text-ink-2 transition-colors hover:text-ink"
         >
           <X className="h-3 w-3" aria-hidden="true" />
           Keep mine
