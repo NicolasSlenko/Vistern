@@ -2,11 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
-import { FileText, Loader2, PenLine, Sparkles, Trash2, Upload } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { FilePlus2, FileText, Loader2, PenLine, Sparkles, Trash2, Upload, WandSparkles } from "lucide-react"
 import { toast } from "sonner"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import type { Resume } from "@/app/api/parse/resumeSchema"
 import { alignFeedback } from "@/lib/feedback-entries"
+import type { BulletRewrite } from "@/lib/resume-suggestions"
+import { PaperPane } from "@/components/resume-paper/paper-pane"
+import { BulletOptionsDialog } from "./bullet-options"
 import type { ModeOption } from "./mode-tabs"
 import { pill } from "./pills"
 import { ProfileForm, SkillsForm } from "./profile-form"
@@ -16,8 +20,10 @@ import { SectionForm } from "./section-form"
 import { SectionNav } from "./section-nav"
 import { LIST_SECTIONS, type ListSection, type SectionRef } from "./sections"
 import { SaveNote, StudioShell, StudioTitle } from "./studio-shell"
+import { SuggestionsPanel } from "./suggestions-panel"
 import { useDismissedNotes } from "./use-dismissed-notes"
 import { useAutosave } from "./use-autosave"
+import { useProfileBulletReview } from "./use-profile-bullet-review"
 
 /**
  * The master profile: everything the student has actually done, in one
@@ -27,13 +33,21 @@ import { useAutosave } from "./use-autosave"
  * resume-doc-studio.tsx) are tellings of it, aimed at different jobs, and
  * each keeps its own wording — so editing a resume never reaches back here,
  * and editing here never silently rewrites a resume the student has already
- * sent. That separation is why this view has no page beside it: there's no
- * one document for the profile to be.
+ * sent.
+ *
+ * The page on the right is the general resume: the whole profile set as a
+ * recruiter would see it, untrimmed, redrawn as the form changes. "Save as
+ * resume" takes a snapshot of it onto the shelf; from then on the two are
+ * edited apart.
  */
 
-type Mode = "write" | "review"
+type Mode = "write" | "review" | "suggestions"
+
+const generalResumeName = () =>
+  `General resume — ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
 
 export function ProfileStudio() {
+  const router = useRouter()
   // The profile's own review, not the current resume's: the two list entries
   // in different orders, so a resume's notes would land on the wrong cards.
   const [review, setReview] = useState<XyzFeedback | null>(null)
@@ -47,6 +61,7 @@ export function ProfileStudio() {
   const [clearOpen, setClearOpen] = useState(false)
   const [clearText, setClearText] = useState("")
   const [clearing, setClearing] = useState(false)
+  const [savingResume, setSavingResume] = useState(false)
   const formRef = useRef<HTMLElement>(null)
 
   const save = useAutosave<Resume>(async (next) => {
@@ -54,6 +69,11 @@ export function ProfileStudio() {
     const result = await response.json()
     if (!response.ok || !result.success) throw new Error(result.error || "Couldn't save your profile")
   })
+
+  // Line-level rewrites for the general resume. UI only until the AI is connected.
+  const bullets = useProfileBulletReview(profile)
+  // The marked line whose three AI options are open, from the paper's "More options".
+  const [moreFor, setMoreFor] = useState<BulletRewrite | null>(null)
 
   useEffect(() => {
     let live = true
@@ -103,6 +123,20 @@ export function ProfileStudio() {
     [open],
   )
 
+  /** Choosing a rewrite opens the card it's about and scrolls the line into view. */
+  const goToRewrite = useCallback(
+    (rewrite: BulletRewrite) => {
+      open(rewrite.section)
+      requestAnimationFrame(() => {
+        const card = document.querySelector<HTMLElement>(`[data-entry-index="${rewrite.entryIndex}"]`)
+        const toggle = card?.querySelector<HTMLButtonElement>("button[aria-expanded]")
+        if (toggle?.getAttribute("aria-expanded") === "false") toggle.click()
+        requestAnimationFrame(() => card?.scrollIntoView({ block: "center", behavior: "smooth" }))
+      })
+    },
+    [open],
+  )
+
   const askAi = async () => {
     if (!profile) return
     setAsking(true)
@@ -119,6 +153,26 @@ export function ProfileStudio() {
       toast.error(error instanceof Error ? error.message : "Couldn't get AI notes")
     } finally {
       setAsking(false)
+    }
+  }
+
+  /** Snapshot the general resume onto the shelf and open it there. */
+  const saveAsResume = async () => {
+    if (!profile || savingResume) return
+    setSavingResume(true)
+    try {
+      const response = await fetch("/api/resume-documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: profile, fileName: generalResumeName() }),
+      })
+      const result = await response.json()
+      if (!response.ok || !result.success) throw new Error(result.error || "Couldn't save this resume")
+      toast.success(`Saved "${result.data.fileName}" to your shelf`)
+      router.push(`/resumes/${result.data.id}`)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Couldn't save this resume")
+      setSavingResume(false)
     }
   }
 
@@ -155,6 +209,7 @@ export function ProfileStudio() {
   const modes: ModeOption<Mode>[] = [
     { id: "write", label: "Write", icon: PenLine },
     { id: "review", label: "Review", icon: Sparkles, badge: notes.length || undefined },
+    { id: "suggestions", label: "Suggestions", icon: WandSparkles, badge: bullets.open.length || undefined },
   ]
 
   return (
@@ -169,8 +224,8 @@ export function ProfileStudio() {
         <>
           <Dialog open={clearOpen} onOpenChange={(next) => { if (!clearing) { setClearOpen(next); if (!next) setClearText("") } }}>
             <DialogTrigger asChild>
-              <button type="button" disabled={loading || !profile || (save.state !== "clean" && save.state !== "saved")} title="Clear master profile" className={pill("white", "h-10 px-4 text-[15px] font-medium")}>
-                <Trash2 aria-hidden="true" /> <span className="max-sm:sr-only">Clear profile</span>
+              <button type="button" disabled={loading || !profile || (save.state !== "clean" && save.state !== "saved")} aria-label="Clear master profile" title="Clear master profile" className={pill("white", "h-10 w-10 p-0")}>
+                <Trash2 aria-hidden="true" />
               </button>
             </DialogTrigger>
             <DialogContent className="zip-scope flex flex-col gap-5 border-hairline bg-sheet p-6 rounded-[18px] sm:max-w-md sm:rounded-[18px]">
@@ -198,12 +253,22 @@ export function ProfileStudio() {
               {resumeCount !== null && <span className="text-ink-3"> · {resumeCount}</span>}
             </span>
           </Link>
+          <button
+            type="button"
+            onClick={saveAsResume}
+            disabled={loading || !profile || savingResume}
+            title="Put a copy of this resume on your shelf"
+            className={pill("brand", "h-10 px-5 text-[15px] font-medium")}
+          >
+            {savingResume ? <Loader2 className="animate-spin" aria-hidden="true" /> : <FilePlus2 aria-hidden="true" />}
+            <span className="max-sm:sr-only">Save as resume</span>
+          </button>
           {save.state !== "clean" && save.state !== "saved" && (
             <button
               type="button"
               onClick={save.saveNow}
               disabled={save.state === "saving"}
-              className={pill("brand", "h-10 px-5 text-[15px] font-medium sm:min-w-[104px]")}
+              className={pill("white", "h-10 px-4 text-[15px] font-medium sm:min-w-[104px]")}
             >
               {save.state === "saving" && <Loader2 className="animate-spin" aria-hidden="true" />}
               {save.state === "saving" ? "Saving" : save.state === "failed" ? "Try again" : "Save now"}
@@ -214,7 +279,7 @@ export function ProfileStudio() {
       left={
         mode === "write" ? (
           <SectionNav resume={profile} active={section} onSelect={open} notesBySection={notesBySection(notes)} />
-        ) : (
+        ) : mode === "review" ? (
           <ReviewPanel
             resume={profile}
             feedback={feedback}
@@ -226,7 +291,32 @@ export function ProfileStudio() {
             onDone={dismiss}
             onRestore={restore}
           />
+        ) : (
+          <SuggestionsPanel
+            resume={profile}
+            score={0}
+            rewrites={bullets.live}
+            open={bullets.open}
+            asking={bullets.asking}
+            loaded={bullets.loaded}
+            onAsk={bullets.ask}
+            onGoTo={goToRewrite}
+            onAccept={(rewrite) => bullets.accept(rewrite, edit)}
+            onReject={bullets.reject}
+          />
         )
+      }
+      // The general resume, as a page: the whole profile, nothing left out,
+      // with the AI's marks on the lines they are about once it's connected.
+      preview={
+        <PaperPane
+          resume={profile}
+          rewrites={bullets.live}
+          answered={bullets.answered}
+          onAccept={(rewrite) => bullets.accept(rewrite, edit)}
+          onReject={bullets.reject}
+          onMoreOptions={setMoreFor}
+        />
       }
     >
       {loading ? (
@@ -252,9 +342,29 @@ export function ProfileStudio() {
               notesFor={(entryIndex) => notes.filter((note) => note.section === section && note.entryIndex === entryIndex)}
               onNoteDone={(note) => dismiss(note)}
               onChange={(entries) => edit({ ...profile, [section]: entries } as Resume)}
+              // Only experience and projects have bullets the AI rewrites.
+              rewritesFor={
+                section === "experience" || section === "projects" ? (entryIndex) => bullets.forEntry(section, entryIndex) : undefined
+              }
+              suggestions={{
+                onAccept: (rewrite) => bullets.accept(rewrite, edit),
+                onReject: bullets.reject,
+              }}
             />
           )}
         </div>
+      )}
+
+      {moreFor && profile && (
+        <BulletOptionsDialog
+          open
+          onOpenChange={(next) => !next && setMoreFor(null)}
+          section={moreFor.section}
+          entry={((profile[moreFor.section] ?? []) as Record<string, unknown>[])[moreFor.entryIndex] ?? {}}
+          bullet={moreFor.original}
+          // Taking an option answers the mark the same way taking its single suggestion would.
+          onChoose={(text) => bullets.accept({ ...moreFor, suggested: text }, edit)}
+        />
       )}
     </StudioShell>
   )

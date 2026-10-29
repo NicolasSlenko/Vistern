@@ -120,7 +120,7 @@ const sections: Section[] = [
         target: ['[data-tour="studio-header"]'],
         title: "Master profile",
         body: "One record of everything you’ve done: education, experience, projects and skills. Fill it in once; every resume draws from it.",
-        points: ["Changes save on their own; the note by the title says when", "Resumes opens the resumes you’ve built from it"],
+        points: ["Changes save on their own; the note by the title says when", "The page on the right is your general resume, redrawn as you type", "Save as resume puts a copy of it on your shelf"],
       },
       {
         target: ['[data-tour="studio-left"]'],
@@ -136,8 +136,8 @@ const sections: Section[] = [
       },
       {
         target: ['[data-tour="studio-modes"]'],
-        title: "Write and Review",
-        body: "Write is where you edit. Review asks the AI to read the whole profile and leave notes on the entries that could be stronger.",
+        title: "Write, Review and Suggestions",
+        body: "Write is where you edit. Review asks the AI to read the whole profile and leave notes on the entries that could be stronger. Suggestions is for line-level rewrites of individual bullets.",
         points: ["Each note points to the entry it’s about", "Mark a note done once you’ve dealt with it"],
       },
     ],

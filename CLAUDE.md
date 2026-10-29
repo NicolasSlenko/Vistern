@@ -131,7 +131,7 @@ Vocabulary: `bg-paper bg-sheet bg-fill` · `text-ink text-ink-2 text-ink-3` · `
 
 **The master profile and resume documents are deliberately separate.**
 
-- `/profile` → `student_profiles` + `profile_items`. One record of what the student has actually done. Two columns, no page preview — there is no single document for it to be.
+- `/profile` → `student_profiles` + `profile_items`. One record of what the student has actually done. Three columns: the page on the right is the *general resume* — the whole profile rendered untrimmed by `ResumePaper`, redrawn as the form changes. "Save as resume" `POST`s it to `/api/resume-documents` (`source_type: "generated"`) as a snapshot and opens it on the shelf. The Suggestions tab there is UI only: `use-profile-bullet-review.ts` mirrors `useBulletReview`'s shape with no AI call behind `ask` yet.
 - `/resumes` → `resume_documents`. Many: one per kind of role. `/resumes/[id]` is three columns — the uploaded file on the right, its wording in the middle, the AI's rewrites on the left. Editing a resume never writes back to the profile.
 
 ### Line-level AI suggestions

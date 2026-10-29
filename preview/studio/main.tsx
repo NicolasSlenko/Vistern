@@ -48,7 +48,26 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     }
     return reply({ success: true, data: found }, 320)
   }
-  if (url.startsWith("/api/resume-documents")) return reply({ success: true, data: documents }, 320)
+  if (url.startsWith("/api/resume-documents")) {
+    if (method === "POST") {
+      const body = JSON.parse(String(init!.body)) as { content: unknown; fileName?: string }
+      const created = {
+        ...structuredClone(documents[0]),
+        id: `generated-${documents.length + 1}`,
+        fileName: body.fileName ?? "General resume",
+        s3Key: null,
+        sourceType: "generated",
+        isCurrent: false,
+        isStarred: false,
+        updatedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        content: body.content,
+      }
+      documents.unshift(created as unknown as (typeof documents)[number])
+      return reply({ success: true, data: { id: created.id, fileName: created.fileName, score: created.score } }, 700)
+    }
+    return reply({ success: true, data: documents }, 320)
+  }
   if (url.startsWith("/api/resume-submissions")) return reply({ success: true, data: SAMPLE_SUBMISSIONS }, 420)
 
   if (url.startsWith("/api/analyze/bullets")) {
@@ -81,7 +100,14 @@ const VIEWS: { id: View; label: string }[] = [
 function Preview() {
   const [dark, setDark] = useState(false)
   const [wide, setWide] = useState(false)
-  const [view, setView] = useState<View>("resume")
+  // #profile, #shelf or #resume opens that view straight away.
+  const [view, setView] = useState<View>(() => {
+    const hash = window.location.hash.slice(1)
+    return VIEWS.some((option) => option.id === hash) ? (hash as View) : "resume"
+  })
+  useEffect(() => {
+    window.history.replaceState(null, "", `#${view}`)
+  }, [view])
   // scale() takes a number, and CSS can't divide one length by another, so
   // the factor is worked out here and handed over as a custom property.
   const [scale, setScale] = useState(1)
