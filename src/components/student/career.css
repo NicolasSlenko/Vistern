@@ -959,6 +959,11 @@
 .career-plan-roadmap-hero { display: flex; justify-content: space-between; gap: 30px; padding: 14px 0 30px; border-bottom: 1px solid var(--career-border); }
 .career-plan-roadmap-hero h2,
 .career-plan-pick h2 { max-width: 14ch; margin: 11px 0 14px; color: var(--career-ink); font-size: clamp(38px, 5vw, 58px); line-height: 1.04; letter-spacing: -.06em; }
+/* The plan's hero reads like a page title, so it takes the titles' Newsreader:
+   the track it names and the headline under it. */
+.career-plan-roadmap-hero h2,
+.career-plan-pick h2 { font-family: var(--font-newsreader), Georgia, serif; font-weight: 400; letter-spacing: -.03em; }
+.career-plan-roadmap-hero .career-eyebrow { font-family: var(--font-newsreader), Georgia, serif; font-size: 18px; font-weight: 400; letter-spacing: -.01em; text-transform: none; }
 .career-plan-roadmap-hero p,
 .career-plan-pick > p { max-width: 65ch; font-size: 16px; line-height: 1.7; }
 .career-plan-hero-number { align-self: flex-start; color: var(--career-accent); font: 700 14px var(--font-geist-sans), system-ui, sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; }
