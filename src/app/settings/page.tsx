@@ -276,8 +276,8 @@ export default function SettingsPage() {
             ) : (
               <div className="mx-auto flex max-w-[1000px] flex-col gap-9">
                 <div className="flex flex-col gap-2">
-                  <p className="max-w-[58ch] font-semibold text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
-                    Your account, <em className="not-italic text-brand">your rules</em>
+                  <p className="max-w-[58ch] font-serif text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
+                    Your account, <em className="text-brand">your rules</em>
                   </p>
                   <p className="max-w-[60ch] text-[15px] leading-relaxed text-ink-2">
                     Your name, what the app shows you, and what happens to your data.

@@ -110,8 +110,8 @@ export function ResumeShelf() {
           <div className="flex-1 px-4 py-8 sm:px-8">
             <div className="mx-auto flex max-w-[1000px] flex-col gap-7">
               <div className="flex flex-col gap-2">
-                <p className="max-w-[58ch] font-semibold text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
-                  One profile, <em className="not-italic text-brand">many resumes</em>
+                <p className="max-w-[58ch] font-serif text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
+                  One profile, <em className="text-brand">many resumes</em>
                 </p>
                 <p className="max-w-[60ch] text-[15px] leading-relaxed text-ink-2">
                   Keep a separate resume for each kind of role you’re going after. They’re edited on their own, so a rewrite here never

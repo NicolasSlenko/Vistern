@@ -119,7 +119,7 @@ Stylesheets, imported at the top of `src/app/globals.css`:
 
 Vocabulary: `bg-paper bg-sheet bg-fill` · `text-ink text-ink-2 text-ink-3` · `border-hairline border-rule border-rule-strong` · `text-brand` (Vistern green, standing where resumezip used blue) · `text-alert text-caution` · `shadow-card-rest|open|lifted` · `label-caps`.
 
-**One typeface in the app.** Every page except the landing page is set in Geist Sans only: titles stand out by size and weight (`font-semibold`), labels use `label-caps`, numbers use `tabular-nums`, and green `<em>` accents are `not-italic`. Don't use `font-serif`, `font-mono`, `label-mono` or another font family outside `src/components/landing/`; Newsreader and Geist Mono are loaded only there (`src/components/landing/fonts.ts`).
+**Two typefaces in the app.** Page titles (the large heading at the top of a page or studio view, and `h1` on student tool pages) use `font-serif` (Newsreader), with an italic green `<em>` accent word. Everything else is Geist Sans: card and dialog headings use `font-semibold`, labels `label-caps`, numbers `tabular-nums`, and an `<em>` accent outside a page title is `not-italic`. Don't use `font-mono`, `label-mono` or another font family outside `src/components/landing/`; Geist Mono is loaded only there (`src/components/landing/fonts.ts`).
 
 **Dark mode** works by re-declaring the `--color-*` tokens under `.dark`, outside `@layer theme`. Use `@theme` (not `@theme inline`) for anything that must follow the theme.
 

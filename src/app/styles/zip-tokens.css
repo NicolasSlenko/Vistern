@@ -43,8 +43,8 @@
 }
 
 @theme inline {
-  /* The app sets everything in Geist Sans. Newsreader and Geist Mono are for the
-     landing page only, and are loaded there (components/landing/fonts.ts). */
+  /* Geist Sans for everything in the app, Newsreader (font-serif) for page titles
+     only. Geist Mono is the landing page's, loaded there (components/landing/fonts.ts). */
   --font-serif: var(--font-newsreader), Georgia, "Times New Roman", serif;
 }
 

@@ -74,7 +74,7 @@ export default async function CommunitySectionPage({
               <div className="mx-auto flex max-w-[1080px] flex-col gap-9">
                 <div className="flex flex-col gap-2">
                   <p className="label-caps text-ink-2">Community</p>
-                  <p className="max-w-[58ch] font-semibold text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
+                  <p className="max-w-[58ch] font-serif text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
                     {data.intro}
                   </p>
                 </div>

@@ -86,8 +86,8 @@ export default async function JobsPage() {
               <div className="mx-auto flex max-w-[1080px] flex-col gap-9">
                 <div className="flex flex-col gap-2">
                   <p className="label-caps text-ink-2">Opportunities</p>
-                  <p className="max-w-[58ch] font-semibold text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
-                    Places to look, and a way to <em className="not-italic text-brand">keep track</em>
+                  <p className="max-w-[58ch] font-serif text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
+                    Places to look, and a way to <em className="text-brand">keep track</em>
                   </p>
                   <p className="max-w-[60ch] text-[15px] leading-relaxed text-ink-2">
                     Check each employer or organiser for current openings, dates, and requirements. Roles you save from the job board

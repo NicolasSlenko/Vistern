@@ -284,8 +284,8 @@ function EmptyProfile() {
       <span className="flex h-11 w-11 items-center justify-center rounded-full bg-fill text-brand">
         <Sparkles className="h-[18px] w-[18px]" aria-hidden="true" />
       </span>
-      <h1 className="font-semibold text-[36px] leading-[1.05] tracking-[-0.03em] text-ink">
-        Let’s start from <em className="not-italic text-brand">your resume</em>
+      <h1 className="font-serif text-[36px] leading-[1.05] tracking-[-0.03em] text-ink">
+        Let’s start from <em className="text-brand">your resume</em>
       </h1>
       <p className="max-w-[46ch] text-[15px] leading-relaxed text-ink-2">
         Upload a PDF and we’ll read it into a profile you can edit here — every role, project and skill as its own card. This profile stays

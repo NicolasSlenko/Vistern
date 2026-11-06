@@ -22,7 +22,6 @@ await build({
     "next/navigation": adapter,
     "@clerk/nextjs": adapter,
     "@/contexts/resume-context": adapter,
-    "next/font/google": adapter,
     "geist/font/mono": adapter,
   },
   plugins: [

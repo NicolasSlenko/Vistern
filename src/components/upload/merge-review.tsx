@@ -114,8 +114,8 @@ export function MergeReview({
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <p className="label-caps text-ink-2">Since your last upload</p>
-        <h2 className="font-semibold text-[30px] leading-[1.05] tracking-[-0.03em] text-ink">
-          {changes.length} {changes.length === 1 ? "thing" : "things"} to <em className="not-italic text-brand">bring across</em>
+        <h2 className="font-serif text-[30px] leading-[1.05] tracking-[-0.03em] text-ink">
+          {changes.length} {changes.length === 1 ? "thing" : "things"} to <em className="text-brand">bring across</em>
         </h2>
         <p className="max-w-[58ch] text-[15px] leading-relaxed text-ink-2">
           Your profile keeps everything you have ever done; this resume is one telling of it. Pick what to carry over. Nothing is

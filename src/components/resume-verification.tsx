@@ -285,8 +285,8 @@ export function ResumeVerification({ parsedData, onConfirm, onCancel, open }: Re
               <div className="flex min-w-0 flex-col gap-1.5">
                 <span className="label-caps text-ink-2">Check what we read</span>
                 <DialogPrimitive.Title asChild>
-                  <h2 className="font-semibold text-[30px] leading-[1.05] tracking-[-0.03em] text-ink">
-                    Does this look <em className="not-italic text-brand">right</em>?
+                  <h2 className="font-serif text-[30px] leading-[1.05] tracking-[-0.03em] text-ink">
+                    Does this look <em className="text-brand">right</em>?
                   </h2>
                 </DialogPrimitive.Title>
                 <DialogPrimitive.Description className="max-w-[56ch] text-[15px] leading-relaxed text-ink-2">

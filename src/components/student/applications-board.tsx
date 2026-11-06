@@ -367,8 +367,8 @@ export function ApplicationsBoard({ initialJobs }: { initialJobs: SavedJob[] | n
             <div className="mx-auto flex max-w-[1080px] flex-col gap-9">
               <div className="flex flex-col gap-2">
                 <p className="label-caps text-ink-2">Jobs</p>
-                <p className="max-w-[58ch] font-semibold text-[26px] leading-[1.1] tracking-[-0.03em] text-ink sm:text-[30px]">
-                  Saved roles and <em className="not-italic text-brand">where each one stands</em>
+                <p className="max-w-[58ch] font-serif text-[26px] leading-[1.1] tracking-[-0.03em] text-ink sm:text-[30px]">
+                  Saved roles and <em className="text-brand">where each one stands</em>
                 </p>
               </div>
 

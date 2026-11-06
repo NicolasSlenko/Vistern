@@ -13,7 +13,7 @@ export default function JobsError({ reset }: { reset: () => void }) {
             <div className="flex flex-1 items-center px-4 py-9 sm:px-8 sm:py-12">
               <div role="alert" className="mx-auto flex w-full max-w-[1080px] flex-col items-start gap-4">
                 <p className="label-caps text-alert">Jobs</p>
-                <h1 className="max-w-[20ch] font-semibold text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
+                <h1 className="max-w-[20ch] font-serif text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
                   We couldn’t load your workspace.
                 </h1>
                 <p className="max-w-[56ch] text-[15px] leading-relaxed text-ink-2">

@@ -213,7 +213,7 @@ export function SectionHeading({ title, note, end }: { title: string; note?: str
   return (
     <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
       <div className="flex min-w-0 flex-col gap-[5px]">
-        <h1 tabIndex={-1} className="min-w-0 font-semibold text-[34px] leading-[1.1] tracking-[-0.03em] wrap-anywhere text-ink sm:text-[40px]">
+        <h1 tabIndex={-1} className="min-w-0 font-serif text-[34px] leading-[1.1] tracking-[-0.03em] wrap-anywhere text-ink sm:text-[40px]">
           {title}
         </h1>
         {note && <p className="text-[14px] leading-5 text-ink-3">{note}</p>}

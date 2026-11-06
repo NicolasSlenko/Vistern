@@ -52,12 +52,12 @@
   --student-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 12px -4px rgb(0 0 0 / 0.5);
 }
 
-/* Page titles stay in Geist, as everything in the app does, and stand out by
-   weight rather than by a second typeface. */
+/* Page titles are Newsreader, as they are in the studio: the one place the app
+   uses a second typeface. Everything else, the nav included, stays in Geist. */
 :where(.student-app) h1,
 :where(.student-app) .student-tool-page h1 {
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
-  font-weight: 600;
+  font-family: var(--font-newsreader), Georgia, serif;
+  font-weight: 400;
   letter-spacing: -0.03em;
 }
 

@@ -166,16 +166,16 @@ export function HomeOverview({
                   {greeting(new Date().getHours())}
                   {firstName ? `, ${firstName}` : ""}
                 </p>
-                <h1 className="max-w-[20ch] text-balance font-semibold text-[40px] leading-[1.04] tracking-[-0.035em] text-ink sm:text-[52px]">
+                <h1 className="max-w-[20ch] text-balance font-serif text-[40px] leading-[1.04] tracking-[-0.035em] text-ink sm:text-[52px]">
                   {primary ? (
                     primary.title
                   ) : hasProjects ? (
                     <>
-                      What will you <em className="not-italic text-brand">build</em> next?
+                      What will you <em className="text-brand">build</em> next?
                     </>
                   ) : (
                     <>
-                      Find a direction <em className="not-italic text-brand">worth</em> exploring
+                      Find a direction <em className="text-brand">worth</em> exploring
                     </>
                   )}
                 </h1>

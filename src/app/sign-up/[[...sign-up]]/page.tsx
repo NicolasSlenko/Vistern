@@ -14,8 +14,8 @@ export default function SignUpPage() {
       <AuthPage title="Vistern">
         <div className="flex w-full flex-col gap-5 px-2 py-4 sm:px-4">
           <div className="flex flex-col gap-2">
-            <h1 className="font-semibold text-[32px] leading-[1.05] tracking-[-0.03em] text-ink">
-              Before we <em className="not-italic text-brand">begin</em>
+            <h1 className="font-serif text-[32px] leading-[1.05] tracking-[-0.03em] text-ink">
+              Before we <em className="text-brand">begin</em>
             </h1>
             <p className="text-[15px] leading-relaxed text-ink-2">Here is exactly what happens to the resume you upload.</p>
           </div>

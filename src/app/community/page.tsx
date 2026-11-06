@@ -25,8 +25,8 @@ export default async function CommunityPage() {
               <div className="mx-auto flex max-w-[1080px] flex-col gap-9">
                 <div className="flex flex-col gap-2">
                   <p className="label-caps text-ink-2">Community</p>
-                  <p className="max-w-[58ch] font-semibold text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
-                    Computing groups, collaborators and <em className="not-italic text-brand">research</em> at UF
+                  <p className="max-w-[58ch] font-serif text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
+                    Computing groups, collaborators and <em className="text-brand">research</em> at UF
                   </p>
                   <p className="max-w-[60ch] text-[15px] leading-relaxed text-ink-2">
                     Check each organisation’s website for current activities and ways to participate. Add one to your plan to keep

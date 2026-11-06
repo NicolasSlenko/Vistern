@@ -46,7 +46,7 @@ export const clerkAppearance = {
     cardBox: "w-full shadow-none",
     card: "w-full border-0 bg-transparent shadow-none",
     header: "gap-1",
-    headerTitle: "font-semibold text-[30px] leading-tight tracking-[-0.03em] text-ink",
+    headerTitle: "font-serif text-[30px] leading-tight tracking-[-0.03em] text-ink",
     headerSubtitle: "text-[14px] text-ink-2",
     socialButtonsBlockButton: "white-button rounded-full border-0 text-ink",
     dividerLine: "bg-hairline",

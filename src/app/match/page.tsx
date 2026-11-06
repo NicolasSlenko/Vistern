@@ -397,8 +397,8 @@ export default function MatchPage() {
         <>
           <div className="flex flex-col gap-2">
             <p className="label-caps text-ink-2">Matches</p>
-            <p className="max-w-[58ch] font-semibold text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
-              Live roles, read <em className="not-italic text-brand">against your resume</em>
+            <p className="max-w-[58ch] font-serif text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
+              Live roles, read <em className="text-brand">against your resume</em>
             </p>
             <p className="max-w-[60ch] text-[15px] leading-relaxed text-ink-2">
               {liveJobs ? `${liveJobs.length} ${liveJobs.length === 1 ? "role" : "roles"} ranked by fit` : "Ranking roles by fit"}
