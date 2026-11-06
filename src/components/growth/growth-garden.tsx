@@ -251,7 +251,7 @@ export function GrowthGarden({
           {showing ? (
             <div className="flex flex-col gap-1.5 rounded-[14px] border border-hairline bg-sheet p-3.5 shadow-card-rest">
               <div className="flex items-baseline justify-between gap-2">
-                <span className="label-mono text-ink-2">{showing.label}</span>
+                <span className="label-caps text-ink-2">{showing.label}</span>
                 {monthYear(showing.date) && <span className="text-[12px] text-ink-3">{monthYear(showing.date)}</span>}
               </div>
               <p className="text-[15px] font-medium leading-snug tracking-[-0.01em] text-ink">{showing.title}</p>

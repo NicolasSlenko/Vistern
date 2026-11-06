@@ -36,7 +36,7 @@ function ChipGroup({
   const id = useId()
   return (
     <div className="flex flex-col gap-2.5">
-      <p id={id} className="label-mono text-ink-2">
+      <p id={id} className="label-caps text-ink-2">
         {label}
       </p>
       <div role="group" aria-labelledby={id} className={className}>
@@ -125,7 +125,7 @@ export function PrefsModal({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="zip-scope flex max-h-[84vh] flex-col gap-5 overflow-y-auto rounded-[18px] border-hairline bg-sheet p-6 sm:max-w-lg sm:rounded-[18px]">
         <DialogHeader className="flex flex-col gap-1.5">
-          <DialogTitle className="font-serif text-[26px] font-normal leading-tight tracking-[-0.025em] text-ink">
+          <DialogTitle className="font-semibold text-[26px] leading-tight tracking-[-0.025em] text-ink">
             Search preferences
           </DialogTitle>
           <p className="text-[14px] leading-relaxed text-ink-2">

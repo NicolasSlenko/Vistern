@@ -140,7 +140,7 @@ export default function CourseMatchingTest() {
                           <div className="flex-1">
                             <p className="font-medium">{match.resumeCourse}</p>
                             <p className="text-sm text-muted-foreground mt-1">
-                              Matched to: <span className="font-mono">{match.ufCourse.code}</span> -{" "}
+                              Matched to: <span className="tabular-nums">{match.ufCourse.code}</span> -{" "}
                               {match.ufCourse.name}
                             </p>
                           </div>

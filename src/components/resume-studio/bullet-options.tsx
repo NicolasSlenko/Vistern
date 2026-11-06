@@ -116,7 +116,7 @@ export function OptionCards({
             }`}
           >
             <div className="flex items-center justify-between gap-3">
-              <span className="label-mono text-ink-2">
+              <span className="label-caps text-ink-2">
                 Option {index + 1} · {option.angle || "Rewrite"}
               </span>
               {chosen && <Check className="h-4 w-4 text-brand" aria-hidden="true" />}
@@ -252,7 +252,7 @@ export function BulletOptionsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="zip-scope flex max-h-[90vh] flex-col gap-5 overflow-y-auto rounded-[18px] border-hairline bg-sheet p-6 sm:max-w-xl sm:rounded-[18px]">
         <DialogHeader className="flex flex-col gap-2">
-          <DialogTitle className="flex items-center gap-2 font-serif text-[26px] font-normal leading-tight tracking-[-0.025em] text-ink">
+          <DialogTitle className="flex items-center gap-2 font-semibold text-[26px] leading-tight tracking-[-0.025em] text-ink">
             <Sparkles className="h-5 w-5 shrink-0 text-brand" aria-hidden="true" /> Improve this bullet
           </DialogTitle>
           <DialogDescription className="text-[14px] leading-relaxed text-ink-2">
@@ -261,7 +261,7 @@ export function BulletOptionsDialog({
         </DialogHeader>
 
         <div className="flex flex-col gap-1.5 rounded-[14px] bg-fill px-3.5 py-3">
-          <span className="label-mono text-ink-3">Now</span>
+          <span className="label-caps text-ink-3">Now</span>
           <p className="text-[14.5px] leading-snug text-ink-2">{bullet}</p>
         </div>
 
@@ -279,7 +279,7 @@ export function BulletOptionsDialog({
 
         {contextOpen && (
           <div className="flex flex-col gap-2">
-            <label htmlFor="bullet-context" className="label-mono text-ink-2">
+            <label htmlFor="bullet-context" className="label-caps text-ink-2">
               What should the AI know?
             </label>
             <textarea

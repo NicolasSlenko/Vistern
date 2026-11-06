@@ -19,8 +19,8 @@ export default function UploadPage() {
           <div className="flex-1 px-4 py-9 sm:px-8 sm:py-12">
             <div className="mx-auto flex max-w-[1000px] flex-col gap-9">
               <div className="flex flex-col gap-2">
-                <p className="max-w-[58ch] font-serif text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
-                  Start from the resume <em className="text-brand">you already have</em>
+                <p className="max-w-[58ch] font-semibold text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
+                  Start from the resume <em className="not-italic text-brand">you already have</em>
                 </p>
                 <p className="max-w-[60ch] text-[15px] leading-relaxed text-ink-2">
                   We’ll read the file, show you what we found, and let you correct it before anything reaches your profile.

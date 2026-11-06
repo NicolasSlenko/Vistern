@@ -155,7 +155,7 @@ export default function QuestionnaireForm({ initialData }: QuestionnaireFormProp
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="bg-muted p-4 rounded-lg overflow-auto max-h-[500px]">
-              <pre className="text-sm font-mono">{JSON.stringify(jsonOutput, null, 2)}</pre>
+              <pre className="whitespace-pre-wrap text-sm">{JSON.stringify(jsonOutput, null, 2)}</pre>
             </div>
             <div className="flex gap-2">
               <Button

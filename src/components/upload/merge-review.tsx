@@ -46,7 +46,7 @@ function Row({ change, on, onToggle }: { change: ProposedChange; on: boolean; on
 
         <span className="flex min-w-0 flex-1 flex-col gap-1.5">
           <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <span className="label-mono flex items-center gap-1 text-ink-3">
+            <span className="label-caps flex items-center gap-1 text-ink-3">
               {change.kind === "added" ? <Plus className="h-3 w-3" /> : <RefreshCw className="h-3 w-3" />}
               {change.kind === "added" ? "New" : "Changed"}
             </span>
@@ -58,7 +58,7 @@ function Row({ change, on, onToggle }: { change: ProposedChange; on: boolean; on
               swapped out without the student having seen the old words. */}
           {change.fields?.map((field) => (
             <span key={field.label} className="flex flex-col gap-0.5 border-l-2 border-rule pl-2.5">
-              <span className="label-mono text-ink-3">{field.label}</span>
+              <span className="label-caps text-ink-3">{field.label}</span>
               <span className="text-[13px] leading-snug text-ink-3 line-through decoration-ink-3/40">{field.before}</span>
               <span className="text-[13px] leading-snug text-ink">{field.after}</span>
             </span>
@@ -113,9 +113,9 @@ export function MergeReview({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <p className="label-mono text-ink-2">Since your last upload</p>
-        <h2 className="font-serif text-[30px] leading-[1.05] tracking-[-0.03em] text-ink">
-          {changes.length} {changes.length === 1 ? "thing" : "things"} to <em className="text-brand">bring across</em>
+        <p className="label-caps text-ink-2">Since your last upload</p>
+        <h2 className="font-semibold text-[30px] leading-[1.05] tracking-[-0.03em] text-ink">
+          {changes.length} {changes.length === 1 ? "thing" : "things"} to <em className="not-italic text-brand">bring across</em>
         </h2>
         <p className="max-w-[58ch] text-[15px] leading-relaxed text-ink-2">
           Your profile keeps everything you have ever done; this resume is one telling of it. Pick what to carry over. Nothing is
@@ -138,7 +138,7 @@ export function MergeReview({
 
       {grouped.map(({ section, rows }) => (
         <section key={section} className="flex flex-col gap-2">
-          <h3 className="label-mono border-b border-hairline pb-1.5 text-ink-2">
+          <h3 className="label-caps border-b border-hairline pb-1.5 text-ink-2">
             {SECTION_NAME[section]} <span className="text-ink-3">· {rows.length}</span>
           </h3>
           <ul className="flex flex-col gap-2">

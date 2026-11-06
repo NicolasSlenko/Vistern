@@ -68,7 +68,7 @@ function DeleteAccountDialog() {
       </DialogTrigger>
       <DialogContent className="zip-scope flex flex-col gap-5 border-hairline bg-sheet p-6 rounded-[18px] sm:max-w-md sm:rounded-[18px]">
         <DialogHeader className="flex flex-col gap-2">
-          <DialogTitle className="flex items-center gap-2 font-serif text-[26px] leading-tight font-normal tracking-[-0.025em] text-ink">
+          <DialogTitle className="flex items-center gap-2 font-semibold text-[26px] leading-tight tracking-[-0.025em] text-ink">
             <AlertTriangle className="h-5 w-5 shrink-0 text-alert" aria-hidden="true" /> Delete your account
           </DialogTitle>
           <DialogDescription className="text-[15px] leading-relaxed text-ink-2">
@@ -76,7 +76,7 @@ function DeleteAccountDialog() {
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-2">
-          <label htmlFor="delete-confirm" className="label-mono text-ink-2">
+          <label htmlFor="delete-confirm" className="label-caps text-ink-2">
             Type DELETE to confirm
           </label>
           <input
@@ -86,7 +86,7 @@ function DeleteAccountDialog() {
             placeholder="DELETE"
             disabled={isDeleting}
             autoComplete="off"
-            className="h-10 w-full rounded-[12px] border border-rule-strong bg-sheet px-3 font-mono text-[14px] tracking-[0.04em] text-ink outline-none transition-colors placeholder:text-ink-2/50 focus-visible:border-brand disabled:opacity-50"
+            className="h-10 w-full rounded-[12px] border border-rule-strong bg-sheet px-3 tabular-nums text-[14px] tracking-[0.04em] text-ink outline-none transition-colors placeholder:text-ink-2/50 focus-visible:border-brand disabled:opacity-50"
           />
         </div>
         <DialogFooter className="gap-2 sm:gap-2.5">
@@ -110,11 +110,11 @@ function DeleteAccountDialog() {
   )
 }
 
-/** A panel on the sheet: a hairline card under a small monospace heading. */
+/** A panel on the sheet: a hairline card under a small caps heading. */
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="flex flex-col gap-4 rounded-[18px] border border-hairline bg-sheet p-5 shadow-card-rest sm:p-6">
-      <h2 className="label-mono text-ink-2">{title}</h2>
+      <h2 className="label-caps text-ink-2">{title}</h2>
       {children}
     </section>
   )
@@ -276,8 +276,8 @@ export default function SettingsPage() {
             ) : (
               <div className="mx-auto flex max-w-[1000px] flex-col gap-9">
                 <div className="flex flex-col gap-2">
-                  <p className="max-w-[58ch] font-serif text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
-                    Your account, <em className="text-brand">your rules</em>
+                  <p className="max-w-[58ch] font-semibold text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
+                    Your account, <em className="not-italic text-brand">your rules</em>
                   </p>
                   <p className="max-w-[60ch] text-[15px] leading-relaxed text-ink-2">
                     Your name, what the app shows you, and what happens to your data.
@@ -306,7 +306,7 @@ export default function SettingsPage() {
                   </div>
 
                   <dl className="flex flex-col gap-1.5">
-                    <dt className="label-mono text-ink-2">Email</dt>
+                    <dt className="label-caps text-ink-2">Email</dt>
                     <dd className="rounded-[12px] bg-fill px-3 py-2 text-[15px] wrap-anywhere text-ink">
                       {user?.primaryEmailAddress?.emailAddress ?? "—"}
                     </dd>

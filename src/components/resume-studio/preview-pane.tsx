@@ -29,7 +29,7 @@ function PrintingPage({ label }: { label: string }) {
     <div className="flex h-full items-center justify-center p-6">
       <div className="relative aspect-[8.5/11] w-full max-w-[520px] overflow-hidden rounded-[6px] bg-sheet shadow-[0_1px_2px_rgb(10_24_17/0.08),0_12px_30px_-16px_rgb(10_24_17/0.4)]">
         <div className="print-sweep absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-brand to-transparent" />
-        <span className="label-mono absolute inset-x-0 bottom-6 text-center text-ink-3">{label}</span>
+        <span className="label-caps absolute inset-x-0 bottom-6 text-center text-ink-3">{label}</span>
       </div>
     </div>
   )
@@ -68,7 +68,7 @@ export function PreviewPane({ submission }: { submission: Submission | null }) {
         <span className="flex h-11 w-11 items-center justify-center rounded-full bg-sheet text-ink-3 shadow-card-rest">
           <Upload className="h-[18px] w-[18px]" aria-hidden="true" />
         </span>
-        <p className="font-serif text-[22px] leading-tight tracking-[-0.02em] text-ink">No file to show</p>
+        <p className="font-semibold text-[22px] leading-tight tracking-[-0.02em] text-ink">No file to show</p>
         <p className="max-w-[28ch] text-[13px] leading-snug text-ink-2">
           Upload a PDF and it’ll sit here beside the form, so you can see what you’re editing against.
         </p>

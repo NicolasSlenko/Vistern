@@ -5,7 +5,7 @@ import { useId } from "react"
 /**
  * The studio's form controls. A field has no box, just a line under it, green
  * where the cursor is, with a soft light rising from that line while it has
- * focus. Its label is small monospace caps, and turns green with the line.
+ * focus. Its label is small caps, and turns green with the line.
  *
  * Adapted from resumezip (MIT, © 2025 Ian Hoang).
  */
@@ -40,7 +40,7 @@ function FocusLine() {
   )
 }
 
-const LABEL = "label-mono text-ink-2 transition-colors group-focus-within/field:text-brand"
+const LABEL = "label-caps text-ink-2 transition-colors group-focus-within/field:text-brand"
 
 interface FieldProps {
   label: string
@@ -208,12 +208,12 @@ export function TagsField({
   )
 }
 
-/** The big serif title at the top of each section, with a note under it and room for an action at its end. */
+/** The big title at the top of each section, with a note under it and room for an action at its end. */
 export function SectionHeading({ title, note, end }: { title: string; note?: string; end?: React.ReactNode }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
       <div className="flex min-w-0 flex-col gap-[5px]">
-        <h1 tabIndex={-1} className="min-w-0 font-serif text-[34px] leading-[1.1] tracking-[-0.03em] wrap-anywhere text-ink sm:text-[40px]">
+        <h1 tabIndex={-1} className="min-w-0 font-semibold text-[34px] leading-[1.1] tracking-[-0.03em] wrap-anywhere text-ink sm:text-[40px]">
           {title}
         </h1>
         {note && <p className="text-[14px] leading-5 text-ink-3">{note}</p>}

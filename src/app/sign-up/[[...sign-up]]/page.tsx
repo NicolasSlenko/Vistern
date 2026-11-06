@@ -14,14 +14,14 @@ export default function SignUpPage() {
       <AuthPage title="Vistern">
         <div className="flex w-full flex-col gap-5 px-2 py-4 sm:px-4">
           <div className="flex flex-col gap-2">
-            <h1 className="font-serif text-[32px] leading-[1.05] tracking-[-0.03em] text-ink">
-              Before we <em className="text-brand">begin</em>
+            <h1 className="font-semibold text-[32px] leading-[1.05] tracking-[-0.03em] text-ink">
+              Before we <em className="not-italic text-brand">begin</em>
             </h1>
             <p className="text-[15px] leading-relaxed text-ink-2">Here is exactly what happens to the resume you upload.</p>
           </div>
 
           <div className="flex flex-col gap-3 rounded-[18px] border border-hairline bg-fill p-5">
-            <h2 className="label-mono text-ink-2">How we use AI</h2>
+            <h2 className="label-caps text-ink-2">How we use AI</h2>
             <p className="text-[14px] leading-relaxed text-ink-2">
               A language model reads your resume to pull out your experience, score each bullet, match your skills against roles, and write
               the suggestions you see in the app. That is all it is used for.

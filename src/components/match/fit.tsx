@@ -30,8 +30,8 @@ export function fitLabel(score: number) {
 export function Score({ value, unit = "match", size = "text-[32px]" }: { value: number; unit?: string; size?: string }) {
   return (
     <p className="flex shrink-0 items-baseline gap-1.5">
-      <span className={`font-serif ${size} leading-[0.9] tracking-[-0.04em] tabular-nums text-ink`}>{Math.round(value)}</span>
-      <span className="label-mono text-ink-3">{unit}</span>
+      <span className={`font-semibold ${size} leading-[0.9] tracking-[-0.04em] tabular-nums text-ink`}>{Math.round(value)}</span>
+      <span className="label-caps text-ink-3">{unit}</span>
     </p>
   )
 }
@@ -95,7 +95,7 @@ export function FitNotes({ analysis, label }: { analysis: FitAnalysis; label: st
             }`}
           >
             {item.label}
-            <span className="label-mono text-ink-3">{lists[item.key].length}</span>
+            <span className="label-caps text-ink-3">{lists[item.key].length}</span>
           </button>
         ))}
       </div>

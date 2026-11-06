@@ -287,8 +287,8 @@ function NotFound() {
     <div className="zip-scope desk desk-bright flex min-h-[calc(100vh-var(--chrome-top,82px))] items-center justify-center p-6">
       <div className="paper-frame w-full max-w-[520px]">
         <div className="paper flex flex-col items-center gap-4 px-6 py-12 text-center sm:px-12">
-          <span className="label-mono inline-flex h-[28px] items-center rounded-full bg-fill px-3 text-ink-2">Not here</span>
-          <h1 className="font-serif text-[36px] leading-tight tracking-[-0.025em] text-ink">Resume not found</h1>
+          <span className="label-caps inline-flex h-[28px] items-center rounded-full bg-fill px-3 text-ink-2">Not here</span>
+          <h1 className="font-semibold text-[36px] leading-tight tracking-[-0.025em] text-ink">Resume not found</h1>
           <p className="max-w-md text-[15px] leading-relaxed text-ink-2">It may have been deleted, or it belongs to another account.</p>
           <Link href="/resumes" className={`${pill("brand")} mt-1`}>
             Back to your resumes

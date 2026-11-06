@@ -73,8 +73,8 @@ export default async function CommunitySectionPage({
             <div className="flex-1 px-4 py-9 sm:px-8 sm:py-12">
               <div className="mx-auto flex max-w-[1080px] flex-col gap-9">
                 <div className="flex flex-col gap-2">
-                  <p className="label-mono text-ink-2">Community</p>
-                  <p className="max-w-[58ch] font-serif text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
+                  <p className="label-caps text-ink-2">Community</p>
+                  <p className="max-w-[58ch] font-semibold text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
                     {data.intro}
                   </p>
                 </div>
@@ -83,7 +83,7 @@ export default async function CommunitySectionPage({
                   <span className="flex h-11 w-11 items-center justify-center rounded-full bg-fill text-brand">
                     <Icon className="h-[18px] w-[18px]" strokeWidth={1.7} aria-hidden="true" />
                   </span>
-                  <h2 className="font-serif text-[26px] leading-tight tracking-[-0.025em] text-ink">{data.emptyTitle}</h2>
+                  <h2 className="font-semibold text-[26px] leading-tight tracking-[-0.025em] text-ink">{data.emptyTitle}</h2>
                   <p className="max-w-[54ch] text-[15px] leading-relaxed text-ink-2">{data.emptyCopy}</p>
                   <div className="flex flex-wrap items-center gap-3 pt-1">
                     {data.links.map((link, index) => (

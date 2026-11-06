@@ -170,7 +170,7 @@ function Bullet({
 
       {open && (
         <div id={details} className="mb-2.5 ml-5 flex flex-col gap-2 border-l-2 border-caution/40 pl-3">
-          <p className="label-mono flex items-center gap-1.5 text-ink-3">
+          <p className="label-caps flex items-center gap-1.5 text-ink-3">
             <Sparkles className="h-3 w-3" aria-hidden="true" />
             {SEVERITY_NAME[rewrite!.severity]} · suggested rewrite
           </p>
@@ -265,9 +265,9 @@ export function BulletList({
   return (
     <div data-bullets={label} className="flex min-w-0 flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
-        <span className="label-mono text-ink-2">{label}</span>
+        <span className="label-caps text-ink-2">{label}</span>
         {waiting > 0 && (
-          <span className="label-mono flex items-center gap-1.5 text-caution">
+          <span className="label-caps flex items-center gap-1.5 text-caution">
             <span aria-hidden="true" className="h-[6px] w-[6px] rounded-full bg-caution" />
             {waiting} {waiting === 1 ? "suggestion" : "suggestions"}
           </span>

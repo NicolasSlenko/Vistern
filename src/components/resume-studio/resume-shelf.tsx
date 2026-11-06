@@ -110,8 +110,8 @@ export function ResumeShelf() {
           <div className="flex-1 px-4 py-8 sm:px-8">
             <div className="mx-auto flex max-w-[1000px] flex-col gap-7">
               <div className="flex flex-col gap-2">
-                <p className="max-w-[58ch] font-serif text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
-                  One profile, <em className="text-brand">many resumes</em>
+                <p className="max-w-[58ch] font-semibold text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
+                  One profile, <em className="not-italic text-brand">many resumes</em>
                 </p>
                 <p className="max-w-[60ch] text-[15px] leading-relaxed text-ink-2">
                   Keep a separate resume for each kind of role you’re going after. They’re edited on their own, so a rewrite here never
@@ -135,7 +135,7 @@ export function ResumeShelf() {
                   <span className="flex h-11 w-11 items-center justify-center rounded-full bg-fill text-brand">
                     <FileText className="h-[18px] w-[18px]" aria-hidden="true" />
                   </span>
-                  <p className="font-serif text-[26px] leading-tight tracking-[-0.025em] text-ink">Nothing on the shelf yet</p>
+                  <p className="font-semibold text-[26px] leading-tight tracking-[-0.025em] text-ink">Nothing on the shelf yet</p>
                   <p className="max-w-[48ch] text-[15px] leading-relaxed text-ink-2">
                     Upload a PDF and we’ll read it in. You’ll get the file to look at, its wording to edit, and the AI’s rewrite for every
                     weak bullet.
@@ -196,7 +196,7 @@ export function ResumeShelf() {
         >
           <div className="paper-frame w-full max-w-[440px]">
             <div className="paper flex flex-col gap-3 p-6">
-              <h2 id="delete-resume-title" className="font-serif text-[26px] leading-tight tracking-[-0.025em] text-ink">
+              <h2 id="delete-resume-title" className="font-semibold text-[26px] leading-tight tracking-[-0.025em] text-ink">
                 Delete this resume?
               </h2>
               <p className="text-[15px] leading-relaxed text-ink-2">

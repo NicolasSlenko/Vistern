@@ -12,8 +12,8 @@ export default function CommunityError({ reset }: { reset: () => void }) {
           <div className="paper flex min-h-[calc(100vh-var(--chrome-top,82px)-68px)] flex-col">
             <div className="flex flex-1 items-center px-4 py-9 sm:px-8 sm:py-12">
               <div role="alert" className="mx-auto flex w-full max-w-[1080px] flex-col items-start gap-4">
-                <p className="label-mono text-alert">Community</p>
-                <h1 className="max-w-[20ch] font-serif text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
+                <p className="label-caps text-alert">Community</p>
+                <h1 className="max-w-[20ch] font-semibold text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
                   We couldn’t load your workspace.
                 </h1>
                 <p className="max-w-[56ch] text-[15px] leading-relaxed text-ink-2">

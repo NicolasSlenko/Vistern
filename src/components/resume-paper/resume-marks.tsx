@@ -95,7 +95,7 @@ function Tip({
           : { bottom: `calc(${percent(height - top, height)} + 8px)` }),
       }}
     >
-      <p className={`label-mono ${placed.rewrite.severity === "fix" ? "text-alert" : "text-caution"}`}>
+      <p className={`label-caps ${placed.rewrite.severity === "fix" ? "text-alert" : "text-caution"}`}>
         {SEVERITY_NAME[placed.rewrite.severity]}
       </p>
       <div id={describe}>

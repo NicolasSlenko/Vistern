@@ -112,12 +112,14 @@ Stylesheets, imported at the top of `src/app/globals.css`:
 
 | File | Holds |
 | --- | --- |
-| `src/app/styles/zip-tokens.css` | Colour, radius, shadow and easing tokens, light and dark; `label-mono`, `bg-hatch`, `no-scrollbar` |
+| `src/app/styles/zip-tokens.css` | Colour, radius, shadow and easing tokens, light and dark; `label-caps` (`label-mono` on the landing page), `bg-hatch`, `no-scrollbar` |
 | `src/app/styles/zip-glass.css` | `.glass` and its tints, and `.desk` — the painted sky |
 | `src/app/styles/zip-sheet.css` | `.paper-frame`, `.paper`, the segmented control, `brand-button` / `white-button` / `ink-button` / `lift-button` |
 | `src/app/styles/zip-studio.css` | Studio-only: the score odometer, dotted leaders, the `ai-ask` pill. All scoped under `.zip-scope` |
 
-Vocabulary: `bg-paper bg-sheet bg-fill` · `text-ink text-ink-2 text-ink-3` · `border-hairline border-rule border-rule-strong` · `text-brand` (Vistern green, standing where resumezip used blue) · `text-alert text-caution` · `shadow-card-rest|open|lifted` · `font-serif` (Newsreader, page titles only) · `label-mono`.
+Vocabulary: `bg-paper bg-sheet bg-fill` · `text-ink text-ink-2 text-ink-3` · `border-hairline border-rule border-rule-strong` · `text-brand` (Vistern green, standing where resumezip used blue) · `text-alert text-caution` · `shadow-card-rest|open|lifted` · `label-caps`.
+
+**One typeface in the app.** Every page except the landing page is set in Geist Sans only: titles stand out by size and weight (`font-semibold`), labels use `label-caps`, numbers use `tabular-nums`, and green `<em>` accents are `not-italic`. Don't use `font-serif`, `font-mono`, `label-mono` or another font family outside `src/components/landing/`; Newsreader and Geist Mono are loaded only there (`src/components/landing/fonts.ts`).
 
 **Dark mode** works by re-declaring the `--color-*` tokens under `.dark`, outside `@layer theme`. Use `@theme` (not `@theme inline`) for anything that must follow the theme.
 

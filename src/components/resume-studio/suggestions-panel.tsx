@@ -50,7 +50,7 @@ function Suggestion({
           <Dot severity={rewrite.severity} />
         </span>
         <span className="flex min-w-0 flex-col gap-1">
-          <span className="label-mono text-ink-3">{name}</span>
+          <span className="label-caps text-ink-3">{name}</span>
           {/* What's there now, struck through, then what the AI would put instead. */}
           <span className="text-[13px] leading-snug text-ink-3 line-through decoration-ink-3/40">{rewrite.original}</span>
           <span id={details} className="text-sm leading-snug text-ink">
@@ -118,12 +118,12 @@ export function SuggestionsPanel({
   if (asking) {
     return (
       <section aria-labelledby={heading} className="flex flex-col gap-3">
-        <h2 id={heading} className="label-mono text-ink-2">
+        <h2 id={heading} className="label-caps text-ink-2">
           Suggestions
         </h2>
         <div className="flex flex-col gap-3 border-t border-ink pt-3.5">
-          <p className="text-balance font-serif text-[30px] leading-[1.02] tracking-[-0.03em] text-ink">
-            Reading every <em className="text-brand">line…</em>
+          <p className="text-balance font-semibold text-[30px] leading-[1.02] tracking-[-0.03em] text-ink">
+            Reading every <em className="not-italic text-brand">line…</em>
           </p>
           <p className="text-[13px] leading-snug text-ink-2">One bullet at a time, the way a recruiter reads it.</p>
           <div aria-hidden="true" className="mt-2 flex flex-col gap-3">
@@ -143,7 +143,7 @@ export function SuggestionsPanel({
 
   if (!loaded) {
     return (
-      <p className="label-mono text-ink-3" role="status">
+      <p className="label-caps text-ink-3" role="status">
         Loading…
       </p>
     )
@@ -152,11 +152,11 @@ export function SuggestionsPanel({
   if (rewrites.length === 0) {
     return (
       <section aria-labelledby={heading} className="flex flex-col gap-3">
-        <h2 id={heading} className="label-mono text-ink-2">
+        <h2 id={heading} className="label-caps text-ink-2">
           Suggestions
         </h2>
-        <p className="font-serif text-[30px] leading-[1.02] tracking-[-0.03em] text-ink">
-          Let the AI read it <em className="text-brand">line by line</em>
+        <p className="font-semibold text-[30px] leading-[1.02] tracking-[-0.03em] text-ink">
+          Let the AI read it <em className="not-italic text-brand">line by line</em>
         </p>
         <p className="text-[13px] leading-snug text-ink-2">
           It marks the weak bullets, writes each one out the way it should read, and you take it or leave it one at a time.
@@ -170,20 +170,20 @@ export function SuggestionsPanel({
 
   return (
     <section aria-labelledby={heading} className="flex flex-col gap-4">
-      <h2 id={heading} className="label-mono text-ink-2">
+      <h2 id={heading} className="label-caps text-ink-2">
         Suggestions
       </h2>
 
       <div className="flex items-baseline gap-2.5 border-b border-ink pb-3">
-        <span className="font-serif text-[52px] leading-[0.85] tracking-[-0.045em] tabular-nums text-ink">{open.length}</span>
-        <span className="label-mono text-ink-2">{open.length === 1 ? "to answer" : "to answer"}</span>
+        <span className="font-semibold text-[52px] leading-[0.85] tracking-[-0.045em] tabular-nums text-ink">{open.length}</span>
+        <span className="label-caps text-ink-2">{open.length === 1 ? "to answer" : "to answer"}</span>
         {answered > 0 && <span className="ml-auto text-[13px] text-ink-3">{answered} done</span>}
       </div>
 
       {open.length === 0 ? (
         <div className="flex flex-col gap-3">
-          <p className="font-serif text-[26px] leading-[1.05] tracking-[-0.025em] text-ink">
-            All <em className="text-brand">answered</em>
+          <p className="font-semibold text-[26px] leading-[1.05] tracking-[-0.025em] text-ink">
+            All <em className="not-italic text-brand">answered</em>
           </p>
           <p className="text-[13px] leading-snug text-ink-2">
             Scored {score} out of 100 as it stands. Rewrite a few more lines and ask again to see it move.
@@ -196,7 +196,7 @@ export function SuggestionsPanel({
         bySeverity.map(({ severity, items }) =>
           items.length === 0 ? null : (
             <section key={severity} aria-label={`${SEVERITY_NAME[severity]}, ${items.length}`} className="flex flex-col gap-1">
-              <h3 className="label-mono flex items-center gap-1.5 text-ink-2">
+              <h3 className="label-caps flex items-center gap-1.5 text-ink-2">
                 <Dot severity={severity} />
                 {SEVERITY_NAME[severity]} · {items.length}
               </h3>
