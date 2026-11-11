@@ -14,7 +14,15 @@ import { rewriteKey, type BulletField, type BulletSection } from "@/lib/resume-s
  * under, which is the whole hinge: resume-marks.tsx finds these nodes, takes
  * their rectangles, and draws over them without either side knowing about the
  * other's layout.
+ *
+ * Review notes are about whole entries and sections rather than lines, so the
+ * entry heads carry `entry.<section>.<index>` and the section headings
+ * `section.<ref>` (the name, `section.profile`) for those to sit on.
  */
+
+/** Where a review note about a whole entry, or a whole section, is drawn. */
+export const entryMark = (section: string, index: number) => `entry.${section}.${index}`
+export const sectionMark = (section: string) => `section.${section}`
 
 /** Letter paper, in the units the marks are measured in. 1 unit ≈ 1pt at 100%. */
 export const PAGE = { width: 612, height: 792 }
@@ -31,20 +39,23 @@ function dateRange(start?: string, end?: string): string {
 }
 
 /** A section's rule and heading, in the small-caps a resume uses. */
-function Heading({ children }: { children: React.ReactNode }) {
+function Heading({ children, section }: { children: React.ReactNode; section: string }) {
   return (
-    <h2 className="mb-[3px] mt-[11px] border-b border-black pb-[1px] text-[11.5px] font-bold uppercase tracking-[0.06em] text-black first:mt-0">
-      {children}
+    <h2
+      data-mark={sectionMark(section)}
+      className="mb-[3px] mt-[11px] border-b border-black pb-[1px] text-[11.5px] font-bold uppercase tracking-[0.06em] text-black first:mt-0"
+    >
+      <span data-mark-text>{children}</span>
     </h2>
   )
 }
 
 /** The two-column line every entry opens with: what and where, when and whence. */
-function EntryHead({ left, right, below, belowRight }: { left: string; right?: string; below?: string; belowRight?: string }) {
+function EntryHead({ left, right, below, belowRight, mark }: { left: string; right?: string; below?: string; belowRight?: string; mark?: string }) {
   return (
     <>
-      <div className="flex items-baseline justify-between gap-3">
-        <span className="text-[11px] font-bold text-black">{left}</span>
+      <div data-mark={mark} className="flex items-baseline justify-between gap-3">
+        <span data-mark-text className="text-[11px] font-bold text-black">{left}</span>
         {right && <span className="shrink-0 text-[11px] font-bold text-black">{right}</span>}
       </div>
       {(below || belowRight) && (
@@ -116,7 +127,9 @@ export function ResumePaper({ resume }: { resume: Resume }) {
       style={{ width: PAGE.width, minHeight: PAGE.height, padding: "40px 46px" }}
     >
       <header className="mb-[6px] text-center">
-        <h1 className="text-[23px] font-normal uppercase tracking-[0.07em] text-black">{basics.name || "Your name"}</h1>
+        <h1 data-mark={sectionMark("profile")} className="text-[23px] font-normal uppercase tracking-[0.07em] text-black">
+          <span data-mark-text>{basics.name || "Your name"}</span>
+        </h1>
         {contact.length > 0 && (
           <p className="mt-[3px] text-[9.5px] leading-[1.4] text-black">
             {contact.map((item, index) => (
@@ -131,10 +144,11 @@ export function ResumePaper({ resume }: { resume: Resume }) {
 
       {resume.education.length > 0 && (
         <section>
-          <Heading>Education</Heading>
+          <Heading section="education">Education</Heading>
           {resume.education.map((entry, index) => (
             <div key={index} className="mb-[4px]">
               <EntryHead
+                mark={entryMark("education", index)}
                 left={entry.school}
                 right={dateRange(entry.start_date, entry.end_date)}
                 below={nonEmpty([entry.degree, entry.field !== entry.degree ? entry.field : "", entry.gpa ? `GPA: ${entry.gpa}` : ""]).join(
@@ -160,10 +174,11 @@ export function ResumePaper({ resume }: { resume: Resume }) {
 
       {resume.experience.length > 0 && (
         <section>
-          <Heading>Experience</Heading>
+          <Heading section="experience">Experience</Heading>
           {resume.experience.map((entry, entryIndex) => (
             <div key={entryIndex} className="mb-[5px]">
               <EntryHead
+                mark={entryMark("experience", entryIndex)}
                 left={entry.position}
                 right={dateRange(entry.start_date, entry.end_date)}
                 below={entry.company}
@@ -178,12 +193,12 @@ export function ResumePaper({ resume }: { resume: Resume }) {
 
       {resume.projects.length > 0 && (
         <section>
-          <Heading>Projects</Heading>
+          <Heading section="projects">Projects</Heading>
           {resume.projects.map((entry, entryIndex) => (
             <div key={entryIndex} className="mb-[5px]">
-              <div className="flex items-baseline justify-between gap-3">
+              <div data-mark={entryMark("projects", entryIndex)} className="flex items-baseline justify-between gap-3">
                 <span className="text-[11px] text-black">
-                  <strong className="font-bold">{entry.name}</strong>
+                  <strong data-mark-text className="font-bold">{entry.name}</strong>
                   {entry.technologies?.length > 0 && (
                     <span className="italic"> | {entry.technologies.join(", ")}</span>
                   )}
@@ -199,7 +214,7 @@ export function ResumePaper({ resume }: { resume: Resume }) {
 
       {shownSkills.length > 0 && (
         <section>
-          <Heading>Technical skills</Heading>
+          <Heading section="skills">Technical skills</Heading>
           <dl className="text-[10.5px] leading-[1.42]">
             {shownSkills.map(([label, values]) => (
               <div key={label} className="flex gap-[4px]">
@@ -213,10 +228,11 @@ export function ResumePaper({ resume }: { resume: Resume }) {
 
       {resume.extracurriculars.length > 0 && (
         <section>
-          <Heading>Leadership</Heading>
+          <Heading section="extracurriculars">Leadership</Heading>
           {resume.extracurriculars.map((entry, index) => (
             <div key={index} className="mb-[4px]">
               <EntryHead
+                mark={entryMark("extracurriculars", index)}
                 left={entry.organization}
                 right={dateRange(entry.start_date, entry.end_date)}
                 below={entry.role}

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { FilePlus2, FileText, Loader2, PenLine, Sparkles, Trash2, Upload, WandSparkles } from "lucide-react"
+import { FilePlus2, FileText, Loader2, PenLine, RotateCcw, Sparkles, Trash2, Upload, WandSparkles } from "lucide-react"
 import { toast } from "sonner"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import type { Resume } from "@/app/api/parse/resumeSchema"
@@ -14,16 +14,18 @@ import { BulletOptionsDialog } from "./bullet-options"
 import type { ModeOption } from "./mode-tabs"
 import { pill } from "./pills"
 import { ProfileForm, SkillsForm } from "./profile-form"
-import { ReviewPanel } from "./review-panel"
 import { flaggedEntries, notesBySection, reviewNotes, type XyzFeedback } from "./review-notes"
 import { SectionForm } from "./section-form"
 import { SectionNav } from "./section-nav"
 import { LIST_SECTIONS, type ListSection, type SectionRef } from "./sections"
 import { SaveNote, StudioShell, StudioTitle } from "./studio-shell"
-import { SuggestionsPanel } from "./suggestions-panel"
 import { useDismissedNotes } from "./use-dismissed-notes"
 import { useAutosave } from "./use-autosave"
-import { useProfileBulletReview } from "./use-profile-bullet-review"
+import { useBulletReview } from "./use-bullet-review"
+import { MarksCount, TOOLBAR_BRAND, TOOLBAR_QUIET } from "./paper-toolbar"
+import { noteMarks, rewriteMarks } from "./paper-marks"
+import { revealInForm } from "./reveal"
+import { applyResumeStandard, trimSummary } from "@/lib/resume/standard"
 
 /**
  * The master profile: everything the student has actually done, in one
@@ -70,8 +72,8 @@ export function ProfileStudio() {
     if (!response.ok || !result.success) throw new Error(result.error || "Couldn't save your profile")
   })
 
-  // Line-level rewrites for the general resume. UI only until the AI is connected.
-  const bullets = useProfileBulletReview(profile)
+  // Line-level rewrites for the general resume, cached apart from any resume document's.
+  const bullets = useBulletReview(profile, { scope: "profile", target: "profile" })
   // The marked line whose three AI options are open, from the paper's "More options".
   const [moreFor, setMoreFor] = useState<BulletRewrite | null>(null)
 
@@ -104,37 +106,29 @@ export function ProfileStudio() {
     [save],
   )
 
+  // Choosing a section keeps the mode: the left column is the same list in all
+  // three, and Review or Suggestions only changes what is drawn on the page.
   const open = useCallback((next: SectionRef) => {
     setSection(next)
-    setMode("write")
     if (formRef.current) formRef.current.scrollTop = 0
   }, [])
 
+  /** A review note on the page opens its section and the card it's about. */
   const goTo = useCallback(
     (next: SectionRef, entryIndex?: number) => {
-      open(next)
-      if (entryIndex === undefined) return
-      requestAnimationFrame(() => {
-        const card = document.querySelector<HTMLElement>(`[data-entry-index="${entryIndex}"]`)
-        card?.querySelector<HTMLButtonElement>("button[aria-expanded]")?.click()
-        card?.scrollIntoView({ block: "center", behavior: "smooth" })
-      })
+      if (next !== section) open(next)
+      revealInForm(formRef.current, { entryIndex })
     },
-    [open],
+    [open, section],
   )
 
-  /** Choosing a rewrite opens the card it's about and scrolls the line into view. */
+  /** A rewrite on the page opens its card and scrolls to the very bullet. */
   const goToRewrite = useCallback(
     (rewrite: BulletRewrite) => {
-      open(rewrite.section)
-      requestAnimationFrame(() => {
-        const card = document.querySelector<HTMLElement>(`[data-entry-index="${rewrite.entryIndex}"]`)
-        const toggle = card?.querySelector<HTMLButtonElement>("button[aria-expanded]")
-        if (toggle?.getAttribute("aria-expanded") === "false") toggle.click()
-        requestAnimationFrame(() => card?.scrollIntoView({ block: "center", behavior: "smooth" }))
-      })
+      if (rewrite.section !== section) open(rewrite.section)
+      revealInForm(formRef.current, { entryIndex: rewrite.entryIndex, field: rewrite.field, line: rewrite.bulletIndex })
     },
-    [open],
+    [open, section],
   )
 
   const askAi = async () => {
@@ -168,7 +162,9 @@ export function ProfileStudio() {
       })
       const result = await response.json()
       if (!response.ok || !result.success) throw new Error(result.error || "Couldn't save this resume")
-      toast.success(`Saved "${result.data.fileName}" to your shelf`)
+      toast.success(`Saved "${result.data.fileName}" to your shelf`, {
+        description: result.data.trimmed ? "Fitted to one page — the profile still has everything." : undefined,
+      })
       router.push(`/resumes/${result.data.id}`)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Couldn't save this resume")
@@ -204,8 +200,31 @@ export function ProfileStudio() {
   // dots on the cards together, because they are all the same list.
   // Each entry's notes follow the entry they were written about, wherever it now sits.
   const feedback = useMemo(() => alignFeedback(review, profile), [review, profile])
-  const allNotes = reviewNotes(profile, feedback)
+  const allNotes = useMemo(() => reviewNotes(profile, feedback), [profile, feedback])
   const { open: notes, hidden, dismiss, restore } = useDismissedNotes(allNotes)
+  // What a one-page save would leave out. The page on the right stays untrimmed:
+  // it is the whole profile, and the AI's marks point at its lines.
+  const trimmed = useMemo(() => (profile ? trimSummary(profile, applyResumeStandard(profile)) : null), [profile])
+  const saveTitle = !trimmed || (trimmed.entries === 0 && trimmed.bullets === 0)
+    ? "Put a one-page copy of this resume on your shelf"
+    : `Put a one-page copy on your shelf. To fit, ${[
+        trimmed.entries && `${trimmed.entries} ${trimmed.entries === 1 ? "entry" : "entries"}`,
+        trimmed.bullets && `${trimmed.bullets} ${trimmed.bullets === 1 ? "bullet" : "bullets"}`,
+      ].filter(Boolean).join(" and ")} will be left out; the profile keeps everything.`
+
+  const marks = useMemo(
+    () =>
+      mode === "review"
+        ? noteMarks(notes, { onDone: dismiss, onGoTo: goTo })
+        : rewriteMarks(bullets.live, bullets.answered, {
+            onAccept: (rewrite) => bullets.accept(rewrite, edit),
+            onReject: bullets.reject,
+            onMore: setMoreFor,
+            onGoTo: goToRewrite,
+          }),
+    [mode, notes, dismiss, goTo, bullets, edit, goToRewrite],
+  )
+
   const modes: ModeOption<Mode>[] = [
     { id: "write", label: "Write", icon: PenLine },
     { id: "review", label: "Review", icon: Sparkles, badge: notes.length || undefined },
@@ -257,7 +276,7 @@ export function ProfileStudio() {
             type="button"
             onClick={saveAsResume}
             disabled={loading || !profile || savingResume}
-            title="Put a copy of this resume on your shelf"
+            title={saveTitle}
             className={pill("brand", "h-10 px-5 text-[15px] font-medium")}
           >
             {savingResume ? <Loader2 className="animate-spin" aria-hidden="true" /> : <FilePlus2 aria-hidden="true" />}
@@ -276,46 +295,47 @@ export function ProfileStudio() {
           )}
         </>
       }
+      // The section list stays put in every mode: the AI's output is drawn on
+      // the page, on the lines it is about, rather than listed over here.
       left={
-        mode === "write" ? (
-          <SectionNav resume={profile} active={section} onSelect={open} notesBySection={notesBySection(notes)} />
-        ) : mode === "review" ? (
-          <ReviewPanel
-            resume={profile}
-            feedback={feedback}
-            asking={asking}
-            onAsk={askAi}
-            onGoTo={goTo}
-            notes={notes}
-            hidden={hidden}
-            onDone={dismiss}
-            onRestore={restore}
-          />
-        ) : (
-          <SuggestionsPanel
-            resume={profile}
-            score={0}
-            rewrites={bullets.live}
-            open={bullets.open}
-            asking={bullets.asking}
-            loaded={bullets.loaded}
-            onAsk={bullets.ask}
-            onGoTo={goToRewrite}
-            onAccept={(rewrite) => bullets.accept(rewrite, edit)}
-            onReject={bullets.reject}
-          />
-        )
+        <SectionNav
+          resume={profile}
+          active={section}
+          onSelect={open}
+          notesBySection={mode === "review" ? notesBySection(notes) : bullets.counts}
+        />
       }
-      // The general resume, as a page: the whole profile, nothing left out,
-      // with the AI's marks on the lines they are about once it's connected.
+      // The general resume, as a page: the whole profile, nothing left out.
+      // Write and Suggestions draw the line rewrites on it; Review, the notes.
       preview={
         <PaperPane
           resume={profile}
-          rewrites={bullets.live}
-          answered={bullets.answered}
-          onAccept={(rewrite) => bullets.accept(rewrite, edit)}
-          onReject={bullets.reject}
-          onMoreOptions={setMoreFor}
+          marks={marks}
+          toolbar={
+            mode === "review" ? (
+              <>
+                <MarksCount count={notes.length} one="note" many="notes" empty={feedback ? "No notes left" : "No review yet"} />
+                {hidden > 0 && (
+                  <button type="button" onClick={restore} className={TOOLBAR_QUIET}>
+                    <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                    Show {hidden} done
+                  </button>
+                )}
+                <button type="button" onClick={askAi} disabled={asking || !profile} className={TOOLBAR_BRAND}>
+                  {asking ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />}
+                  {asking ? "Reading…" : feedback ? "Review again" : "Review my profile"}
+                </button>
+              </>
+            ) : mode === "suggestions" ? (
+              <>
+                <MarksCount count={bullets.open.length} one="suggestion" many="suggestions" empty={bullets.all.length ? "All answered" : "No suggestions yet"} />
+                <button type="button" onClick={bullets.ask} disabled={bullets.asking || !profile} className={TOOLBAR_BRAND}>
+                  {bullets.asking ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <WandSparkles className="h-3.5 w-3.5" aria-hidden="true" />}
+                  {bullets.asking ? "Reading…" : bullets.all.length ? "Suggest again" : "Suggest rewrites"}
+                </button>
+              </>
+            ) : undefined
+          }
         />
       }
     >

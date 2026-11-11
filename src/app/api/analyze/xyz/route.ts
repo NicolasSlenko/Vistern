@@ -1,4 +1,5 @@
-import { generateObject } from "@/lib/ai";
+import { generateObject, type AiProvider } from "@/lib/ai";
+import { withAiCache } from "@/lib/ai/cache";
 import { resolveAiProvider } from "@/lib/ai/resolve";
 import { z } from "zod";
 import { type NextRequest, NextResponse } from "next/server";
@@ -35,17 +36,23 @@ export async function POST(request: NextRequest) {
       Provide a score (0-100), an analysis of its adherence to the XYZ formula, and 2-3 specific rewritten versions that improve it.
     `;
 
-        const { provider } = await resolveAiProvider(userId);
-        const result = await generateObject({
-            provider,
-            system: "You are an expert resume consultant focusing on Google's XYZ formula.",
-            prompt,
-            schema: FeedbackSchema,
-            name: "feedback",
-            temperature: 0.3,
+        // Same prompt, same answer: served from the cache without a model call or a paid request.
+        let provider: AiProvider | undefined;
+        const { value, cached } = await withAiCache(userId, "feedback", { prompt }, async () => {
+            const resolved = await resolveAiProvider(userId);
+            provider = resolved.provider;
+            const result = await generateObject({
+                provider: resolved.provider,
+                system: "You are an expert resume consultant focusing on Google's XYZ formula.",
+                prompt,
+                schema: FeedbackSchema,
+                name: "feedback",
+                temperature: 0.3,
+            });
+            return result.data;
         });
 
-        return NextResponse.json({ success: true, data: result.data, aiProvider: provider });
+        return NextResponse.json({ success: true, data: value, aiProvider: provider, cached });
 
     } catch (error) {
         console.error("Error generating feedback:", error);

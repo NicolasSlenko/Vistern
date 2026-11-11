@@ -1,4 +1,5 @@
-import { generateObject } from "@/lib/ai";
+import { generateObject, type AiProvider } from "@/lib/ai";
+import { withAiCache } from "@/lib/ai/cache";
 import { resolveAiProvider } from "@/lib/ai/resolve";
 import { z } from "zod";
 import { type NextRequest, NextResponse } from "next/server";
@@ -132,17 +133,23 @@ BE VERY SPECIFIC. Don't say "learn a new framework" — say "Learn React and Nex
 Use the survey data to make every suggestion directly relevant to their career goals.
 `;
 
-        const { provider } = await resolveAiProvider(userId);
-        const result = await generateObject({
-            provider,
-            system: "You are an expert career advisor for CS students. Generate extremely specific, actionable recommendations. For resume tweaks, reference exact content from the resume. For career goals, use the student's survey preferences to suggest specific courses, technologies, clubs, and projects.",
-            prompt,
-            schema: InsightsResultSchema,
-            name: "insights",
-            temperature: 0.4,
+        // Same prompt, same answer: served from the cache without a model call or a paid request.
+        let provider: AiProvider | undefined;
+        const { value, cached } = await withAiCache(userId, "insights", { prompt }, async () => {
+            const resolved = await resolveAiProvider(userId);
+            provider = resolved.provider;
+            const result = await generateObject({
+                provider: resolved.provider,
+                system: "You are an expert career advisor for CS students. Generate extremely specific, actionable recommendations. For resume tweaks, reference exact content from the resume. For career goals, use the student's survey preferences to suggest specific courses, technologies, clubs, and projects.",
+                prompt,
+                schema: InsightsResultSchema,
+                name: "insights",
+                temperature: 0.4,
+            });
+            return result.data;
         });
 
-        return NextResponse.json({ success: true, data: result.data, aiProvider: provider });
+        return NextResponse.json({ success: true, data: value, aiProvider: provider, cached });
 
     } catch (error) {
         console.error("Error generating insights:", error);

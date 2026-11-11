@@ -1,11 +1,10 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Minus, Plus } from "lucide-react"
 import type { Resume } from "@/app/api/parse/resumeSchema"
-import type { BulletRewrite } from "@/lib/resume-suggestions"
 import { PAGE, ResumePaper } from "./resume-paper"
-import { ResumeMarks } from "./resume-marks"
+import { ResumeMarks, type PaperMark } from "./resume-marks"
 import { useMarkBoxes } from "./use-mark-boxes"
 
 /**
@@ -22,22 +21,15 @@ const ZOOMS = [0.6, 0.75, 0.9, 1, 1.25, 1.5]
 
 export function PaperPane({
   resume,
-  rewrites,
-  answered,
-  onAccept,
-  onReject,
-  onMoreOptions,
+  marks,
+  toolbar,
   original,
 }: {
   resume: Resume | null
-  /** The rewrites that still match the page. */
-  rewrites: readonly BulletRewrite[]
-  /** Keys already ticked or crossed. */
-  answered: ReadonlySet<string>
-  onAccept: (rewrite: BulletRewrite) => void
-  onReject: (rewrite: BulletRewrite) => void
-  /** Opens three AI options for a marked line. */
-  onMoreOptions?: (rewrite: BulletRewrite) => void
+  /** What to draw on the page: line rewrites, review notes, or nothing (see studio/paper-marks.ts). */
+  marks: readonly PaperMark[]
+  /** Floats at the top of the page, e.g. the button that asks the AI for the marks. */
+  toolbar?: React.ReactNode
   /** The file as uploaded, to check our reading of it against. */
   original?: React.ReactNode
 }) {
@@ -52,7 +44,10 @@ export function PaperPane({
   const [showing, setShowing] = useState<"marked" | "original">("marked")
 
   // The keys to measure. Derived here so the hook re-runs when the set changes.
-  const keys = rewrites.map((rewrite) => `${rewrite.section}.${rewrite.entryIndex}.${rewrite.field}.${rewrite.bulletIndex}`)
+  // Every target, fallbacks included, so a mark can drop to the next if its first isn't printed.
+  // Keyed on the joined list, so a new array with the same targets doesn't re-measure.
+  const signature = [...new Set(marks.flatMap((mark) => mark.targets))].join("|")
+  const keys = useMemo(() => (signature ? signature.split("|") : []), [signature])
   const { boxes, height } = useMarkBoxes(paper, keys)
 
   const fit = useCallback(() => {
@@ -97,7 +92,8 @@ export function PaperPane({
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
-      <div ref={frame} className="min-h-0 flex-1 overflow-auto p-4">
+      {/* Room at the top for the toolbar, so it never sits over the name. */}
+      <div ref={frame} className={`min-h-0 flex-1 overflow-auto p-4 ${toolbar ? "pt-[68px]" : ""}`}>
         {/* The page is scaled rather than re-laid-out, so a line never
             rewraps as you zoom and the marks stay exactly where they were. */}
         {/* Scaling does not change the room an element reserves, so the
@@ -110,19 +106,15 @@ export function PaperPane({
           <div ref={paper} className="shadow-[0_1px_2px_rgb(10_24_17/0.08),0_14px_40px_-18px_rgb(10_24_17/0.5)]">
             <ResumePaper resume={resume} />
           </div>
-          <ResumeMarks
-            rewrites={rewrites}
-            boxes={boxes}
-            height={height}
-            answered={answered}
-            open={open}
-            onOpen={setOpen}
-            onAccept={onAccept}
-            onReject={onReject}
-            onMoreOptions={onMoreOptions}
-          />
+          <ResumeMarks marks={marks} boxes={boxes} height={height} open={open} onOpen={setOpen} />
         </div>
       </div>
+
+      {toolbar && (
+        <div className="pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center px-3">
+          <div className="glass glass-float pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-1.5 rounded-full p-1">{toolbar}</div>
+        </div>
+      )}
 
       <div className="pointer-events-none absolute inset-x-0 bottom-3 flex flex-wrap items-center justify-center gap-2 px-3">
         {original && <ViewSwitch showing={showing} onChoose={setShowing} floating={false} />}

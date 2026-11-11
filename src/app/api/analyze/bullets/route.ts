@@ -1,4 +1,4 @@
-import { generateObject, aiErrorMessage } from "@/lib/ai"
+import { generateObject, aiErrorMessage, type AiProvider } from "@/lib/ai"
 import { resolveAiProvider } from "@/lib/ai/resolve"
 import { z } from "zod"
 import { type NextRequest, NextResponse } from "next/server"
@@ -7,6 +7,8 @@ import type { Resume } from "@/app/api/parse/resumeSchema"
 import { createClerkSupabaseServerClient } from "@/lib/supabase/server"
 import { BULLET_FIELDS, type BulletRewrite, type BulletSection } from "@/lib/resume-suggestions"
 import type { Json } from "@/lib/supabase/database.types"
+import { withAiCache } from "@/lib/ai/cache"
+import { RESUME_STANDARD_PROMPT } from "@/lib/resume/standard"
 
 /**
  * Line-level rewrites: for each weak bullet, the exact words to put there
@@ -18,7 +20,14 @@ import type { Json } from "@/lib/supabase/database.types"
  * whole entries and plans a career. Here: one bullet in, one bullet out.
  */
 
-const FEEDBACK_TYPE = "bullets"
+/**
+ * The master profile's rewrites are kept apart from a resume's, as xyz-batch
+ * does: both hang off the current resume document under their own type, so
+ * neither shows up as the other's suggestions.
+ */
+const FEEDBACK_TYPE = { resume: "bullets", profile: "bullets-profile" } as const
+type Target = keyof typeof FEEDBACK_TYPE
+const targetOf = (value: unknown): Target => (value === "profile" ? "profile" : "resume")
 
 const RewriteSchema = z.object({
   section: z.enum(["experience", "projects"]),
@@ -43,17 +52,24 @@ Rules:
 - NEVER invent numbers, employers, technologies or scope the student did not state. If a bullet has no number and you cannot infer one honestly, improve the verb and the specificity instead, and say in "why" that a number would make it stronger.
 - "original" must be copied character for character from the bullet you were given.
 - "why" is one sentence, plain, no flattery, no "consider".
-- severity: "fix" for a bullet that says nothing (duties, "worked on", "helped with"); "look" for a real bullet missing impact; "optional" for polish.`
+- severity: "fix" for a bullet that says nothing (duties, "worked on", "helped with"); "look" for a real bullet missing impact; "optional" for polish.
+
+${RESUME_STANDARD_PROMPT}`
 
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth()
     if (!userId) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
 
-    const { resumeData, resumeDocumentId } = (await request.json()) as {
+    const body = (await request.json()) as {
       resumeData?: Resume
       resumeDocumentId?: string
+      for?: string
     }
+    const { resumeData } = body
+    const target = targetOf(body.for)
+    // The profile isn't a document; its rewrites always sit on the current one.
+    const resumeDocumentId = target === "profile" ? undefined : body.resumeDocumentId
     if (!resumeData) return NextResponse.json({ success: false, error: "No resume data provided" }, { status: 400 })
 
     // Every bullet, labelled with the coordinates the model must echo back.
@@ -82,25 +98,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, data: empty })
     }
 
-    const { provider } = await resolveAiProvider(userId)
-    const result = await generateObject({
-      provider,
-      system: SYSTEM,
-      prompt: `Rewrite the weak bullets below. Each is tagged [section entryIndex field bulletIndex] — echo those back exactly.\n\n${lines.join("\n\n")}`,
-      schema: ResultSchema,
-      name: "bullet_rewrites",
-      temperature: 0.3,
+    // The labelled lines are everything the model sees, so they are the cache key.
+    // A hit costs no tokens and spends no paid request.
+    let provider: AiProvider | undefined
+    const { value: modelRewrites, cached } = await withAiCache(userId, "bullet_rewrites", lines, async () => {
+      const resolved = await resolveAiProvider(userId)
+      provider = resolved.provider
+      const result = await generateObject({
+        provider: resolved.provider,
+        system: SYSTEM,
+        prompt: `Rewrite the weak bullets below. Each is tagged [section entryIndex field bulletIndex] — echo those back exactly.\n\n${lines.join("\n\n")}`,
+        schema: ResultSchema,
+        name: "bullet_rewrites",
+        temperature: 0.3,
+      })
+      return result.data?.rewrites ?? null
     })
 
-    const rewrites: BulletRewrite[] = (result.data?.rewrites ?? []).map((rewrite, index) => ({
+    const rewrites: BulletRewrite[] = (modelRewrites ?? []).map((rewrite, index) => ({
       ...rewrite,
       // The model reuses ids across runs; the index and the clock make one that doesn't collide.
       id: `${rewrite.section}-${rewrite.entryIndex}-${rewrite.field}-${rewrite.bulletIndex}-${index}`,
     }))
     const data = { rewrites, generatedAt: new Date().toISOString() }
 
-    await cacheReview(userId, resumeDocumentId, data)
-    return NextResponse.json({ success: true, data, aiProvider: provider })
+    await cacheReview(userId, resumeDocumentId, target, data)
+    return NextResponse.json({ success: true, data, aiProvider: provider, cached })
   } catch (error) {
     console.error("Error rewriting bullets:", error)
     return NextResponse.json({ success: false, error: aiErrorMessage(error, "Failed to review the bullets") }, { status: 500 })
@@ -113,7 +136,8 @@ export async function GET(request: NextRequest) {
     const { userId } = await auth()
     if (!userId) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
 
-    const documentId = request.nextUrl.searchParams.get("resumeDocumentId")
+    const target = targetOf(request.nextUrl.searchParams.get("for"))
+    const documentId = target === "profile" ? null : request.nextUrl.searchParams.get("resumeDocumentId")
     const supabase = await createClerkSupabaseServerClient()
     const id = documentId ?? (await currentDocumentId(supabase, userId))
     if (!id) return NextResponse.json({ success: true, data: null })
@@ -123,7 +147,7 @@ export async function GET(request: NextRequest) {
       .select("result")
       .eq("clerk_user_id", userId)
       .eq("resume_document_id", id)
-      .eq("feedback_type", FEEDBACK_TYPE)
+      .eq("feedback_type", FEEDBACK_TYPE[target])
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle()
@@ -149,7 +173,7 @@ async function currentDocumentId(
 }
 
 /** Caching is best-effort: a student who has no resume document yet still gets their rewrites. */
-async function cacheReview(userId: string, documentId: string | undefined, data: unknown) {
+async function cacheReview(userId: string, documentId: string | undefined, target: Target, data: unknown) {
   try {
     const supabase = await createClerkSupabaseServerClient()
     const id = documentId ?? (await currentDocumentId(supabase, userId))
@@ -157,7 +181,7 @@ async function cacheReview(userId: string, documentId: string | undefined, data:
     await supabase.from("resume_feedback").insert({
       clerk_user_id: userId,
       resume_document_id: id,
-      feedback_type: FEEDBACK_TYPE,
+      feedback_type: FEEDBACK_TYPE[target],
       result: data as Json,
     })
   } catch (error) {

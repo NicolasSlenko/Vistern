@@ -5,6 +5,10 @@ import { getOrCreateProfileId, importLegacyResumeSubmissions } from "@/lib/supab
 import { normalizeProfileData } from "@/lib/profile/profile-data"
 import { calculateResumeScoreDetailed } from "@/lib/resumeScoring"
 import type { Json } from "@/lib/supabase/database.types"
+import type { Resume } from "@/app/api/parse/resumeSchema"
+import { PAGE_LINES, estimateLines } from "@/lib/resumePageBudget"
+import { applyResumeStandard, normalizeResume } from "@/lib/resume/standard"
+import { selectForRole } from "@/lib/resume/select"
 
 /**
  * The student's resume documents: the files they've uploaded or tailored.
@@ -67,7 +71,7 @@ export async function POST(request: NextRequest) {
     if (!body.content || typeof body.content !== "object") {
       return NextResponse.json({ success: false, error: "Nothing to save" }, { status: 400 })
     }
-    const content = normalizeProfileData(body.content)
+    const { content, trimmed } = await toOnePage(userId, normalizeProfileData(body.content))
     const fileName = typeof body.fileName === "string" && body.fileName.trim() ? body.fileName.trim() : "General resume"
 
     const supabase = await createClerkSupabaseServerClient()
@@ -89,9 +93,29 @@ export async function POST(request: NextRequest) {
       .single()
     if (error) throw error
 
-    return NextResponse.json({ success: true, data: { id: data.id, fileName: data.file_name, score: data.score, createdAt: data.created_at } })
+    return NextResponse.json({ success: true, data: { id: data.id, fileName: data.file_name, score: data.score, createdAt: data.created_at, trimmed } })
   } catch (error) {
     console.error("Error creating resume document:", error)
     return NextResponse.json({ success: false, error: "Failed to save this resume" }, { status: 500 })
   }
+}
+
+/**
+ * The resume standard (src/lib/resume/standard.ts) applied to a snapshot of
+ * the profile. A profile that already fits one page is only tidied — dates,
+ * order, punctuation — at no cost. One that runs over asks the AI which
+ * entries matter most for a general internship (cached, and it only picks,
+ * never rewrites); if that can't be done, it is trimmed from the end instead.
+ */
+async function toOnePage(userId: string, profile: Resume): Promise<{ content: Resume; trimmed: boolean }> {
+  const tidy = normalizeResume(profile)
+  if (estimateLines(tidy) <= PAGE_LINES) return { content: tidy, trimmed: false }
+
+  try {
+    const selected = await selectForRole({ userId, base: tidy, experiences: tidy.experience, projects: tidy.projects, job: null })
+    if (selected) return { content: selected.resume, trimmed: true }
+  } catch (error) {
+    console.error("Couldn't choose entries for the general resume, trimming from the end:", error)
+  }
+  return { content: applyResumeStandard(profile), trimmed: true }
 }

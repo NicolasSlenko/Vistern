@@ -83,6 +83,7 @@ function GrowingBox({
 }
 
 function Bullet({
+  line,
   value,
   rewrite,
   answered,
@@ -93,6 +94,7 @@ function Bullet({
   onReject,
   onEnhance,
 }: {
+  line: number
   value: string
   rewrite: BulletRewrite | undefined
   answered: boolean
@@ -117,6 +119,7 @@ function Bullet({
 
   return (
     <li
+      data-line={line}
       className={`group/bullet relative -mx-2 flex flex-col rounded-[12px] px-2 transition-colors duration-300 motion-reduce:transition-none ${
         open ? "bg-caution/[0.07]" : "hover:bg-fill/60"
       }`}
@@ -215,6 +218,7 @@ function Bullet({
 
 export function BulletList({
   label,
+  field,
   hint,
   bullets,
   /** The AI's rewrites for this field, by line. */
@@ -227,6 +231,8 @@ export function BulletList({
   onEnhance,
 }: {
   label: string
+  /** The entry's field these bullets live in, so the page can point at one (see reveal.ts). */
+  field?: string
   hint?: string
   bullets: string[]
   rewrites?: Map<number, BulletRewrite>
@@ -263,7 +269,7 @@ export function BulletList({
   const lines = bullets.length ? bullets : [""]
 
   return (
-    <div data-bullets={label} className="flex min-w-0 flex-col gap-2">
+    <div data-bullets={label} data-field={field} className="flex min-w-0 flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
         <span className="label-mono text-ink-2">{label}</span>
         {waiting > 0 && (
@@ -278,6 +284,7 @@ export function BulletList({
         {lines.map((bullet, index) => (
           <Bullet
             key={index}
+            line={index}
             value={bullet}
             rewrite={rewrites?.get(index)}
             answered={Boolean(answered?.has(index))}

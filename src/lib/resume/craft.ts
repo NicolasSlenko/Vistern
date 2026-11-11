@@ -1,5 +1,6 @@
 import type { Resume } from "@/app/api/parse/resumeSchema"
 import { allBullets, readBullet } from "./impact"
+import { parseResumeDate } from "./standard"
 
 /**
  * Whether the resume is well made, as opposed to whether there is enough in
@@ -72,11 +73,15 @@ function dates(resume: Resume): Check {
   }
 
   const given = ranges.flatMap((range) => [range.start, range.end]).filter((value): value is string => Boolean(value?.trim()))
-  const withMonth = given.filter((value) => MONTH.test(value)).length
+  // Read with the same parser the resume standard formats with, so "consistent" means the same thing in both.
+  const withMonth = given.filter((value) => {
+    const parsed = parseResumeDate(value)
+    return parsed ? parsed.present || parsed.month !== null : MONTH.test(value)
+  }).length
   // Either every date names a month or none does. A resume that mixes the
   // two reads as careless, which is the only reason it matters.
   const mixed = withMonth > 0 && withMonth < given.length
-  const missingYear = given.filter((value) => !YEAR.test(value)).length
+  const missingYear = given.filter((value) => !YEAR.test(value) && !parseResumeDate(value)?.present).length
 
   const backwards = ranges.filter((range) => {
     const from = Number(range.start?.match(YEAR)?.[0])

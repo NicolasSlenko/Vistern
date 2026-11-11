@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, Loader2, PenLine, RotateCcw, Sparkles, Star } from "lucide-react"
 import { toast } from "sonner"
@@ -17,7 +17,9 @@ import { BulletOptionsDialog } from "./bullet-options"
 import { SectionNav } from "./section-nav"
 import { LIST_SECTIONS, type ListSection, type SectionRef } from "./sections"
 import { SaveNote, StudioShell, StudioTitle } from "./studio-shell"
-import { SuggestionsPanel } from "./suggestions-panel"
+import { rewriteMarks } from "./paper-marks"
+import { MarksCount } from "./paper-toolbar"
+import { revealInForm } from "./reveal"
 import { useAutosave } from "./use-autosave"
 import { useBulletReview } from "./use-bullet-review"
 
@@ -93,24 +95,19 @@ export function ResumeDocStudio({ id }: { id: string }) {
   // The marked line whose three AI options are open, from the paper's "More options".
   const [moreFor, setMoreFor] = useState<BulletRewrite | null>(null)
 
+  // Choosing a section keeps the mode: the left column is the same list in both.
   const open = useCallback((next: SectionRef) => {
     setSection(next)
-    setMode("write")
     if (formRef.current) formRef.current.scrollTop = 0
   }, [])
 
-  /** Choosing a suggestion opens the card it's about and scrolls the line into view. */
+  /** A suggestion on the page opens its card and scrolls to the very bullet. */
   const goTo = useCallback(
     (rewrite: BulletRewrite) => {
-      open(rewrite.section)
-      requestAnimationFrame(() => {
-        const card = document.querySelector<HTMLElement>(`[data-entry-index="${rewrite.entryIndex}"]`)
-        const toggle = card?.querySelector<HTMLButtonElement>("button[aria-expanded]")
-        if (toggle?.getAttribute("aria-expanded") === "false") toggle.click()
-        requestAnimationFrame(() => card?.scrollIntoView({ block: "center", behavior: "smooth" }))
-      })
+      if (rewrite.section !== section) open(rewrite.section)
+      revealInForm(formRef.current, { entryIndex: rewrite.entryIndex, field: rewrite.field, line: rewrite.bulletIndex })
     },
-    [open],
+    [open, section],
   )
 
   const toggleStar = async () => {
@@ -123,6 +120,17 @@ export function ResumeDocStudio({ id }: { id: string }) {
       body: JSON.stringify({ isStarred: next }),
     }).catch(() => toast.error("Couldn't change that"))
   }
+
+  const marks = useMemo(
+    () =>
+      rewriteMarks(review.live, review.answered, {
+        onAccept: (rewrite) => review.accept(rewrite, edit),
+        onReject: review.reject,
+        onMore: setMoreFor,
+        onGoTo: goTo,
+      }),
+    [review, edit, goTo],
+  )
 
   if (missing) return <NotFound />
 
@@ -186,24 +194,9 @@ export function ResumeDocStudio({ id }: { id: string }) {
           )}
         </>
       }
-      left={
-        mode === "write" ? (
-          <SectionNav resume={content} active={section} onSelect={open} notesBySection={review.counts} />
-        ) : (
-          <SuggestionsPanel
-            resume={content}
-            score={doc?.score ?? 0}
-            rewrites={review.live}
-            open={review.open}
-            asking={review.asking}
-            loaded={review.loaded}
-            onAsk={review.ask}
-            onGoTo={goTo}
-            onAccept={(rewrite) => review.accept(rewrite, edit)}
-            onReject={review.reject}
-          />
-        )
-      }
+      // The section list stays put in both modes; the suggestions are drawn on
+      // the page, on the bullet each would rewrite.
+      left={<SectionNav resume={content} active={section} onSelect={open} notesBySection={review.counts} />}
       // The page itself, with the AI's marks drawn on the lines they are
       // about. This is the student's own resume rendered as HTML rather than
       // the uploaded PDF, because a mark has to sit exactly on its line and a
@@ -211,11 +204,12 @@ export function ResumeDocStudio({ id }: { id: string }) {
       preview={
         <PaperPane
           resume={content}
-          rewrites={review.live}
-          answered={review.answered}
-          onAccept={(rewrite) => review.accept(rewrite, edit)}
-          onReject={review.reject}
-          onMoreOptions={setMoreFor}
+          marks={marks}
+          toolbar={
+            mode === "suggestions" ? (
+              <MarksCount count={review.open.length} one="suggestion" many="suggestions" empty={review.all.length ? "All answered" : "No suggestions yet — Review bullets"} />
+            ) : undefined
+          }
           original={
             doc?.s3Key ? (
               <PreviewPane submission={{ id: doc.id, fileName: doc.fileName, s3Key: doc.s3Key, uploadedAt: doc.updatedAt, score: doc.score }} />

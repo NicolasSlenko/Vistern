@@ -19,6 +19,8 @@ const WIDE_PX = 1288
 let profile = structuredClone(SAMPLE_PROFILE)
 const documents = structuredClone(SAMPLE_DOCUMENTS)
 let bulletReview: unknown = null
+// The master profile's rewrites are kept apart from a resume's, as the real route does.
+let profileBulletReview: unknown = null
 
 const reply = (body: unknown, wait = 260) =>
   new Promise<Response>((done) =>
@@ -64,7 +66,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
         content: body.content,
       }
       documents.unshift(created as unknown as (typeof documents)[number])
-      return reply({ success: true, data: { id: created.id, fileName: created.fileName, score: created.score } }, 700)
+      return reply({ success: true, data: { id: created.id, fileName: created.fileName, score: created.score, trimmed: false } }, 700)
     }
     return reply({ success: true, data: documents }, 320)
   }
@@ -72,10 +74,12 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
 
   if (url.startsWith("/api/analyze/bullets")) {
     if (method === "POST") {
-      bulletReview = SAMPLE_BULLET_REVIEW
-      return reply({ success: true, data: bulletReview }, 2400)
+      const forProfile = (JSON.parse(String(init!.body)) as { for?: string }).for === "profile"
+      if (forProfile) profileBulletReview = SAMPLE_BULLET_REVIEW
+      else bulletReview = SAMPLE_BULLET_REVIEW
+      return reply({ success: true, data: SAMPLE_BULLET_REVIEW }, 2400)
     }
-    return reply({ success: true, data: bulletReview }, 300)
+    return reply({ success: true, data: url.includes("for=profile") ? profileBulletReview : bulletReview }, 300)
   }
   // No real PDF to sign a URL for; the pane shows its stand-in page instead.
   if (url.startsWith("/api/resume-preview")) return reply({ success: false, error: "No file in the preview build." }, 600)

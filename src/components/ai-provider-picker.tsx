@@ -26,9 +26,10 @@ const CHANGE_EVENT = "ai-provider-changed"
 
 /**
  * Dropdown for choosing which AI provider runs the user's requests.
- * "full" is the Settings row; "compact" is the quick switch for page headers.
+ * "full" is the Settings row; "compact" is the quick switch for page headers;
+ * "icon" is the square button beside the theme toggle in the student sidebar.
  */
-export function AiProviderPicker({ variant = "compact" }: { variant?: "full" | "compact" }) {
+export function AiProviderPicker({ variant = "compact" }: { variant?: "full" | "compact" | "icon" }) {
   const [state, setState] = useState<AiProviderState | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -79,16 +80,31 @@ export function AiProviderPicker({ variant = "compact" }: { variant?: "full" | "
       : "Daily paid limit reached; using HiPerGator until tomorrow"
     : "Free through UF"
 
+  const icon = variant === "icon"
+  const trigger = icon ? (
+    // Styled as the theme toggle it sits beside.
+    <button
+      type="button"
+      disabled={saving}
+      className="student-theme-toggle"
+      aria-label={`AI model: ${selected?.label ?? "default"}. Change model`}
+      title={`AI model: ${selected?.label ?? "default"}`}
+    >
+      {saving ? <Loader2 size={18} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Cpu size={18} aria-hidden="true" />}
+    </button>
+  ) : (
+    <button type="button" disabled={saving} className={pill("white", "h-10 px-4 text-[15px] font-medium")}>
+      {saving ? <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Cpu aria-hidden="true" />}
+      {selected?.label ?? "AI model"}
+      <ChevronDown className="opacity-60" aria-hidden="true" />
+    </button>
+  )
+
   const menu = (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button type="button" disabled={saving} className={pill("white", "h-10 px-4 text-[15px] font-medium")}>
-          {saving ? <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Cpu aria-hidden="true" />}
-          {selected?.label ?? "AI model"}
-          <ChevronDown className="opacity-60" aria-hidden="true" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
+      <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
+      {/* In the sidebar the button sits at the bottom of a narrow column, so the menu opens up and to the right. */}
+      <DropdownMenuContent align={icon ? "start" : "end"} side={icon ? "top" : "bottom"} className="w-64">
         <DropdownMenuLabel>AI model</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {state.providers.map(p => (
@@ -107,11 +123,17 @@ export function AiProviderPicker({ variant = "compact" }: { variant?: "full" | "
             </div>
           </DropdownMenuItem>
         ))}
+        {icon && (
+          <>
+            <DropdownMenuSeparator />
+            <p className="px-2 py-1.5 text-xs text-muted-foreground">{paidNote}</p>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   )
 
-  if (variant === "compact") return menu
+  if (variant !== "full") return menu
 
   return (
     <div className="flex items-start justify-between gap-5">

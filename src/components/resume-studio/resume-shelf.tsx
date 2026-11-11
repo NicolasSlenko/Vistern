@@ -94,7 +94,7 @@ export function ResumeShelf() {
       <div className="paper-frame">
         <div className="paper flex min-h-[calc(100vh-var(--chrome-top,82px)-68px)] flex-col">
           <header data-tour="resumes-header" className="flex min-h-[72px] flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-hairline px-4 py-[13px] sm:px-6">
-            <h1 className="text-[17px] font-medium tracking-[-0.02em] text-ink sm:text-[18px]">Your resumes</h1>
+            <h1 className="text-[17px] font-medium tracking-[-0.02em] text-ink sm:text-[18px]">Resume collection</h1>
             <div className="flex items-center gap-2.5">
               <Link href="/profile" className={pill("white", "h-10 px-4 text-[15px] font-medium")}>
                 <UserRound aria-hidden="true" />

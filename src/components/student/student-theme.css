@@ -108,6 +108,35 @@
   color: var(--color-ink);
 }
 
+/* Theme and AI model: two square switches on one row, rather than two
+   full-width rows, so the model choice sits right beside the theme one. */
+.student-account-nav > .student-quick-toggles,
+.student-account-nav > .student-quick-toggles:hover {
+  padding: 0;
+  gap: 6px;
+  background: transparent;
+}
+.student-quick-toggles {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.student-quick-toggles > .student-theme-toggle {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--color-hairline) !important;
+  border-radius: 11px;
+  background: transparent !important;
+  color: var(--color-ink-2) !important;
+}
+.student-quick-toggles > .student-theme-toggle:hover {
+  background: var(--color-fill) !important;
+  color: var(--color-ink) !important;
+}
+.student-quick-toggles > .student-theme-toggle:disabled {
+  opacity: 0.6;
+}
+
 /* The topbar no longer carries the controls, so on wide screens it is gone
    entirely — it only held the mobile menu toggle, and the sidebar is
    already on screen there. The 82px it used to reserve goes with it. */

@@ -131,7 +131,7 @@ Vocabulary: `bg-paper bg-sheet bg-fill` · `text-ink text-ink-2 text-ink-3` · `
 
 **The master profile and resume documents are deliberately separate.**
 
-- `/profile` → `student_profiles` + `profile_items`. One record of what the student has actually done. Three columns: the page on the right is the *general resume* — the whole profile rendered untrimmed by `ResumePaper`, redrawn as the form changes. "Save as resume" `POST`s it to `/api/resume-documents` (`source_type: "generated"`) as a snapshot and opens it on the shelf. The Suggestions tab there is UI only: `use-profile-bullet-review.ts` mirrors `useBulletReview`'s shape with no AI call behind `ask` yet.
+- `/profile` → `student_profiles` + `profile_items`. One record of what the student has actually done. Three columns: the page on the right is the *general resume* — the whole profile rendered untrimmed by `ResumePaper`, redrawn as the form changes. "Save as resume" `POST`s it to `/api/resume-documents` (`source_type: "generated"`), which applies the resume standard (below) and saves a one-page snapshot; the profile keeps everything. The Suggestions tab uses `useBulletReview(profile, { target: "profile" })`: rewrites are cached under `feedback_type = 'bullets-profile'` on the current document, apart from any resume's.
 - `/resumes` → `resume_documents`. Many: one per kind of role. `/resumes/[id]` is three columns — the uploaded file on the right, its wording in the middle, the AI's rewrites on the left. Editing a resume never writes back to the profile.
 
 ### Line-level AI suggestions
@@ -141,6 +141,16 @@ Vocabulary: `bg-paper bg-sheet bg-fill` · `text-ink text-ink-2 text-ink-3` · `
 `src/lib/resume-suggestions.ts` matches a rewrite back to the line it is about and drops any whose text has changed since — better no suggestion than one applied to the wrong words. `useBulletReview` (`src/components/resume-studio/use-bullet-review.ts`) holds the answers; `bullet-list.tsx` draws each bullet with its suggestion, a tick and a cross.
 
 This is separate from `/api/analyze/xyz-batch`, which scores whole entries and plans a career.
+
+### Resume standard (`src/lib/resume/standard.ts`)
+
+One list (`RESUME_STANDARD`) of what a generated resume must be: Jake Gutierrez's one-page template, `Mon YYYY – Mon YYYY` dates, reverse chronological, 3–4 bullets per role / 2–3 per project, action verbs, XYZ, no trailing periods, no invented facts. `normalizeResume` enforces the mechanical rules for free; `applyResumeStandard` adds `fitToOnePage`; `RESUME_STANDARD_PROMPT` (the wording rules only) is appended to every resume-writing system prompt. Change a rule there, not in a prompt. `craft.ts` reads dates with the same parser.
+
+`selectForRole` (`src/lib/resume/select.ts`) is the AI's pick of entries and bullets for one page — for a job (`/api/tailor-resume`) or, with `job: null`, for a general internship (Save as resume, only when the profile runs over a page). It picks by index and never rewrites.
+
+### AI cache (`src/lib/ai/cache.ts`)
+
+`withAiCache(userId, feature, input, run)` keys on a SHA-256 of the feature and the full prompt (`cache-key.ts`), stored per user in Supabase `ai_cache` (30-day TTL). `run` must contain `resolveAiProvider` and any daily-limit check, so a hit spends no tokens, no paid request and no limit. The provider is not in the key. Bump `AI_CACHE_VERSION` when a prompt or schema change should invalidate old answers. Used by bullets, bullet-options, xyz, xyz-batch, insights, selection and the LaTeX export.
 
 ## Preview harnesses
 

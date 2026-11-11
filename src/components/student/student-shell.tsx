@@ -25,6 +25,7 @@ import {
 } from "lucide-react"
 import { careerNavigationEvent, navigateCareer } from "@/lib/career/navigation"
 import { GuidedTour, startTour } from "./guided-tour"
+import { AiProviderPicker } from "@/components/ai-provider-picker"
 import "./student.css"
 // The paper theme, loaded after so its variables and chrome win.
 import "./student-theme.css"
@@ -42,15 +43,13 @@ const UserButton = dynamic(
 
 const links = [
   { href: "/home", label: "Home", icon: Home },
+  // The master profile: one record of everything the student has done, which
+  // every resume in the collection is drawn from.
+  { href: "/profile", label: "Profile", icon: UserRound },
   { href: "/career", label: "Career", icon: Compass },
   { href: "/community", label: "Community", icon: Users },
-  { href: "/profile", label: "Resume", icon: FileText },
+  { href: "/resumes", label: "Resume collection", icon: FileText },
   { href: "/jobs", label: "Jobs", icon: Search },
-]
-const resumePages = [
-  { href: "/profile", label: "Master profile" },
-  { href: "/resumes", label: "My resumes" },
-  { href: "/upload", label: "Upload resume" },
 ]
 const careerPages = [
   { href: "/career", label: "My plan" },
@@ -73,7 +72,6 @@ const jobsPages = [
 const sectionPages: Record<string, { href: string; label: string }[]> = {
   "/career": careerPages,
   "/community": communityPages,
-  "/profile": resumePages,
   "/jobs": jobsPages,
 }
 const expandedStorageKey = "vistern-sidebar-expanded"
@@ -88,8 +86,8 @@ export function StudentShell({
   activeSubpage?: string
 }) {
   const pathname = usePathname()
-  const activeHref = resumePages.some((page) => page.href === pathname) || pathname.startsWith("/resumes/")
-    ? "/profile"
+  const activeHref = pathname.startsWith("/resumes/")
+    ? "/resumes"
     : pathname === "/match"
       ? "/jobs"
       : pathname.startsWith("/community/")
@@ -189,7 +187,10 @@ export function StudentShell({
                 <Signpost size={18} aria-hidden="true" />
                 Take the tour
               </button>
-              <ThemeToggle />
+              <div className="student-quick-toggles">
+                <ThemeToggle />
+                <AiProviderPicker variant="icon" />
+              </div>
               <UserButton />
               <SignOutButton redirectUrl="/">
                 <button type="button">Sign out</button>
@@ -259,7 +260,10 @@ function Brand() {
 function AccountControls() {
   return (
     <div className="student-account">
-      <ThemeToggle />
+      <div className="student-quick-toggles">
+        <ThemeToggle />
+        <AiProviderPicker variant="icon" />
+      </div>
       <UserButton />
       <SignOutButton redirectUrl="/">
         <button type="button">Sign out</button>

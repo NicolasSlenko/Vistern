@@ -1,5 +1,8 @@
-import { generateText } from "@/lib/ai";
+import { generateText, type AiProvider } from "@/lib/ai";
 import { resolveAiProvider } from "@/lib/ai/resolve";
+import { withAiCache } from "@/lib/ai/cache";
+import type { Resume } from "@/app/api/parse/resumeSchema";
+import { RESUME_STANDARD_PROMPT, normalizeResume } from "@/lib/resume/standard";
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { checkAndIncrementLimit } from "@/lib/usageLimits";
@@ -139,22 +142,15 @@ export async function POST(request: NextRequest) {
         const isPreview = url.searchParams.get("preview") === "true";
         const isOverleaf = url.searchParams.get("mode") === "overleaf";
 
-        const { resumeData, tweaks, xyzImprovements, customInstructions } = await request.json();
+        const { resumeData: rawResume, tweaks, xyzImprovements, customInstructions } = await request.json();
 
-        if (!resumeData) {
+        if (!rawResume) {
             return NextResponse.json({ error: "No resume data provided" }, { status: 400 });
         }
-
-        if (isPreview) {
-            // Preview data is ephemeral; generate it without persisting to S3.
-            const { allowed } = await checkAndIncrementLimit(userId, "tailorResume");
-            if (!allowed) {
-                return NextResponse.json(
-                    { error: "Daily tailor resume limit reached (10/day). Try again tomorrow." },
-                    { status: 429 }
-                );
-            }
-        }
+        // One date form, newest first, clean bullets (src/lib/resume/standard.ts). The
+        // gamification blob is app state, not resume content, so it isn't sent.
+        const { gamification: _gamification, ...resumeData } = normalizeResume(rawResume as Resume);
+        void _gamification;
 
         // Build a summary of all improvements available
         const improvementsSummary: string[] = [];
@@ -240,7 +236,7 @@ ${improvementsSummary.length > 0 ? `- Use \\\\textbf{} for action verbs and key 
 
 ${requiredEntries ? `=== REQUIRED ENTRIES (check your output against this before finishing) ===\n${requiredEntries}\n` : ""}
 === RESUME DATA (JSON) ===
-${JSON.stringify(resumeData, null, 2)}
+${JSON.stringify(resumeData)}
 
 ${improvementsSummary.length > 0 ? improvementsSummary.join("\n") : "No specific improvements — copy all bullet points verbatim from the resume data above."}
 
@@ -256,10 +252,7 @@ ${customInstructions}
 === END UNTRUSTED USER INPUT ===\n` : ""}
 `;
 
-        const { provider } = await resolveAiProvider(userId);
-        const result = await generateText({
-            provider,
-            system: `You are an expert LaTeX resume formatter.
+        const system = `You are an expert LaTeX resume formatter.
 You must output ONLY valid, compilable LaTeX code using the EXACT template provided below. 
 Never output markdown fences or explanations.
 CRITICAL: Only include sections that exist in the provided resume data. Do NOT invent new sections like Summary, Objective, or Profile. Your ONLY job is to format the data into LaTeX and improve bullet point wording where suggestions are provided.
@@ -267,12 +260,36 @@ CRITICAL: Every experience and every project in the data must appear in the outp
 
 === REQUIRED LATEX TEMPLATE TO FILL OUT ===
 ${JAKE_TEMPLATE}
-`,
-            prompt,
-            temperature: 0.2,
-        });
 
-        let latex = result;
+${RESUME_STANDARD_PROMPT}
+`;
+
+        // A whole document is the priciest output the app asks for, so the same
+        // resume, suggestions and instructions are served from the cache. The
+        // preview limit and the paid request are spent only when the model is asked.
+        let provider: AiProvider | undefined;
+        let limited = false;
+        const { value: generated } = await withAiCache(userId, "latex_export", { system, prompt }, async () => {
+            if (isPreview) {
+                const { allowed } = await checkAndIncrementLimit(userId, "tailorResume");
+                if (!allowed) {
+                    limited = true;
+                    return null;
+                }
+            }
+            const resolved = await resolveAiProvider(userId);
+            provider = resolved.provider;
+            return (await generateText({ provider: resolved.provider, system, prompt, temperature: 0.2 })) || null;
+        });
+        if (limited) {
+            return NextResponse.json(
+                { error: "Daily tailor resume limit reached (10/day). Try again tomorrow." },
+                { status: 429 }
+            );
+        }
+        if (!generated) throw new Error("The AI returned no LaTeX");
+
+        let latex = generated;
 
         // Strip markdown fences if GPT added them
         latex = latex.replace(/^```(?:latex|tex)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();

@@ -1,9 +1,9 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 import type { Resume } from "@/app/api/parse/resumeSchema"
-import { applyRewrite, liveRewrites, rewriteKey, type BulletRewrite } from "@/lib/resume-suggestions"
+import { BULLET_FIELDS, applyRewrite, liveRewrites, rewriteKey, type BulletRewrite, type BulletSection } from "@/lib/resume-suggestions"
 
 /**
  * The AI's line-level rewrites for whatever resume is open, and what the
@@ -17,11 +17,34 @@ import { applyRewrite, liveRewrites, rewriteKey, type BulletRewrite } from "@/li
 
 const answeredKey = (scope: string) => `vistern-rewrites-answered:${scope}`
 
-export function useBulletReview(resume: Resume | null, { scope, resumeDocumentId }: { scope: string; resumeDocumentId?: string }) {
+/** Every bullet the route would send, so an unchanged resume isn't sent again. */
+function bulletFingerprint(resume: Resume): string {
+  const lines: string[] = []
+  for (const section of Object.keys(BULLET_FIELDS) as BulletSection[]) {
+    ;((resume[section] ?? []) as Record<string, unknown>[]).forEach((entry, entryIndex) => {
+      for (const field of BULLET_FIELDS[section]) {
+        const bullets = Array.isArray(entry[field]) ? (entry[field] as unknown[]) : []
+        bullets.forEach((bullet, bulletIndex) => lines.push(`${section}.${entryIndex}.${field}.${bulletIndex}:${String(bullet)}`))
+      }
+    })
+  }
+  return lines.join("\n")
+}
+
+/**
+ * `target: "profile"` reviews the master profile's general resume: its
+ * rewrites are cached apart from any resume document's.
+ */
+export function useBulletReview(
+  resume: Resume | null,
+  { scope, resumeDocumentId, target = "resume" }: { scope: string; resumeDocumentId?: string; target?: "resume" | "profile" },
+) {
   const [all, setAll] = useState<BulletRewrite[]>([])
   const [asking, setAsking] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [answered, setAnswered] = useState<Set<string>>(new Set())
+  // The bullets the last answer was for; asking again about the same words is free.
+  const lastAsked = useRef<string | null>(null)
 
   // What's already been answered, from the last visit.
   useEffect(() => {
@@ -51,7 +74,12 @@ export function useBulletReview(resume: Resume | null, { scope, resumeDocumentId
   // The rewrites last generated for this resume.
   useEffect(() => {
     let live = true
-    const query = resumeDocumentId ? `?resumeDocumentId=${encodeURIComponent(resumeDocumentId)}` : ""
+    const query =
+      target === "profile"
+        ? "?for=profile"
+        : resumeDocumentId
+          ? `?resumeDocumentId=${encodeURIComponent(resumeDocumentId)}`
+          : ""
     fetch(`/api/analyze/bullets${query}`)
       .then((response) => response.json())
       .then((result) => {
@@ -64,27 +92,39 @@ export function useBulletReview(resume: Resume | null, { scope, resumeDocumentId
     return () => {
       live = false
     }
-  }, [resumeDocumentId])
+  }, [resumeDocumentId, target])
+
+  const clearAnswers = useCallback(() => {
+    // A fresh reading is a fresh set of offers, so old answers don't suppress them.
+    setAnswered(new Set())
+    try {
+      localStorage.removeItem(answeredKey(scope))
+    } catch {
+      /* Nothing to clear. */
+    }
+  }, [scope])
 
   const ask = useCallback(async () => {
     if (!resume) return
+    const fingerprint = bulletFingerprint(resume)
+    if (fingerprint === lastAsked.current) {
+      // Nothing has changed since the last answer: offer it again without a request.
+      clearAnswers()
+      toast.success(all.length === 0 ? "Nothing to change — your bullets read well" : `${all.length} ${all.length === 1 ? "bullet" : "bullets"} to look at`)
+      return
+    }
     setAsking(true)
     try {
       const response = await fetch("/api/analyze/bullets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeData: resume, resumeDocumentId }),
+        body: JSON.stringify({ resumeData: resume, resumeDocumentId, for: target }),
       })
       const result = await response.json()
       if (!result.success) throw new Error(result.error || "The AI couldn't read it this time")
       setAll(result.data.rewrites ?? [])
-      // A fresh reading is a fresh set of offers, so old answers don't suppress them.
-      setAnswered(new Set())
-      try {
-        localStorage.removeItem(answeredKey(scope))
-      } catch {
-        /* Nothing to clear. */
-      }
+      lastAsked.current = fingerprint
+      clearAnswers()
       const count = result.data.rewrites?.length ?? 0
       toast.success(count === 0 ? "Nothing to change — your bullets read well" : `${count} ${count === 1 ? "bullet" : "bullets"} to look at`)
     } catch (error) {
@@ -92,7 +132,7 @@ export function useBulletReview(resume: Resume | null, { scope, resumeDocumentId
     } finally {
       setAsking(false)
     }
-  }, [resume, resumeDocumentId, scope])
+  }, [resume, resumeDocumentId, target, all.length, clearAnswers])
 
   // Only the rewrites that still match the words in front of us, minus the ones already answered.
   const live = useMemo(() => liveRewrites(resume, all), [resume, all])

@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { RESUME_STANDARD_PROMPT } from "@/lib/resume/standard"
 
 /**
  * Writing bullets with the AI while the student decides.
@@ -68,7 +69,9 @@ Every bullet you write:
 
 When you give several options for one bullet, make them genuinely different, not rewordings:
 one leads with the measurable impact, one with the technical work, one is the most concise.
-Label each with a two- or three-word "angle" and say in one sentence what makes it strong.`
+Label each with a two- or three-word "angle" and say in one sentence what makes it strong.
+
+${RESUME_STANDARD_PROMPT}`
 
 const SECTION_NOUN: Record<WritableSection, string> = {
   experience: "work experience",

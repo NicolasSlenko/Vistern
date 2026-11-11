@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_cache: {
+        Row: {
+          cache_key: string
+          clerk_user_id: string
+          created_at: string
+          expires_at: string
+          feature: string
+          result: Json
+        }
+        Insert: {
+          cache_key: string
+          clerk_user_id: string
+          created_at?: string
+          expires_at: string
+          feature: string
+          result: Json
+        }
+        Update: {
+          cache_key?: string
+          clerk_user_id?: string
+          created_at?: string
+          expires_at?: string
+          feature?: string
+          result?: Json
+        }
+        Relationships: []
+      }
       application_events: {
         Row: {
           clerk_user_id: string

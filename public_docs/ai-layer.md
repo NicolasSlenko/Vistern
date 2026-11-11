@@ -110,7 +110,7 @@ generateObject() × 10 on the student's provider ──▶ score, strengths, gap
 
 **Where it opens** — Experience, Projects and Activities only (education, awards and certifications are lists, not achievement bullets):
 
-- **Improve** on any bullet in the Master profile and My resumes editor
+- **Improve** on any bullet in the Master profile and Resume collection editor
 - **More options** beside Use this / Keep mine on the AI's existing suggestions, in the editor and on the resume paper
 
 **"Write it with AI" walkthrough**, next to "Fill one in myself" when adding an entry:
@@ -137,7 +137,7 @@ Used by "Tailor" on the Match page: `POST /api/tailor-resume` selects content, t
 
 ## 7. Other changes in PR #1
 
-- **Mock resume workspace removed.** The `/resume` pages showing sample data ("Alex Rivera") were removed with their components and `src/lib/resume/{mock-data,types,workspace}.ts`. Links go to the real Master profile (`/profile`) and My resumes (`/resumes`). `craft.ts` and `impact.ts` stay.
+- **Mock resume workspace removed.** The `/resume` pages showing sample data ("Alex Rivera") were removed with their components and `src/lib/resume/{mock-data,types,workspace}.ts`. Links go to the real Master profile (`/profile`) and Resume collection (`/resumes`). `craft.ts` and `impact.ts` stay.
 - **Overleaf opens reliably:** the tab opens during the click and the LaTeX is posted into it when ready, since browsers block a tab opened seconds later.
 - **Live-match failures are logged** instead of silently falling back to the similarity score.
 - **UI:** suggestion buttons no longer squash their labels; the resume paper's zoom bar has its `glass` class.

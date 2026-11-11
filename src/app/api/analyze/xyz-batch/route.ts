@@ -1,4 +1,5 @@
-import { generateObject } from "@/lib/ai";
+import { generateObject, type AiProvider } from "@/lib/ai";
+import { withAiCache } from "@/lib/ai/cache";
 import { resolveAiProvider } from "@/lib/ai/resolve";
 import { z } from "zod";
 import { type NextRequest, NextResponse } from "next/server";
@@ -198,17 +199,22 @@ ${projectItems.length > 0 ? "=== PROJECTS ===\n" + projectItems.join("\n\n") : "
 ${experienceItems.length > 0 ? "=== EXPERIENCE ===\n" + experienceItems.join("\n\n") : ""}
 `;
 
-        const { provider } = await resolveAiProvider(userId);
-        const result = await generateObject({
-            provider,
-            system: "You are an expert resume consultant. Analyze each item for XYZ formula adherence, then synthesize findings into actionable insights. Be specific — reference actual content from the resume.",
-            prompt,
-            schema: BatchResultSchema,
-            name: "batch_feedback",
-            temperature: 0.3,
+        // The prompt carries everything the answer depends on, so it is the cache key:
+        // re-running an unchanged resume costs no tokens and no paid request.
+        let provider: AiProvider | undefined;
+        const { value: feedbackData } = await withAiCache(userId, "batch_feedback", { prompt }, async () => {
+            const resolved = await resolveAiProvider(userId);
+            provider = resolved.provider;
+            const result = await generateObject({
+                provider: resolved.provider,
+                system: "You are an expert resume consultant. Analyze each item for XYZ formula adherence, then synthesize findings into actionable insights. Be specific — reference actual content from the resume.",
+                prompt,
+                schema: BatchResultSchema,
+                name: "batch_feedback",
+                temperature: 0.3,
+            });
+            return result.data;
         });
-
-        const feedbackData = result.data;
 
         // Transform to index-keyed maps for easy lookup
         const indexed = {

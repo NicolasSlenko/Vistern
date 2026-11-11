@@ -88,6 +88,7 @@ function EntryFields({
               <div key={field.key} className={span}>
                 <BulletList
                   label={field.label}
+                  field={field.key}
                   hint={field.hint}
                   bullets={asList(entry[field.key])}
                   rewrites={byLine.size ? byLine : undefined}

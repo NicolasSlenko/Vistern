@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server"
 import { z } from "zod"
 import { generateObject, aiErrorMessage } from "@/lib/ai"
 import { resolveAiProvider } from "@/lib/ai/resolve"
+import { withAiCache } from "@/lib/ai/cache"
 import {
   BULLET_WRITING_SYSTEM,
   DraftResultSchema,
@@ -57,36 +58,32 @@ export async function POST(request: NextRequest) {
     const body = parsed.data
     const section = body.section as (typeof WRITABLE_SECTIONS)[number]
 
-    const { provider } = await resolveAiProvider(userId)
+    // The prompt is the whole question, so it is the cache key. "More options" sends
+    // the ones already seen as `avoid`, which changes the prompt, so it is never
+    // served a repeat. The provider is resolved only on a miss.
+    const ask = async <T extends z.ZodTypeAny>(name: string, prompt: string, schema: T) =>
+      withAiCache(userId, name, { prompt }, async () => {
+        const { provider } = await resolveAiProvider(userId)
+        const result = await generateObject({ provider, system: BULLET_WRITING_SYSTEM, prompt, schema, name, temperature: 0.7 })
+        return result.data as z.infer<T> | null
+      }, { ttlDays: 7 })
 
     if (body.mode === "fix") {
-      const result = await generateObject({
-        provider,
-        system: BULLET_WRITING_SYSTEM,
-        prompt: buildFixPrompt({ section, entry: body.entry, bullet: body.bullet, context: body.context, avoid: body.avoid }),
-        schema: FixResultSchema,
-        name: "bullet_options",
-        temperature: 0.7,
-      })
-      const options = cleanOptions(result.data?.options)
+      const prompt = buildFixPrompt({ section, entry: body.entry, bullet: body.bullet, context: body.context, avoid: body.avoid })
+      const { value, cached } = await ask("bullet_options", prompt, FixResultSchema)
+      const options = cleanOptions(value?.options)
       if (options.length === 0) throw new Error("The AI returned no options")
-      return NextResponse.json({ success: true, data: { options }, aiProvider: provider })
+      return NextResponse.json({ success: true, data: { options }, cached })
     }
 
-    const result = await generateObject({
-      provider,
-      system: BULLET_WRITING_SYSTEM,
-      prompt: buildDraftPrompt({ section, entry: body.entry, answers: body.answers, count: body.count }),
-      schema: DraftResultSchema,
-      name: "bullet_draft",
-      temperature: 0.7,
-    })
-    const bullets = (result.data?.bullets ?? [])
+    const prompt = buildDraftPrompt({ section, entry: body.entry, answers: body.answers, count: body.count })
+    const { value, cached } = await ask("bullet_draft", prompt, DraftResultSchema)
+    const bullets = (value?.bullets ?? [])
       .map((bullet) => ({ options: cleanOptions(bullet.options) }))
       .filter((bullet) => bullet.options.length > 0)
       .slice(0, body.count)
     if (bullets.length === 0) throw new Error("The AI returned no bullets")
-    return NextResponse.json({ success: true, data: { bullets }, aiProvider: provider })
+    return NextResponse.json({ success: true, data: { bullets }, cached })
   } catch (error) {
     console.error("Error writing bullet options:", error)
     return NextResponse.json({ success: false, error: aiErrorMessage(error, "The AI couldn't write options this time. Try again.") }, { status: 500 })

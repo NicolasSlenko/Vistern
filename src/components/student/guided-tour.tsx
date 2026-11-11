@@ -125,7 +125,7 @@ const sections: Section[] = [
       {
         target: ['[data-tour="studio-left"]'],
         title: "Sections",
-        body: "Choose a section to edit it. A dot beside one means there’s a review note waiting on it.",
+        body: "Choose a section to edit it. The list stays here in every mode; a count beside a section means there are notes or suggestions waiting on it.",
         points: ["Profile, education, experience, projects, skills and more", "Add as many entries as you have: this isn’t limited to one page"],
       },
       {
@@ -137,8 +137,8 @@ const sections: Section[] = [
       {
         target: ['[data-tour="studio-modes"]'],
         title: "Write, Review and Suggestions",
-        body: "Write is where you edit. Review asks the AI to read the whole profile and leave notes on the entries that could be stronger. Suggestions is for line-level rewrites of individual bullets.",
-        points: ["Each note points to the entry it’s about", "Mark a note done once you’ve dealt with it"],
+        body: "Write is where you edit. Review and Suggestions draw the AI’s notes and bullet rewrites on the page itself, underlined on the line they’re about.",
+        points: ["Ask for them from the bar at the top of the page", "Click a marked line to jump to it in the form", "Answer a rewrite with Use this or Keep mine; mark a note done once you’ve dealt with it"],
       },
     ],
   },
@@ -149,7 +149,7 @@ const sections: Section[] = [
     steps: [
       {
         target: ['[data-tour="resumes-header"]'],
-        title: "My resumes",
+        title: "Resume collection",
         body: "Keep a separate resume for each kind of role you apply to. They’re edited on their own, so a rewrite here never changes your master profile.",
         points: ["Upload adds a new resume from a PDF"],
       },
@@ -162,7 +162,7 @@ const sections: Section[] = [
       {
         title: "Inside a resume",
         body: "An open resume has three columns side by side.",
-        points: ["Right: the file you uploaded, exactly as it looks", "Middle: its wording, to edit", "Left: the AI’s rewrite for each weak bullet; accept with a tick or dismiss with a cross"],
+        points: ["Right: the file you uploaded, exactly as it looks", "Middle: its wording, to edit", "Weak bullets are underlined on the page; click one to see the rewrite and jump to it in the form"],
       },
     ],
   },
