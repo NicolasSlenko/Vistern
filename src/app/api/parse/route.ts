@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { extractWithChatGPT } from "./semanticParse"
 import { resolveAiProvider } from "@/lib/ai/resolve"
-import { aiErrorMessage } from "@/lib/ai"
+import { aiErrorMessage, aiErrorStatus } from "@/lib/ai"
 import { parseFileContent, ResumeFileError } from "./parseContent"
 import { getBufferFromS3, objectExistsInS3 } from "@/lib/aws/s3"
 import type { Resume } from "./resumeSchema"
@@ -64,9 +64,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: aiErrorMessage(error, "Something went wrong while reading your resume. Try again in a moment."),
-        code: "server_error",
+        code: aiErrorStatus(error) === 504 ? "timeout" : "server_error",
       },
-      { status: 500 },
+      { status: aiErrorStatus(error) },
     )
   }
 }
