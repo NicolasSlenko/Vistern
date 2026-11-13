@@ -2,12 +2,14 @@
 
 import { useState } from "react"
 import { SignUp } from "@clerk/nextjs"
-import { AuthPage, clerkAppearance } from "@/components/auth/auth-page"
+import { AuthPage } from "@/components/auth/auth-page"
+import { useClerkAppearance } from "@/components/auth/use-clerk-appearance"
 import { pill } from "@/components/resume-studio/pills"
 
 export default function SignUpPage() {
   // Said plainly before an account exists, not buried in terms afterwards.
   const [acceptedAiUse, setAcceptedAiUse] = useState(false)
+  const appearance = useClerkAppearance()
 
   if (!acceptedAiUse) {
     return (
@@ -50,7 +52,7 @@ export default function SignUpPage() {
 
   return (
     <AuthPage title="Vistern">
-      <SignUp appearance={clerkAppearance} path="/sign-up" routing="path" signInUrl="/sign-in" />
+      <SignUp appearance={appearance} path="/sign-up" routing="path" signInUrl="/sign-in" />
     </AuthPage>
   )
 }
