@@ -3,13 +3,13 @@ import ResumeSchema, { type Resume } from "./resumeSchema";
 import { normalizeParsedResume } from "@/lib/parse/normalize";
 import { z } from "zod";
 
-const ResultSchema = z.object({
+export const ResultSchema = z.object({
   details: ResumeSchema.omit({ gamification: true }),
   missing: z.array(z.string())
 })
 
 
-const SYSTEM_PROMPT = `
+export const SYSTEM_PROMPT = `
 You are a resume parser that extracts structured JSON from raw resume text.
 
 CRITICAL RULES:
