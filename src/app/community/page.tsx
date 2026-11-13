@@ -24,7 +24,7 @@ export default async function CommunityPage() {
             <div className="flex-1 px-4 py-9 sm:px-8 sm:py-12">
               <div className="mx-auto flex max-w-[1080px] flex-col gap-9">
                 <div className="flex flex-col gap-2">
-                  <p className="label-mono text-ink-2">Community</p>
+                  <p className="label-caps text-ink-2">Community</p>
                   <p className="max-w-[58ch] font-serif text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
                     Computing groups, collaborators and <em className="text-brand">research</em> at UF
                   </p>
@@ -35,7 +35,7 @@ export default async function CommunityPage() {
                 </div>
 
                 <section data-tour="community-orgs" className="flex flex-col gap-4">
-                  <h2 className="label-mono text-ink-2">Around UF and beyond</h2>
+                  <h2 className="label-caps text-ink-2">Around UF and beyond</h2>
                   <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     {organizations.map((organization) => {
                       const saved = workspace.activities.find(
@@ -50,7 +50,7 @@ export default async function CommunityPage() {
                             id={`organization-${organization.id}`}
                             className="flex flex-1 scroll-mt-6 flex-col gap-2 rounded-[18px] border border-hairline bg-sheet p-5 shadow-card-rest transition-colors duration-150 hover:border-rule"
                           >
-                            <p className="label-mono text-ink-3">{organization.kind}</p>
+                            <p className="label-caps text-ink-3">{organization.kind}</p>
                             <h3 className="text-[16px] font-medium tracking-[-0.015em] text-ink">{organization.name}</h3>
                             <p className="text-[14px] leading-relaxed text-ink-2">{organization.description}</p>
                             <div className="mt-auto flex flex-wrap items-center gap-x-5 gap-y-2 pt-3">

@@ -52,8 +52,8 @@
   --student-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 12px -4px rgb(0 0 0 / 0.5);
 }
 
-/* Titles are Newsreader, as they are in the studio. Headings inside a card
-   or a control stay in the sans face; only page titles change voice. */
+/* Page titles are Newsreader, as they are in the studio: the one place the app
+   uses a second typeface. Everything else, the nav included, stays in Geist. */
 :where(.student-app) h1,
 :where(.student-app) .student-tool-page h1 {
   font-family: var(--font-newsreader), Georgia, serif;
@@ -124,8 +124,8 @@
 }
 
 .student-brand {
-  font-family: var(--font-newsreader), Georgia, serif;
-  font-weight: 500;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-weight: 600;
   letter-spacing: -0.04em;
   color: var(--color-ink);
 }
@@ -134,9 +134,8 @@
   color: var(--color-brand);
 }
 
-/* The nav reads in Newsreader, as the page titles do — it is a list of
-   places, which is closer to prose than to a control. The size is nudged up
-   because the serif runs smaller than Geist at the same point size. */
+/* The nav is in Geist like the rest of the app, a touch larger than body text
+   so the list of places reads easily. */
 .student-sidebar nav a,
 .student-nav-disclosure > span,
 .student-nav-disclosure,
@@ -144,10 +143,10 @@
 .student-mobile-nav a,
 .student-mobile-subnav a,
 .student-account-nav > * {
-  font-family: var(--font-newsreader), Georgia, serif;
-  font-size: 16px;
-  font-weight: 450;
-  letter-spacing: -0.012em;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.006em;
 }
 .student-subnav a,
 .student-mobile-subnav a {
@@ -371,7 +370,7 @@
 /* ---- Tool pages ------------------------------------------------------- */
 
 /* A tool page that hasn't been rebuilt as a sheet still reads as part of the
-   theme: paper behind it, hairline cards, the serif title. */
+   theme: paper behind it, hairline cards, the bold title. */
 .student-tool-page [data-slot="card"] {
   border-color: var(--color-hairline);
   border-radius: 18px;
@@ -499,7 +498,8 @@
     0 0 0 13px rgb(160 200 175 / 0.07);
 }
 .student-entry .student-growth-kicker {
-  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-weight: 500;
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -673,10 +673,10 @@
   padding: 12px 13px;
   border-radius: 11px;
   color: var(--student-muted);
-  font-family: var(--font-newsreader), Georgia, serif;
-  font-size: 16px;
-  font-weight: 450;
-  letter-spacing: -0.012em;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.006em;
   text-align: left;
 }
 .student-mobile-tour:hover {

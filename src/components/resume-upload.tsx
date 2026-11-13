@@ -361,7 +361,7 @@ export function ResumeUpload({ onComplete, onBusyChange }: ResumeUploadProps = {
 
       <SignedOut>
         <div className="flex flex-col items-start gap-3 rounded-[18px] border border-hairline bg-sheet p-6 shadow-card-rest">
-          <h2 className="font-serif text-[26px] leading-tight tracking-[-0.025em] text-ink">Sign in to upload a resume</h2>
+          <h2 className="font-semibold text-[26px] leading-tight tracking-[-0.025em] text-ink">Sign in to upload a resume</h2>
           <p className="max-w-[52ch] text-[15px] leading-relaxed text-ink-2">
             Your resume and the feedback on it are kept with your account.
           </p>
@@ -429,7 +429,7 @@ export function ResumeUpload({ onComplete, onBusyChange }: ResumeUploadProps = {
                 <UploadCloud className="h-[18px] w-[18px]" aria-hidden="true" />
               )}
             </span>
-            <p className="font-serif text-[26px] leading-tight tracking-[-0.025em] text-ink">
+            <p className="font-semibold text-[26px] leading-tight tracking-[-0.025em] text-ink">
               {isUploading ? "Uploading…" : isDragActive ? "Drop your resume here" : "Choose a file or drag it here"}
             </p>
             <p className="text-[14px] leading-relaxed text-ink-3">PDF, DOCX or TXT, up to 10 MB.</p>

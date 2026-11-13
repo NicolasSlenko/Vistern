@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { ArrowRight, ChevronRight, CircleCheck, Sprout } from "lucide-react"
 import { LandingThemeToggle } from "./landing-theme-toggle"
+import { landingFontVariables } from "./fonts"
 import { HeroWindow } from "./motion/hero-window"
 import { MarkupStory } from "./motion/markup-story"
 import { GrowthStory } from "./motion/growth-story"
@@ -14,7 +15,7 @@ import "./landing-motion.css"
 
 export function PublicHome() {
   return (
-    <div className="public-home">
+    <div className={`public-home ${landingFontVariables}`}>
       <a className="public-skip" href="#public-main">Skip to content</a>
       <header className="public-header">
         <div className="public-container public-header-inner">

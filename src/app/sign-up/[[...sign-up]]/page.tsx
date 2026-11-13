@@ -23,7 +23,7 @@ export default function SignUpPage() {
           </div>
 
           <div className="flex flex-col gap-3 rounded-[18px] border border-hairline bg-fill p-5">
-            <h2 className="label-mono text-ink-2">How we use AI</h2>
+            <h2 className="label-caps text-ink-2">How we use AI</h2>
             <p className="text-[14px] leading-relaxed text-ink-2">
               A language model reads your resume to pull out your experience, score each bullet, match your skills against roles, and write
               the suggestions you see in the app. That is all it is used for.

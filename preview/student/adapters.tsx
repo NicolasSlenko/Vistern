@@ -61,3 +61,5 @@ export function useResume() {
     refreshResumeData: async () => {},
   }
 }
+// geist/font needs Next's compiler; the landing page only reads its CSS variable.
+export const GeistMono = { variable: "", className: "" }

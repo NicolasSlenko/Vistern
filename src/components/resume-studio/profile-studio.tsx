@@ -175,12 +175,12 @@ export function ProfileStudio() {
             </DialogTrigger>
             <DialogContent className="zip-scope flex flex-col gap-5 border-hairline bg-sheet p-6 rounded-[18px] sm:max-w-md sm:rounded-[18px]">
               <DialogHeader className="flex flex-col gap-2">
-                <DialogTitle className="font-serif text-[26px] leading-tight font-normal text-ink">Clear master profile</DialogTitle>
+                <DialogTitle className="font-semibold text-[26px] leading-tight text-ink">Clear master profile</DialogTitle>
                 <DialogDescription className="text-[15px] leading-relaxed text-ink-2">Remove your profile details, skills and experience. Saved resumes and your account stay available.</DialogDescription>
               </DialogHeader>
               <div className="flex flex-col gap-2">
-                <label htmlFor="clear-profile-confirm" className="label-mono text-ink-2">Type CLEAR to confirm</label>
-                <input id="clear-profile-confirm" value={clearText} onChange={(event) => setClearText(event.target.value)} placeholder="CLEAR" disabled={clearing} autoComplete="off" className="h-10 w-full rounded-[12px] border border-rule-strong bg-sheet px-3 font-mono text-[14px] text-ink outline-none focus-visible:border-brand disabled:opacity-50" />
+                <label htmlFor="clear-profile-confirm" className="label-caps text-ink-2">Type CLEAR to confirm</label>
+                <input id="clear-profile-confirm" value={clearText} onChange={(event) => setClearText(event.target.value)} placeholder="CLEAR" disabled={clearing} autoComplete="off" className="h-10 w-full rounded-[12px] border border-rule-strong bg-sheet px-3 tabular-nums text-[14px] text-ink outline-none focus-visible:border-brand disabled:opacity-50" />
               </div>
               <DialogFooter className="gap-2 sm:gap-2.5">
                 <DialogClose asChild><button type="button" disabled={clearing} className={pill("white")}>Cancel</button></DialogClose>

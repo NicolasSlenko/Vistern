@@ -674,7 +674,7 @@
 .career-paths-count,
 .career-path-card-top,
 .career-roadmap-heading > span:last-child {
-  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-family: var(--font-geist-sans), system-ui, sans-serif; font-variant-numeric: tabular-nums;
   font-size: 11px;
   line-height: 1.5;
   font-weight: 600;
@@ -797,7 +797,7 @@
 .career-roadmap-list { margin: 0; padding: 0; list-style: none; }
 .career-roadmap-list li { display: grid; grid-template-columns: 35px minmax(0, 1fr); gap: 15px; position: relative; padding: 0 0 27px; }
 .career-roadmap-list li:not(:last-child)::before { content: ""; position: absolute; top: 35px; bottom: 0; left: 17px; border-left: 1px solid var(--career-border); }
-.career-roadmap-number { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 50%; background: var(--career-accent); color: #fff; font-family: var(--font-geist-mono), monospace; font-size: 11px; font-weight: 700; }
+.career-roadmap-number { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 50%; background: var(--career-accent); color: #fff; font-family: var(--font-geist-sans), system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 11px; font-weight: 700; }
 .career-roadmap-list li > div { padding: 0 0 20px; border-bottom: 1px solid var(--career-border); }
 .career-roadmap-list h3 { margin: 0 0 7px; color: var(--career-ink); font-size: 20px; line-height: 1.3; }
 .career-roadmap-list p { max-width: 65ch; font-size: 15px; line-height: 1.65; }
@@ -817,7 +817,7 @@
 @media (min-width: 720px) {
   .career-plan-hero { padding: 38px 42px; }
   .career-plan-hero-mark { display: grid; flex: none; align-self: center; grid-template-columns: repeat(2, 64px); gap: 10px; transform: rotate(-11deg); }
-  .career-plan-hero-mark span { display: grid; place-items: center; height: 64px; border: 1px solid #9fbca7; border-radius: 12px; color: var(--career-accent); background: var(--career-surface); font-family: var(--font-geist-mono), monospace; font-size: 19px; font-weight: 650; }
+  .career-plan-hero-mark span { display: grid; place-items: center; height: 64px; border: 1px solid #9fbca7; border-radius: 12px; color: var(--career-accent); background: var(--career-surface); font-family: var(--font-geist-sans), system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 19px; font-weight: 650; }
   .career-paths-intro { flex-direction: row; justify-content: space-between; align-items: end; }
   .career-path-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
   .career-path-detail-hero { flex-direction: row; justify-content: space-between; align-items: center; }
@@ -866,7 +866,7 @@
 .career-project-card-footer,
 .career-project-art-index,
 .career-project-detail-art span {
-  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-family: var(--font-geist-sans), system-ui, sans-serif; font-variant-numeric: tabular-nums;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: .09em;
@@ -944,7 +944,7 @@
 .career-project-steps-label { display: block; margin-top: 34px; }
 .career-project-steps { display: grid; margin: 20px 0 0; padding: 0; list-style: none; }
 .career-project-steps li { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 14px; padding: 16px 0; border-top: 1px solid var(--career-border); }
-.career-project-steps li span { color: var(--career-accent); font: 700 12px var(--font-geist-mono), ui-monospace, monospace; }
+.career-project-steps li span { color: var(--career-accent); font: 700 12px var(--font-geist-sans), system-ui, sans-serif; font-variant-numeric: tabular-nums; }
 .career-project-steps li p { color: var(--career-ink); font-size: 14px; line-height: 1.6; }
 .career-project-detail-aside { align-self: start; padding: 24px; border: 1px solid var(--career-border); border-radius: 12px; background: var(--career-soft); }
 .career-project-detail-aside p { margin: 10px 0 15px; font-size: 14px; line-height: 1.65; }
@@ -961,7 +961,7 @@
 .career-plan-pick h2 { max-width: 14ch; margin: 11px 0 14px; color: var(--career-ink); font-size: clamp(38px, 5vw, 58px); line-height: 1.04; letter-spacing: -.06em; }
 .career-plan-roadmap-hero p,
 .career-plan-pick > p { max-width: 65ch; font-size: 16px; line-height: 1.7; }
-.career-plan-hero-number { align-self: flex-start; color: var(--career-accent); font: 700 14px var(--font-geist-mono), ui-monospace, monospace; white-space: nowrap; }
+.career-plan-hero-number { align-self: flex-start; color: var(--career-accent); font: 700 14px var(--font-geist-sans), system-ui, sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .career-plan-change-track { display: inline-flex; align-items: center; gap: 7px; min-height: 42px; margin-top: 17px; padding: 0; border: 0; background: none; color: var(--career-accent); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
 .career-plan-change-track[aria-expanded="true"] svg { transform: rotate(180deg); }
 .career-plan-pick { padding: 22px 0 24px; }
@@ -977,14 +977,14 @@
 .career-plan-pick-note svg { flex: none; color: var(--career-accent); }
 .career-plan-progress { padding: 26px 0 30px; }
 .career-plan-progress > div:first-child { display: flex; justify-content: space-between; gap: 20px; align-items: center; margin-bottom: 11px; }
-.career-plan-progress strong { color: var(--career-ink); font: 600 12px var(--font-geist-mono), ui-monospace, monospace; white-space: nowrap; }
+.career-plan-progress strong { color: var(--career-ink); font: 600 12px var(--font-geist-sans), system-ui, sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .career-plan-progress [role="progressbar"] { height: 7px; overflow: hidden; border-radius: 999px; background: var(--career-border); }
 .career-plan-progress [role="progressbar"] span { display: block; height: 100%; border-radius: inherit; background: var(--career-accent); transition: width .25s ease; }
 .career-plan-roadmap-layout { display: grid; gap: 30px; align-items: start; }
 .career-plan-timeline { min-width: 0; padding: 4px 0; background-image: radial-gradient(var(--career-border) .7px, transparent .7px); background-size: 22px 22px; }
 .career-plan-stage { position: relative; margin-left: 20px; padding: 0 0 37px 35px; border-left: 2px solid var(--career-border); }
 .career-plan-stage:last-child { border-left-color: transparent; }
-.career-plan-stage-number { position: absolute; top: 0; left: -21px; display: grid; place-items: center; width: 40px; height: 40px; border: 5px solid var(--career-soft); border-radius: 50%; background: var(--career-accent); color: #fff; font: 750 12px var(--font-geist-mono), ui-monospace, monospace; }
+.career-plan-stage-number { position: absolute; top: 0; left: -21px; display: grid; place-items: center; width: 40px; height: 40px; border: 5px solid var(--career-soft); border-radius: 50%; background: var(--career-accent); color: #fff; font: 750 12px var(--font-geist-sans), system-ui, sans-serif; font-variant-numeric: tabular-nums; }
 .career-plan-stage-heading { min-height: 90px; padding-top: 2px; }
 .career-plan-stage-heading h3 { margin: 6px 0 7px; color: var(--career-ink); font-size: clamp(20px, 2.3vw, 25px); line-height: 1.25; letter-spacing: -.04em; }
 .career-plan-stage-heading p { max-width: 55ch; font-size: 14px; line-height: 1.6; }
@@ -1002,7 +1002,7 @@
 .career-plan-growth p,
 .career-plan-suggestions > p { font-size: 13px; line-height: 1.6; }
 .career-plan-suggestion { display: grid; gap: 7px; margin-top: 18px; padding-top: 17px; border-top: 1px solid var(--career-border); }
-.career-plan-suggestion > span { color: var(--career-muted); font: 600 10px var(--font-geist-mono), ui-monospace, monospace; letter-spacing: .08em; text-transform: uppercase; }
+.career-plan-suggestion > span { color: var(--career-muted); font: 600 10px var(--font-geist-sans), system-ui, sans-serif; font-variant-numeric: tabular-nums; letter-spacing: .08em; text-transform: uppercase; }
 .career-plan-suggestion strong { color: var(--career-ink); font-size: 14px; }
 .career-plan-suggestion button,
 .career-plan-suggestions > a { display: inline-flex; align-items: center; gap: 7px; justify-self: start; min-height: 34px; padding: 0; border: 0; background: none; color: var(--career-accent) !important; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
@@ -1082,7 +1082,7 @@
   margin: 30px 0 15px;
 }
 .career-guide-section-head h3 { color: var(--career-ink); font-size: 20px; }
-.career-guide-section-head span { color: var(--career-muted); font-family: var(--font-geist-mono), monospace; font-size: 11px; letter-spacing: .08em; }
+.career-guide-section-head span { color: var(--career-muted); font-family: var(--font-geist-sans), system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 11px; letter-spacing: .08em; }
 .career-guide-grid { display: grid; gap: 12px; }
 .career-guide-card {
   display: flex;
@@ -1120,7 +1120,7 @@
 .career-practice-layout { display: grid; gap: 28px; padding-top: 8px; }
 .career-practice-routine { display: grid; gap: 11px; padding: 0; margin: 0; list-style: none; }
 .career-practice-routine li { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 13px; min-height: 115px; padding: 21px; border: 1px solid var(--career-border); border-radius: 12px; background: var(--career-surface); }
-.career-practice-routine li > span { color: var(--career-accent); font-family: var(--font-geist-mono), monospace; font-size: 14px; font-weight: 700; }
+.career-practice-routine li > span { color: var(--career-accent); font-family: var(--font-geist-sans), system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 700; }
 .career-practice-routine h4 { color: var(--career-ink); font-size: 17px; line-height: 1.3; font-weight: 650; }
 .career-practice-routine p { margin-top: 6px; font-size: 14px; line-height: 1.6; }
 .career-practice-resources > svg { display: block; margin-bottom: 12px; color: var(--career-accent); }
@@ -1180,7 +1180,7 @@
 .career-history-detail-stat span { color: var(--career-muted); font-size: 12px; }
 .career-history-stage-list { display: grid; gap: 10px; }
 .career-history-stage-list > div { display: grid; gap: 3px; padding-left: 14px; border-left: 2px solid var(--career-accent); }
-.career-history-stage-list span { color: var(--career-accent); font: 650 10px var(--font-geist-mono), ui-monospace, monospace; letter-spacing: .08em; text-transform: uppercase; }
+.career-history-stage-list span { color: var(--career-accent); font: 650 10px var(--font-geist-sans), system-ui, sans-serif; font-variant-numeric: tabular-nums; letter-spacing: .08em; text-transform: uppercase; }
 .career-history-stage-list strong { color: var(--career-ink); font-size: 14px; }
 .career-history-stage-list small { color: var(--career-muted); font-size: 12px; line-height: 1.5; }
 .career-history-step-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
@@ -1236,7 +1236,7 @@
 .career-work-row-text strong { overflow: hidden; font-size: 14px; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
 .career-work-row-bar { display: block; height: 4px; margin-top: 4px; overflow: hidden; border-radius: 999px; background: var(--career-border); }
 .career-work-row-bar span { display: block; height: 100%; border-radius: inherit; background: var(--career-accent); transition: width .25s ease; }
-.career-work-row-percent { color: var(--career-muted); font: 500 12px var(--font-geist-mono), ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+.career-work-row-percent { color: var(--career-muted); font: 500 12px var(--font-geist-sans), system-ui, sans-serif; font-variant-numeric: tabular-nums; }
 .career-work-panel { min-width: 0; scroll-margin-top: 82px; }
 
 .career-detail { display: grid; gap: 22px; padding: 24px; border: 1px solid var(--career-border); border-radius: 16px; background: var(--career-surface); animation: career-detail-in .22s ease-out; }
@@ -1252,7 +1252,7 @@
 /* Each fact draws the hairline above and left of it; the frame clips the outer ones, so a short last row leaves no grey block. */
 .career-detail-facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); margin: 0; overflow: hidden; border: 1px solid var(--career-border); border-radius: 12px; }
 .career-detail-facts > div { display: grid; align-content: start; gap: 3px; padding: 11px 13px; box-shadow: -1px -1px 0 var(--career-border); }
-.career-detail-facts dt { color: var(--career-muted); font: 500 10.5px var(--font-geist-mono), ui-monospace, monospace; letter-spacing: .07em; text-transform: uppercase; }
+.career-detail-facts dt { color: var(--career-muted); font: 500 10.5px var(--font-geist-sans), system-ui, sans-serif; font-variant-numeric: tabular-nums; letter-spacing: .07em; text-transform: uppercase; }
 .career-detail-facts dd { margin: 0; color: var(--career-ink); font-size: 14px; font-weight: 600; }
 .career-detail-facts a { display: inline-flex; align-items: center; gap: 4px; color: var(--career-accent); }
 .career-detail-block { display: grid; gap: 8px; }
@@ -1274,3 +1274,26 @@
   .career-work-panel { position: sticky; top: calc(var(--chrome-top, 82px) + 16px); }
 }
 @media (prefers-reduced-motion: reduce) { .career-detail { animation: none; } .career-detail-bar span, .career-work-row-bar span { transition: none; } }
+
+/* Each Career view opens with a hero that reads like a page title, so it takes
+   the titles' Newsreader: the headline, and the label above it in sentence case.
+   Cards, steps and the small labels inside a view stay in Geist. */
+.career-plan-roadmap-hero h2,
+.career-plan-pick h2,
+.career-plan-hero h2,
+.career-paths-intro h2,
+.career-path-detail-hero h2,
+.career-projects-hero h2,
+.career-project-detail-hero h2,
+.career-resource-hero h2,
+.career-history-intro h2,
+.career-build > h2,
+.career-reading > h2 { font-family: var(--font-newsreader), Georgia, serif; font-weight: 400; letter-spacing: -.03em; }
+.career-plan-roadmap-hero .career-eyebrow,
+.career-plan-pick > .career-eyebrow,
+.career-paths-intro .career-eyebrow,
+.career-path-detail-hero > div > .career-eyebrow,
+.career-projects-hero > .career-eyebrow,
+.career-project-detail-hero > div > .career-eyebrow,
+.career-resource-hero > .career-eyebrow,
+.career-history-intro > .career-eyebrow { font-family: var(--font-newsreader), Georgia, serif; font-size: 18px; font-weight: 400; letter-spacing: -.01em; text-transform: none; }

@@ -133,7 +133,7 @@ Used by "Tailor" on the Match page: `POST /api/tailor-resume` selects content, t
 
 ## 6. Every AI route uses the layer
 
-`api/parse` (and `semanticParse.ts`), `api/analyze/{xyz, xyz-batch, insights, bullets, bullet-options}`, `api/match`, `api/match-live`, `api/tailor-resume`, `api/export/latex`, and `src/lib/embeddings.ts`.
+`api/parse` (and `semanticParse.ts`), `api/analyze/{xyz, xyz-batch, insights, bullets, bullet-options}`, `api/match`, `api/match-live`, `api/tailor-resume` and `api/export/latex`.
 
 ## 7. Other changes in PR #1
 

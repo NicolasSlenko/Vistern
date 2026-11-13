@@ -537,10 +537,10 @@ export function GuidedTour() {
         </div>
 
         <div key={step} className="guided-tour-copy flex flex-col gap-2.5">
-          <p className="label-mono text-ink-3">
+          <p className="label-caps text-ink-3">
             {current.section.label} · {current.index + 1} of {current.section.steps.length}
           </p>
-          <h2 id="guided-tour-title" ref={heading} tabIndex={-1} className="font-serif text-[25px] leading-[1.1] tracking-[-0.025em] text-ink focus:outline-none">
+          <h2 id="guided-tour-title" ref={heading} tabIndex={-1} className="font-semibold text-[25px] leading-[1.1] tracking-[-0.025em] text-ink focus:outline-none">
             {current.title}
           </h2>
           <p id="guided-tour-body" className="text-[14px] leading-relaxed text-ink-2">

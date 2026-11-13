@@ -43,8 +43,8 @@
 }
 
 @theme inline {
-  /* Newsreader for titles, Geist for everything read or pressed, Geist Mono
-     for label-mono. The first two are loaded by next/font in app/layout.tsx. */
+  /* Geist Sans for everything in the app, Newsreader (font-serif) for page titles
+     only. Geist Mono is the landing page's, loaded there (components/landing/fonts.ts). */
   --font-serif: var(--font-newsreader), Georgia, "Times New Roman", serif;
 }
 
@@ -101,9 +101,19 @@
   --shadow-card-lifted: 0 2px 4px rgb(0 0 0 / 0.5), 0 8px 18px -4px rgb(0 0 0 / 0.5), 0 24px 48px -10px rgb(0 0 0 / 0.6);
 }
 
-/* Small monospace caps, the theme's one label style: for facts about things
-   ("/ 100", "3 ENTRIES") and eyebrows over titles. Buttons and links say
-   their words in sentence case instead. */
+/* Small caps in the app's one typeface, the theme's one label style: for facts
+   about things ("/ 100", "3 ENTRIES") and eyebrows over titles. Buttons and
+   links say their words in sentence case instead. */
+@utility label-caps {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The landing page's monospace version of label-caps. */
 @utility label-mono {
   font-family: var(--font-mono);
   font-size: 11px;

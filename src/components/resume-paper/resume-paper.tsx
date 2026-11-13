@@ -112,7 +112,7 @@ export function ResumePaper({ resume }: { resume: Resume }) {
     // should look like the one that gets sent.
     <article
       data-resume-paper
-      className="relative bg-white font-[Georgia,'Times_New_Roman',serif] text-black"
+      className="relative bg-white font-sans text-black"
       style={{ width: PAGE.width, minHeight: PAGE.height, padding: "40px 46px" }}
     >
       <header className="mb-[6px] text-center">

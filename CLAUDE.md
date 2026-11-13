@@ -112,12 +112,14 @@ Stylesheets, imported at the top of `src/app/globals.css`:
 
 | File | Holds |
 | --- | --- |
-| `src/app/styles/zip-tokens.css` | Colour, radius, shadow and easing tokens, light and dark; `label-mono`, `bg-hatch`, `no-scrollbar` |
+| `src/app/styles/zip-tokens.css` | Colour, radius, shadow and easing tokens, light and dark; `label-caps` (`label-mono` on the landing page), `bg-hatch`, `no-scrollbar` |
 | `src/app/styles/zip-glass.css` | `.glass` and its tints, and `.desk` — the painted sky |
 | `src/app/styles/zip-sheet.css` | `.paper-frame`, `.paper`, the segmented control, `brand-button` / `white-button` / `ink-button` / `lift-button` |
 | `src/app/styles/zip-studio.css` | Studio-only: the score odometer, dotted leaders, the `ai-ask` pill. All scoped under `.zip-scope` |
 
-Vocabulary: `bg-paper bg-sheet bg-fill` · `text-ink text-ink-2 text-ink-3` · `border-hairline border-rule border-rule-strong` · `text-brand` (Vistern green, standing where resumezip used blue) · `text-alert text-caution` · `shadow-card-rest|open|lifted` · `font-serif` (Newsreader, page titles only) · `label-mono`.
+Vocabulary: `bg-paper bg-sheet bg-fill` · `text-ink text-ink-2 text-ink-3` · `border-hairline border-rule border-rule-strong` · `text-brand` (Vistern green, standing where resumezip used blue) · `text-alert text-caution` · `shadow-card-rest|open|lifted` · `label-caps`.
+
+**Two typefaces in the app.** Page titles (the large heading at the top of a page or studio view, and `h1` on student tool pages) use `font-serif` (Newsreader), with an italic green `<em>` accent word. Everything else is Geist Sans: card and dialog headings use `font-semibold`, labels `label-caps`, numbers `tabular-nums`, and an `<em>` accent outside a page title is `not-italic`. Don't use `font-mono`, `label-mono` or another font family outside `src/components/landing/`; Geist Mono is loaded only there (`src/components/landing/fonts.ts`).
 
 **Dark mode** works by re-declaring the `--color-*` tokens under `.dark`, outside `@layer theme`. Use `@theme` (not `@theme inline`) for anything that must follow the theme.
 

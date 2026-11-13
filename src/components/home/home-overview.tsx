@@ -69,7 +69,7 @@ function Panel({
   return (
     <section data-tour={tour} className={`flex flex-col gap-3.5 rounded-[18px] border border-hairline bg-sheet p-5 shadow-card-rest ${className}`}>
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="label-mono flex items-center gap-2 text-ink-2">
+        <h2 className="label-caps flex items-center gap-2 text-ink-2">
           {Icon && <Icon className="h-3.5 w-3.5" aria-hidden={true} />}
           {title}
         </h2>
@@ -160,9 +160,9 @@ export function HomeOverview({
           <div className="flex-1 px-4 py-9 sm:px-8 sm:py-12">
             <div className="mx-auto flex max-w-[1080px] flex-col gap-9">
               {/* What to do next. The one thing the page is for, so it gets
-                  the serif and the full width. */}
+                  the largest title and the full width. */}
               <header data-tour="home-next" className="flex flex-col gap-4">
-                <p className="label-mono text-ink-2">
+                <p className="label-caps text-ink-2">
                   {greeting(new Date().getHours())}
                   {firstName ? `, ${firstName}` : ""}
                 </p>
@@ -202,7 +202,7 @@ export function HomeOverview({
                     My plan
                   </Link>
                   {attention && primary && (
-                    <span className="label-mono flex items-center gap-1.5 text-caution">
+                    <span className="label-caps flex items-center gap-1.5 text-caution">
                       <span aria-hidden="true" className="h-[6px] w-[6px] rounded-full bg-caution" />
                       Coming up
                     </span>
@@ -216,8 +216,8 @@ export function HomeOverview({
                 <Panel tour="home-resume" title="Resume" icon={FileText} href={resume ? "/profile" : "/upload"} action={resume ? "Open profile" : "Upload"}>
                   {score === null ? (
                     <>
-                      <p className="font-serif text-[26px] leading-[1.05] tracking-[-0.025em] text-ink">
-                        No resume <em className="text-brand">yet</em>
+                      <p className="font-semibold text-[26px] leading-[1.05] tracking-[-0.025em] text-ink">
+                        No resume <em className="not-italic text-brand">yet</em>
                       </p>
                       <p className="text-[13px] leading-snug text-ink-2">
                         Upload one and we’ll read it into a profile, then mark every bullet worth rewriting.
@@ -226,8 +226,8 @@ export function HomeOverview({
                   ) : (
                     <>
                       <p className="flex items-baseline gap-2">
-                        <span className="font-serif text-[48px] leading-[0.85] tracking-[-0.045em] tabular-nums text-ink">{score}</span>
-                        <span className="label-mono text-ink-2">/ 100</span>
+                        <span className="font-semibold text-[48px] leading-[0.85] tracking-[-0.045em] tabular-nums text-ink">{score}</span>
+                        <span className="label-caps text-ink-2">/ 100</span>
                       </p>
                       <div className="relative h-[3px] rounded-full bg-rule">
                         <div style={{ width: `${score}%` }} className="absolute inset-y-0 left-0 rounded-full bg-ink" />
@@ -236,7 +236,7 @@ export function HomeOverview({
                           well it is made. Two different questions, so they are
                           answered separately rather than averaged into one. */}
                       {craft && (
-                        <p className="label-mono flex items-center gap-1.5 text-ink-2">
+                        <p className="label-caps flex items-center gap-1.5 text-ink-2">
                           <span
                             aria-hidden="true"
                             className={`h-[6px] w-[6px] rounded-full ${craft.clear === craft.total ? "bg-brand" : "bg-caution"}`}
@@ -269,10 +269,10 @@ export function HomeOverview({
                     and each one says which when it's chosen. */}
                 <Panel tour="home-growth" title="Growth" icon={Compass} href="/career?view=history" action="Completed work">
                   <p className="flex items-baseline gap-2">
-                    <span className="font-serif text-[48px] leading-[0.85] tracking-[-0.045em] tabular-nums text-ink">
+                    <span className="font-semibold text-[48px] leading-[0.85] tracking-[-0.045em] tabular-nums text-ink">
                       {completed.length}
                     </span>
-                    <span className="label-mono text-ink-2">{completed.length === 1 ? "activity done" : "activities done"}</span>
+                    <span className="label-caps text-ink-2">{completed.length === 1 ? "activity done" : "activities done"}</span>
                   </p>
                   <GrowthGarden leaves={growthLeaves} className="-mt-1" />
                   {growth > 0 && <p className="text-[12px] text-ink-3">{growth}% along your roadmap</p>}

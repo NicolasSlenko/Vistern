@@ -83,7 +83,7 @@ function Note({
             <Dot tier={note.tier} />
           </span>
           <span className="flex min-w-0 flex-col gap-0.5">
-            {note.entryName && <span className="label-mono text-ink-3">{note.entryName}</span>}
+            {note.entryName && <span className="label-caps text-ink-3">{note.entryName}</span>}
             <span className="text-sm leading-snug text-ink">{note.text}</span>
           </span>
         </button>
@@ -117,10 +117,10 @@ function Breakdown({ resume, feedback }: { resume: Resume; feedback: XyzFeedback
   return (
     <div {...(perfect ? { "data-perfect": "" } : {})} className="flex flex-col gap-4">
       <div className="flex items-baseline gap-2.5">
-        <span className="score-number font-serif text-[72px] leading-[0.9] tracking-[-0.045em] tabular-nums text-ink">
+        <span className="score-number font-semibold text-[72px] leading-[0.9] tracking-[-0.045em] tabular-nums text-ink">
           <Odometer value={total} />
         </span>
-        <span className="label-mono tracking-[0.04em] text-ink-2" aria-hidden="true">
+        <span className="label-caps tracking-[0.04em] text-ink-2" aria-hidden="true">
           / 100
         </span>
       </div>
@@ -183,12 +183,12 @@ export function ReviewPanel({
   if (asking) {
     return (
       <section aria-labelledby={heading} className="flex flex-col gap-3">
-        <h2 id={heading} className="label-mono text-ink-2">
+        <h2 id={heading} className="label-caps text-ink-2">
           AI review
         </h2>
         <div className="flex flex-col gap-3 border-t border-ink pt-3.5">
-          <p className="text-balance font-serif text-[30px] leading-[1.02] tracking-[-0.03em] text-ink">
-            Reading it like a <em className="text-brand">recruiter…</em>
+          <p className="text-balance font-semibold text-[30px] leading-[1.02] tracking-[-0.03em] text-ink">
+            Reading it like a <em className="not-italic text-brand">recruiter…</em>
           </p>
           <p className="text-[13px] leading-snug text-ink-2">Every bullet, not just the first seven seconds.</p>
           {/* Three bars filling in turn, where the notes will be. */}
@@ -210,7 +210,7 @@ export function ReviewPanel({
   if (!resume) {
     return (
       <section aria-labelledby={heading} className="flex flex-col gap-3">
-        <h2 id={heading} className="label-mono text-ink-2">
+        <h2 id={heading} className="label-caps text-ink-2">
           AI review
         </h2>
         <p className="text-[13px] leading-snug text-ink-2">Add something to your profile first, and the AI will have something to read.</p>
@@ -221,13 +221,13 @@ export function ReviewPanel({
   if (notes.length === 0) {
     return (
       <section aria-labelledby={heading} className="flex flex-col gap-3">
-        <h2 id={heading} className="label-mono text-ink-2">
+        <h2 id={heading} className="label-caps text-ink-2">
           AI review
         </h2>
         {hidden > 0 ? (
           <>
-            <p className="font-serif text-[30px] leading-[1.02] tracking-[-0.03em] text-ink">
-              All notes <em className="text-brand">marked done.</em>
+            <p className="font-semibold text-[30px] leading-[1.02] tracking-[-0.03em] text-ink">
+              All notes <em className="not-italic text-brand">marked done.</em>
             </p>
             <button type="button" onClick={onRestore} className="self-start text-[13px] text-ink-3 hover:text-ink">
               {hidden} marked done · show {hidden === 1 ? "it" : "them"} again
@@ -235,8 +235,8 @@ export function ReviewPanel({
           </>
         ) : (
           <>
-            <p className="font-serif text-[30px] leading-[1.02] tracking-[-0.03em] text-ink">
-              What a recruiter <em className="text-brand">notices</em>
+            <p className="font-semibold text-[30px] leading-[1.02] tracking-[-0.03em] text-ink">
+              What a recruiter <em className="not-italic text-brand">notices</em>
             </p>
             <p className="text-[13px] leading-snug text-ink-2">
               An AI reads every bullet the way a recruiter skims it, scores each role and project, and says what to rewrite.
@@ -256,7 +256,7 @@ export function ReviewPanel({
 
   return (
     <section aria-labelledby={heading} className="flex flex-col gap-5">
-      <h2 id={heading} className="label-mono text-ink-2">
+      <h2 id={heading} className="label-caps text-ink-2">
         AI review
       </h2>
 
@@ -268,10 +268,10 @@ export function ReviewPanel({
           <div key={tier} className="flex min-w-0 flex-col gap-1 py-3 not-last:border-r not-last:border-rule not-first:pl-2.5">
             <span className="flex items-center gap-1.5">
               <Dot tier={tier} />
-              <span className="font-serif text-[28px] leading-[0.9] tracking-[-0.04em] text-ink">{group.length}</span>
+              <span className="font-semibold text-[28px] leading-[0.9] tracking-[-0.04em] text-ink">{group.length}</span>
             </span>
             {/* The column is narrow, so the name wraps rather than being cut short. */}
-            <span className="label-mono leading-[1.35] text-ink-2">{TIER_NAMES[tier].many}</span>
+            <span className="label-caps leading-[1.35] text-ink-2">{TIER_NAMES[tier].many}</span>
           </div>
         ))}
       </div>
@@ -297,7 +297,7 @@ export function ReviewPanel({
 
       {goals.length > 0 && (
         <section className="flex flex-col gap-2.5 border-t border-rule pt-4">
-          <h3 className="label-mono flex items-center gap-2 text-ink-2">
+          <h3 className="label-caps flex items-center gap-2 text-ink-2">
             <Target className="h-3.5 w-3.5" aria-hidden="true" />
             Not edits — things to go and do
           </h3>
@@ -308,7 +308,7 @@ export function ReviewPanel({
                   <Dot tier={goal.tier} />
                 </span>
                 <span className="flex min-w-0 flex-col gap-0.5">
-                  {goal.targetYear && <span className="label-mono text-ink-3">{YEAR_NAMES[goal.targetYear] ?? `Year ${goal.targetYear}`}</span>}
+                  {goal.targetYear && <span className="label-caps text-ink-3">{YEAR_NAMES[goal.targetYear] ?? `Year ${goal.targetYear}`}</span>}
                   <span className="text-[13px] leading-snug text-ink-2">{goal.text}</span>
                 </span>
               </li>

@@ -59,7 +59,7 @@ function Notice({
       <span className="flex h-11 w-11 items-center justify-center rounded-full bg-fill text-brand">
         <BriefcaseBusiness className="h-[18px] w-[18px]" aria-hidden="true" />
       </span>
-      <h2 className="font-serif text-[26px] leading-tight tracking-[-0.025em] text-ink">{title}</h2>
+      <h2 className="font-semibold text-[26px] leading-tight tracking-[-0.025em] text-ink">{title}</h2>
       {children}
     </section>
   )
@@ -227,7 +227,7 @@ function StageColumn({
           }`}
         >
           <ChevronsLeftRight className="h-4 w-4" aria-hidden="true" />
-          <span className="label-mono [writing-mode:vertical-rl]">{stage.label}</span>
+          <span className="label-caps [writing-mode:vertical-rl]">{stage.label}</span>
           <span className="text-[13px] tabular-nums">{count}</span>
         </button>
       </section>
@@ -236,7 +236,7 @@ function StageColumn({
   return (
     <section className="flex min-w-[232px] flex-1 basis-0 flex-col gap-3" aria-label={label}>
       <header className="flex items-baseline justify-between gap-2 border-b border-hairline pb-2">
-        <h2 className="label-mono text-ink-2">{stage.label}</h2>
+        <h2 className="label-caps text-ink-2">{stage.label}</h2>
         <span className="flex items-center gap-1.5">
           <span className="text-[13px] tabular-nums text-ink-3">{count}</span>
           {onToggle && (
@@ -366,7 +366,7 @@ export function ApplicationsBoard({ initialJobs }: { initialJobs: SavedJob[] | n
           <div className="flex-1 px-4 py-9 sm:px-8 sm:py-12">
             <div className="mx-auto flex max-w-[1080px] flex-col gap-9">
               <div className="flex flex-col gap-2">
-                <p className="label-mono text-ink-2">Jobs</p>
+                <p className="label-caps text-ink-2">Jobs</p>
                 <p className="max-w-[58ch] font-serif text-[26px] leading-[1.1] tracking-[-0.03em] text-ink sm:text-[30px]">
                   Saved roles and <em className="text-brand">where each one stands</em>
                 </p>
@@ -378,8 +378,8 @@ export function ApplicationsBoard({ initialJobs }: { initialJobs: SavedJob[] | n
                     key={item.label}
                     className="flex flex-col gap-1.5 rounded-[14px] border border-hairline bg-sheet px-4 py-3.5 shadow-card-rest"
                   >
-                    <dt className="label-mono text-ink-2">{item.label}</dt>
-                    <dd className="font-serif text-[26px] leading-[0.95] tracking-[-0.04em] tabular-nums text-ink">
+                    <dt className="label-caps text-ink-2">{item.label}</dt>
+                    <dd className="font-semibold text-[26px] leading-[0.95] tracking-[-0.04em] tabular-nums text-ink">
                       {item.value}
                     </dd>
                   </div>
