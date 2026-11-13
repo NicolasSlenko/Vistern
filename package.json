@@ -21,7 +21,8 @@
     "preview:student": "node scripts/student-preview.mjs",
     "preview:studio": "node scripts/studio-preview.mjs",
     "test:career": "tsx --test tests/career-*.test.ts",
-    "test:jobs": "tsx --test tests/job-filter.test.ts"
+    "test:jobs": "tsx --test tests/job-filter.test.ts",
+    "test:http": "tsx --test tests/body-limit.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.2.0",
@@ -42,7 +43,7 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tabs": "^1.1.13",
     "@supabase/supabase-js": "2.117.3",
-    "@vercel/oidc-aws-credentials-provider": "3.3.11",
+    "@vercel/oidc-aws-credentials-provider": "^3.3.21",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",

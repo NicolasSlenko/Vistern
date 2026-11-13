@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
+import { bodyLimitViolation } from '@/lib/http/body-limit'
 
 const isPublicRoute = createRouteMatcher([
   '/login(.*)',
@@ -12,6 +13,15 @@ const isPublicRoute = createRouteMatcher([
 ])
 
 export default clerkMiddleware(async (auth, request) => {
+  // Before auth, so an oversized body is refused without any work on it.
+  const tooBig = bodyLimitViolation(
+    request.nextUrl.pathname,
+    request.method,
+    request.headers.get('content-length'),
+    request.headers.get('transfer-encoding'),
+  )
+  if (tooBig) return NextResponse.json({ success: false, error: tooBig.error }, { status: tooBig.status })
+
   if (isPublicRoute(request)) return
 
   const { userId } = await auth()
