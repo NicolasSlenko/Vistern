@@ -194,8 +194,9 @@ export function TagsField({
       </label>
       {value.length > 0 && (
         <div className="flex flex-wrap gap-1.5 pt-0.5">
-          {value.map((tag) => (
-            <span key={tag} className="inline-flex h-[23px] items-center rounded-full bg-fill px-2.5 text-[12px] text-ink-2 ring-1 ring-fill-line ring-inset">
+          {/* Keyed by place: a student can type the same tag twice. */}
+          {value.map((tag, index) => (
+            <span key={index}className="inline-flex h-[23px] items-center rounded-full bg-fill px-2.5 text-[12px] text-ink-2 ring-1 ring-fill-line ring-inset">
               {tag}
             </span>
           ))}

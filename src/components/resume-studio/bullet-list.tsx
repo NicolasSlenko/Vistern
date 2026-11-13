@@ -246,7 +246,10 @@ export function BulletList({
   const hintId = useId()
   const waiting = rewrites ? [...rewrites.keys()].filter((line) => !answered?.has(line)).length : 0
 
-  const set = (index: number, value: string) => onChange(bullets.map((bullet, at) => (at === index ? value : bullet)))
+  // A field with no bullets still shows one empty box; writing into it has to
+  // go through that box, not the empty list, or the first keystrokes are lost.
+  const lines = bullets.length ? bullets : [""]
+  const set = (index: number, value: string) => onChange(lines.map((bullet, at) => (at === index ? value : bullet)))
   const insertAfter = (index: number) => {
     const next = [...bullets]
     next.splice(index + 1, 0, "")
@@ -265,8 +268,6 @@ export function BulletList({
       const boxes = document.querySelectorAll<HTMLTextAreaElement>(`[data-bullets="${label}"] textarea`)
       boxes[index]?.focus()
     })
-
-  const lines = bullets.length ? bullets : [""]
 
   return (
     <div data-bullets={label} data-field={field} className="flex min-w-0 flex-col gap-2">
