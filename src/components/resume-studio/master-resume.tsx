@@ -18,6 +18,7 @@ import type { BulletRewrite } from "@/lib/resume-suggestions"
 // Save as resume (parked below): import { FilePlus2 } from "lucide-react"
 // import { applyResumeStandard, trimSummary } from "@/lib/resume/standard"
 import { PaperPane } from "@/components/resume-paper/paper-pane"
+import { tidyForDisplay } from "@/lib/resume/standard"
 import { BulletOptionsDialog } from "./bullet-options"
 import { rewriteMarks } from "./paper-marks"
 import { MarksCount, TOOLBAR_BRAND } from "./paper-toolbar"
@@ -153,6 +154,8 @@ export function MasterResume() {
   //       trimmed.bullets && `${trimmed.bullets} ${trimmed.bullets === 1 ? "bullet" : "bullets"}`,
   //     ].filter(Boolean).join(" and ")} will be left out; the profile keeps everything.`
 
+  const shown = useMemo(() => (profile ? tidyForDisplay(profile) : null), [profile])
+
   const marks = useMemo(
     () =>
       rewriteMarks(bullets.live, bullets.answered, {
@@ -227,7 +230,9 @@ export function MasterResume() {
               ) : (
                 <PaperPane
                   layout="flow"
-                  resume={profile}
+                  // Drawn in the resume standard's dates and punctuation, like
+                  // every other resume, without reordering: the marks are filed by index.
+                  resume={shown}
                   marks={marks}
                   toolbar={
                     <>

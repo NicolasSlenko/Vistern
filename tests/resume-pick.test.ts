@@ -1,6 +1,6 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { bulletKey, defaultPick, pickFromProfile, setSkills, toggleBullet, toggleEntry, toggleSkill } from "../src/lib/resume/pick"
+import { bulletKey, defaultPick, pickFromProfile, setSection, setSkills, toggleBullet, toggleEntry, toggleSkill } from "../src/lib/resume/pick"
 import { getResumeObject, type Resume } from "../src/app/api/parse/resumeSchema"
 
 function profile(): Resume {
@@ -65,4 +65,16 @@ test("re-ticking an entry or a skill puts it back in its place", () => {
 
   pick = setSkills(pick, source, false)
   assert.deepEqual(pickFromProfile(source, pick).skills.programming_languages, [])
+})
+
+test("All brings a section's unticked bullets back; None leaves them as they were", () => {
+  const source = profile()
+  let pick = defaultPick(source)
+  pick = toggleBullet(pick, bulletKey("experience", 0, "responsibilities", 1))
+  pick = toggleBullet(pick, bulletKey("projects", 0, "highlights", 0))
+  pick = setSection(pick, "experience", source, false)
+  assert.equal(pick.droppedBullets.length, 2)
+  pick = setSection(pick, "experience", source, true)
+  assert.deepEqual(pick.droppedBullets, [bulletKey("projects", 0, "highlights", 0)])
+  assert.equal(pickFromProfile(source, pick).experience[0].responsibilities.length, 3)
 })

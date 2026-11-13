@@ -1,4 +1,5 @@
 import type { Resume } from "@/app/api/parse/resumeSchema"
+import { hasContent } from "./blank"
 
 /**
  * A resume as Jake Gutierrez's LaTeX template, written straight from the data.
@@ -126,6 +127,17 @@ const hrefUrl = (url: string) => {
 /** How a link reads on the page: no scheme, no www, no trailing slash. */
 const shownUrl = (url: string) => url.replace(/^[a-z]+:\/\//i, "").replace(/^www\./i, "").replace(/\/$/, "")
 
+/** A web address, as opposed to a word: a domain with a dot in it, no spaces. */
+const looksLikeUrl = (value: string) => /^(?:[a-z][a-z0-9+.-]*:\/\/)?[^\s/@]+\.[a-z]{2,}(?:[/?#]\S*)?$/i.test(value.trim())
+const looksLikeEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+
+/**
+ * A link when it is one. A field holding "LinkedIn" rather than an address is
+ * printed as written instead of becoming \href{https://LinkedIn}.
+ */
+const link = (value: string) =>
+  looksLikeUrl(value) ? `\\href{${hrefUrl(value)}}{\\underline{${escapeLatex(shownUrl(value))}}}` : escapeLatex(value)
+
 const clean = (values: (string | number | null | undefined)[]) =>
   values.map((value) => (value === null || value === undefined ? "" : String(value).trim())).filter(Boolean)
 
@@ -146,10 +158,11 @@ function items(bullets: string[], indent = "      "): string[] {
 
 function header(basics: Resume["basics"]): string[] {
   const city = clean([basics.location?.city, basics.location?.state]).join(", ")
-  const link = (url: string) => `\\href{${hrefUrl(url)}}{\\underline{${escapeLatex(shownUrl(url))}}}`
   const contact = [
     ...clean([basics.phone]).map(escapeLatex),
-    ...clean([basics.email]).map((email) => `\\href{${hrefUrl(email)}}{\\underline{${escapeLatex(email)}}}`),
+    ...clean([basics.email]).map((email) =>
+      looksLikeEmail(email) ? `\\href{${hrefUrl(email)}}{\\underline{${escapeLatex(email)}}}` : escapeLatex(email),
+    ),
     ...clean([basics.linkedin, basics.github, basics.portfolio]).map(link),
     ...clean([city]).map(escapeLatex),
   ]
@@ -168,7 +181,7 @@ function section(title: string, body: string[]): string[] {
 
 /** The whole document, ready for pdflatex or Overleaf. */
 export function resumeToLatex(resume: Resume): string {
-  const education = (resume.education ?? []).flatMap((entry) => [
+  const education = (resume.education ?? []).filter(hasContent).flatMap((entry) => [
     "    \\resumeSubheading",
     `      {${escapeLatex(entry.school)}}{${escapeLatex(dateRange(entry.start_date, entry.end_date))}}`,
     `      {${escapeLatex(
@@ -177,17 +190,17 @@ export function resumeToLatex(resume: Resume): string {
     ...items(entry.achievements ?? []),
   ])
 
-  const experience = (resume.experience ?? []).flatMap((entry) => [
+  const experience = (resume.experience ?? []).filter(hasContent).flatMap((entry) => [
     "    \\resumeSubheading",
     `      {${escapeLatex(entry.position)}}{${escapeLatex(dateRange(entry.start_date, entry.end_date))}}`,
     `      {${escapeLatex(entry.company)}}{${escapeLatex(entry.location)}}`,
     ...items([...(entry.responsibilities ?? []), ...(entry.achievements ?? [])]),
   ])
 
-  const projects = (resume.projects ?? []).flatMap((entry) => {
+  const projects = (resume.projects ?? []).filter(hasContent).flatMap((entry) => {
     const tech = (entry.technologies ?? []).filter(Boolean)
     const title = `\\textbf{${escapeLatex(entry.name)}}${tech.length ? ` $|$ \\emph{${escapeLatex(tech.join(", "))}}` : ""}`
-    const right = entry.link?.trim() ? `\\href{${hrefUrl(entry.link.trim())}}{\\underline{${escapeLatex(shownUrl(entry.link.trim()))}}}` : ""
+    const right = entry.link?.trim() ? link(entry.link.trim()) : ""
     // The page prints a description as a line of its own above the bullets.
     const description = entry.description?.trim()
     const bullets = items(entry.highlights ?? [])
@@ -221,7 +234,7 @@ export function resumeToLatex(resume: Resume): string {
       ]
     : []
 
-  const leadership = (resume.extracurriculars ?? []).flatMap((entry) => [
+  const leadership = (resume.extracurriculars ?? []).filter(hasContent).flatMap((entry) => [
     "    \\resumeSubheading",
     `      {${escapeLatex(entry.organization)}}{${escapeLatex(dateRange(entry.start_date, entry.end_date))}}`,
     `      {${escapeLatex(entry.role)}}{}`,

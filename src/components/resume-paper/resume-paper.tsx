@@ -1,5 +1,8 @@
 import type { Resume } from "@/app/api/parse/resumeSchema"
 import { rewriteKey, type BulletField, type BulletSection } from "@/lib/resume-suggestions"
+// Blank entries (a card just added) are skipped where they stand rather than
+// filtered out, so every other entry keeps the index its marks are filed under.
+import { hasContent } from "@/lib/resume/blank"
 
 /**
  * The resume as a page: the student's own words, typeset the way a recruiter
@@ -155,10 +158,10 @@ export function ResumePaper({ resume, breaks, pages = 1 }: { resume: Resume; bre
         )}
       </header>
 
-      {resume.education.length > 0 && (
+      {resume.education.some(hasContent) && (
         <section>
           <Heading section="education" breaks={breaks}>Education</Heading>
-          {resume.education.map((entry, index) => (
+          {resume.education.map((entry, index) => !hasContent(entry) ? null : (
             <div key={index} data-block={`education.${index}`} style={pushed(breaks, `education.${index}`)} className="mb-[4px]">
               <EntryHead
                 mark={entryMark("education", index)}
@@ -185,10 +188,10 @@ export function ResumePaper({ resume, breaks, pages = 1 }: { resume: Resume; bre
         </section>
       )}
 
-      {resume.experience.length > 0 && (
+      {resume.experience.some(hasContent) && (
         <section>
           <Heading section="experience" breaks={breaks}>Experience</Heading>
-          {resume.experience.map((entry, entryIndex) => (
+          {resume.experience.map((entry, entryIndex) => !hasContent(entry) ? null : (
             <div key={entryIndex} data-block={`experience.${entryIndex}`} style={pushed(breaks, `experience.${entryIndex}`)} className="mb-[5px]">
               <EntryHead
                 mark={entryMark("experience", entryIndex)}
@@ -204,10 +207,10 @@ export function ResumePaper({ resume, breaks, pages = 1 }: { resume: Resume; bre
         </section>
       )}
 
-      {resume.projects.length > 0 && (
+      {resume.projects.some(hasContent) && (
         <section>
           <Heading section="projects" breaks={breaks}>Projects</Heading>
-          {resume.projects.map((entry, entryIndex) => (
+          {resume.projects.map((entry, entryIndex) => !hasContent(entry) ? null : (
             <div key={entryIndex} data-block={`projects.${entryIndex}`} style={pushed(breaks, `projects.${entryIndex}`)} className="mb-[5px]">
               <div data-mark={entryMark("projects", entryIndex)} className="flex items-baseline justify-between gap-3">
                 <span className="text-[11px] text-black">
@@ -239,10 +242,10 @@ export function ResumePaper({ resume, breaks, pages = 1 }: { resume: Resume; bre
         </section>
       )}
 
-      {resume.extracurriculars.length > 0 && (
+      {resume.extracurriculars.some(hasContent) && (
         <section>
           <Heading section="extracurriculars" breaks={breaks}>Leadership</Heading>
-          {resume.extracurriculars.map((entry, index) => (
+          {resume.extracurriculars.map((entry, index) => !hasContent(entry) ? null : (
             <div key={index} data-block={`extracurriculars.${index}`} style={pushed(breaks, `extracurriculars.${index}`)} className="mb-[4px]">
               <EntryHead
                 mark={entryMark("extracurriculars", index)}

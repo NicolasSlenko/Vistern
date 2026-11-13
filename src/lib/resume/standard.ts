@@ -217,6 +217,32 @@ export function normalizeResume(input: Resume): Resume {
   }
 }
 
+/**
+ * The standard's look without moving anything: dates in one form and bullets
+ * without trailing periods, but every entry and bullet stays at its index —
+ * nothing sorted, nothing dropped. For drawing a record whose marks are filed
+ * by index (the master resume), where `normalizeResume`'s reordering would put
+ * a suggestion on the wrong line.
+ */
+export function tidyForDisplay(input: Resume): Resume {
+  const yearOnly = !anyMonth(input)
+  const date = (value: string) => formatResumeDate(value, { yearOnly })
+  const tidy = (list: string[] | undefined) => (list ?? []).map(cleanBullet)
+  return {
+    ...input,
+    education: input.education.map((ed) => ({ ...ed, start_date: date(ed.start_date), end_date: date(ed.end_date), achievements: tidy(ed.achievements) })),
+    experience: input.experience.map((e) => ({
+      ...e,
+      start_date: date(e.start_date),
+      end_date: date(e.end_date),
+      responsibilities: tidy(e.responsibilities),
+      achievements: tidy(e.achievements),
+    })),
+    projects: input.projects.map((p) => ({ ...p, highlights: tidy(p.highlights) })),
+    extracurriculars: input.extracurriculars.map((x) => ({ ...x, start_date: date(x.start_date), end_date: date(x.end_date), achievements: tidy(x.achievements) })),
+  }
+}
+
 /** The full standard: normalised, then fitted to one page. */
 export function applyResumeStandard(input: Resume): Resume {
   return fitToOnePage(normalizeResume(input))

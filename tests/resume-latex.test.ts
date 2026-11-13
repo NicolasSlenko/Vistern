@@ -68,3 +68,15 @@ test("links keep their address and show it without the scheme", () => {
   assert.ok(tex.includes("\\href{https://github.com/ada_g}{\\underline{github.com/ada\\_g}}"))
   assert.ok(tex.includes("\\href{mailto:ada@ufl.edu}{\\underline{ada@ufl.edu}}"))
 })
+
+test("a link field holding a word is printed, not linked, and blank entries are left out", () => {
+  const r = resume()
+  r.basics.linkedin = "LinkedIn"
+  r.projects.push({ name: "", description: "", technologies: [], highlights: [""], link: "", github: "" })
+  r.extracurriculars = [{ organization: "", role: "", start_date: "", end_date: "", achievements: [] }]
+  const tex = resumeToLatex(r)
+  assert.ok(!tex.includes("https://LinkedIn"))
+  assert.ok(tex.includes("$|$ LinkedIn $|$"))
+  assert.equal(tex.match(/\\resumeProjectHeading\n/g)?.length, 1)
+  assert.ok(!tex.includes("\\section{Leadership}"))
+})

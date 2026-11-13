@@ -111,9 +111,17 @@ export function toggleSkill(pick: ProfilePick, group: SkillGroup, skill: string,
   return { ...pick, skills: { ...pick.skills, [group]: next } }
 }
 
-/** Every entry of a section, or none. */
+/**
+ * Every entry of a section, or none. "All" means all: the bullets unticked in
+ * that section come back too, rather than returning with their entries still
+ * missing lines.
+ */
 export function setSection(pick: ProfilePick, section: PickSection, profile: Resume, on: boolean): ProfilePick {
-  return { ...pick, entries: { ...pick.entries, [section]: on ? indexes(profile[section]) : [] } }
+  return {
+    ...pick,
+    entries: { ...pick.entries, [section]: on ? indexes(profile[section]) : [] },
+    droppedBullets: on ? pick.droppedBullets.filter((key) => !key.startsWith(`${section}.`)) : pick.droppedBullets,
+  }
 }
 
 /** Every skill, or none. */

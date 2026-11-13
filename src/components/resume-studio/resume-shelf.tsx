@@ -9,8 +9,8 @@ import { pill } from "./pills"
 /**
  * The shelf: every resume the student keeps, as a row of pages.
  *
- * Resumes are plural on purpose â€” one for backend roles, one for research,
- * one for the career fair â€” while the master profile behind them stays one
+ * Resumes are plural on purpose — one for backend roles, one for research,
+ * one for the career fair — while the master profile behind them stays one
  * record. This page is the way between the two.
  */
 
@@ -136,7 +136,7 @@ export function ResumeShelf() {
                   {Array.from({ length: 4 }, (_, index) => (
                     <div key={index} className="aspect-[8.5/11] rounded-[8px] bg-fill" />
                   ))}
-                  <span className="sr-only">Loading your resumesâ€¦</span>
+                  <span className="sr-only">Loading your resumes…</span>
                 </div>
               ) : resumes.length === 0 ? (
                 <div data-tour="resumes-shelf" className="flex flex-col items-start gap-4 rounded-[18px] border border-dashed border-rule-strong px-6 py-12">
@@ -185,8 +185,8 @@ export function ResumeShelf() {
                             <span className="min-w-0 truncate text-[15px] font-medium tracking-[-0.01em] text-ink">{resume.fileName}</span>
                           </span>
                           <span className="text-[12px] text-ink-3">
-                            {resume.targetRole ? `${resume.targetRole} Â· ` : ""}
-                            {when(resume.updatedAt)} Â· scored {resume.score}
+                            {resume.targetRole ? `${resume.targetRole} · ` : ""}
+                            {when(resume.updatedAt)} · scored {resume.score}
                           </span>
                         </span>
                       </Link>

@@ -6,6 +6,7 @@ import {
   cleanBullet,
   formatResumeDate,
   normalizeResume,
+  tidyForDisplay,
 } from "../src/lib/resume/standard"
 import { PAGE_LINES, estimateLines } from "../src/lib/resumePageBudget"
 import { getResumeObject, type Resume } from "../src/app/api/parse/resumeSchema"
@@ -82,4 +83,13 @@ test("the AI is told the wording rules and not the layout ones", () => {
   assert.match(RESUME_STANDARD_PROMPT, /Never invent numbers/)
   assert.match(RESUME_STANDARD_PROMPT, /Mon YYYY/)
   assert.doesNotMatch(RESUME_STANDARD_PROMPT, /Section order/)
+})
+
+test("tidyForDisplay formats dates and periods but never moves or drops a line", () => {
+  const resume = getResumeObject()
+  resume.experience = [job("Old", "Jan 2020", "Dec 2020", ["First.", "", "Third."]), job("New", "Jan. 2024", "Present")]
+  const shown = tidyForDisplay(resume)
+  assert.deepEqual(shown.experience.map((e) => e.company), ["Old", "New"])
+  assert.deepEqual(shown.experience[0].responsibilities, ["First", "", "Third"])
+  assert.equal(shown.experience[1].start_date, "Jan 2024")
 })
