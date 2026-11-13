@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { FileText, Loader2, Star, Trash2, Upload, UserRound } from "lucide-react"
+import { FileText, Loader2, ScrollText, Star, Trash2, Upload, UserRound } from "lucide-react"
 import { toast } from "sonner"
 import { pill } from "./pills"
 
@@ -94,11 +94,15 @@ export function ResumeShelf() {
       <div className="paper-frame">
         <div className="paper flex min-h-[calc(100vh-var(--chrome-top,82px)-68px)] flex-col">
           <header data-tour="resumes-header" className="flex min-h-[72px] flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-hairline px-4 py-[13px] sm:px-6">
-            <h1 className="text-[17px] font-medium tracking-[-0.02em] text-ink sm:text-[18px]">Resume collection</h1>
+            <h1 className="text-[17px] font-medium tracking-[-0.02em] text-ink sm:text-[18px]">All resumes</h1>
             <div className="flex items-center gap-2.5">
               <Link href="/profile" className={pill("white", "h-10 px-4 text-[15px] font-medium")}>
                 <UserRound aria-hidden="true" />
                 <span className="max-sm:sr-only">Master profile</span>
+              </Link>
+              <Link href="/resumes/master" className={pill("white", "h-10 px-4 text-[15px] font-medium")}>
+                <ScrollText aria-hidden="true" />
+                <span className="max-sm:sr-only">Master resume</span>
               </Link>
               <Link href="/upload" className={pill("brand", "h-10 px-5 text-[15px] font-medium")}>
                 <Upload aria-hidden="true" />

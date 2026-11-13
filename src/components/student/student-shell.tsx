@@ -48,7 +48,7 @@ const links = [
   { href: "/profile", label: "Profile", icon: UserRound },
   { href: "/career", label: "Career", icon: Compass },
   { href: "/community", label: "Community", icon: Users },
-  { href: "/resumes", label: "Resume collection", icon: FileText },
+  { href: "/resumes", label: "My Resumes", icon: FileText },
   { href: "/jobs", label: "Jobs", icon: Search },
 ]
 const careerPages = [
@@ -69,11 +69,18 @@ const jobsPages = [
   { href: "/jobs", label: "Browse jobs" },
   { href: "/jobs/applications", label: "Applications" },
 ]
+const resumesPages = [
+  { href: "/resumes/master", label: "Master Resume" },
+]
 const sectionPages: Record<string, { href: string; label: string }[]> = {
   "/career": careerPages,
   "/community": communityPages,
   "/jobs": jobsPages,
+  "/resumes": resumesPages,
 }
+// Sections whose own link is a page (My Resumes opens the shelf) rather than
+// a disclosure: their sub-pages show while the section is current.
+const landingSections = new Set(["/resumes"])
 const expandedStorageKey = "vistern-sidebar-expanded"
 
 export function StudentShell({
@@ -174,10 +181,11 @@ export function StudentShell({
             <nav aria-label="Main navigation">
               {links.map(({ href, label, icon: Icon }) => {
                 const pages = sectionPages[href]
-                const expanded = expandedSections.includes(href)
+                const landing = landingSections.has(href)
+                const expanded = landing ? href === activeHref : expandedSections.includes(href)
                 return <div className="student-nav-section" data-nav-section={href} key={href}>
-                  {pages ? <button type="button" data-nav={href} className="student-nav-disclosure" aria-current={href === activeHref ? "page" : undefined} aria-expanded={expanded} aria-controls={`student-subnav-${href.slice(1)}`} onClick={() => toggleSection(href)}><Icon size={19} /><span>{label}</span><ChevronDown size={15} aria-hidden="true" /></button>
-                    : <Link href={href} data-nav={href} aria-current={href === activeHref ? "page" : undefined}><Icon size={19} />{label}</Link>}
+                  {pages && !landing ? <button type="button" data-nav={href} className="student-nav-disclosure" aria-current={href === activeHref ? "page" : undefined} aria-expanded={expanded} aria-controls={`student-subnav-${href.slice(1)}`} onClick={() => toggleSection(href)}><Icon size={19} /><span>{label}</span><ChevronDown size={15} aria-hidden="true" /></button>
+                    : <Link href={href} data-nav={href} aria-current={href === activeHref && !pages?.some((page) => page.href === pathname) ? "page" : undefined}><Icon size={19} />{label}</Link>}
                   {pages && expanded && <div id={`student-subnav-${href.slice(1)}`} className="student-subnav">{pages.map((page) => <Link key={page.href} href={page.href} aria-current={isCurrentSubpage(page.href) ? "page" : undefined}>{page.label}</Link>)}</div>}
                 </div>
               })}
@@ -218,10 +226,11 @@ export function StudentShell({
             >
               {links.map(({ href, label, icon: Icon }) => {
                 const pages = sectionPages[href]
-                const expanded = expandedSections.includes(href)
+                const landing = landingSections.has(href)
+                const expanded = landing ? href === activeHref : expandedSections.includes(href)
                 return <div className="student-mobile-nav-section" key={href}>
-                  {pages ? <button type="button" className="student-nav-disclosure" aria-current={href === activeHref ? "page" : undefined} aria-expanded={expanded} aria-controls={`student-mobile-subnav-${href.slice(1)}`} onClick={() => toggleSection(href)}><Icon size={18} /><span>{label}</span><ChevronDown size={15} aria-hidden="true" /></button>
-                    : <Link href={href} onClick={closeMenu} aria-current={href === activeHref ? "page" : undefined}><Icon size={18} />{label}</Link>}
+                  {pages && !landing ? <button type="button" className="student-nav-disclosure" aria-current={href === activeHref ? "page" : undefined} aria-expanded={expanded} aria-controls={`student-mobile-subnav-${href.slice(1)}`} onClick={() => toggleSection(href)}><Icon size={18} /><span>{label}</span><ChevronDown size={15} aria-hidden="true" /></button>
+                    : <Link href={href} onClick={closeMenu} aria-current={href === activeHref && !pages?.some((page) => page.href === pathname) ? "page" : undefined}><Icon size={18} />{label}</Link>}
                   {pages && expanded && <div id={`student-mobile-subnav-${href.slice(1)}`} className="student-mobile-subnav">{pages.map((page) => <Link key={page.href} href={page.href} onClick={closeMenu} aria-current={isCurrentSubpage(page.href) ? "page" : undefined}>{page.label}</Link>)}</div>}
                 </div>
               })}

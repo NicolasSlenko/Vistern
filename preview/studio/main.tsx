@@ -1,5 +1,6 @@
 import { StrictMode, useEffect, useState } from "react"
 import { createRoot } from "react-dom/client"
+import { MasterResume } from "../../src/components/resume-studio/master-resume"
 import { ProfileStudio } from "../../src/components/resume-studio/profile-studio"
 import { ResumeDocStudio } from "../../src/components/resume-studio/resume-doc-studio"
 import { ResumeShelf } from "../../src/components/resume-studio/resume-shelf"
@@ -16,7 +17,11 @@ import "./preview.css"
 /** The width the "Wide" switch lays the studio out at: 1512px less the shell's 224px sidebar. */
 const WIDE_PX = 1288
 
+// ?long triples the roles and projects, to see the page turn.
 let profile = structuredClone(SAMPLE_PROFILE)
+if (window.location.search.includes("long")) {
+  profile = { ...profile, experience: [...profile.experience, ...profile.experience, ...profile.experience], projects: [...profile.projects, ...profile.projects, ...profile.projects] }
+}
 const documents = structuredClone(SAMPLE_DOCUMENTS)
 let bulletReview: unknown = null
 // The master profile's rewrites are kept apart from a resume's, as the real route does.
@@ -87,10 +92,11 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   return realFetch(input as RequestInfo, init)
 }
 
-type View = "profile" | "shelf" | "resume"
+type View = "profile" | "master" | "shelf" | "resume"
 
 const VIEWS: { id: View; label: string }[] = [
   { id: "profile", label: "Master profile" },
+  { id: "master", label: "Master resume" },
   { id: "shelf", label: "Shelf" },
   { id: "resume", label: "One resume" },
 ]
@@ -153,7 +159,7 @@ function Preview() {
       </header>
       <main className="preview-main">
         <div className="preview-stage">
-          {view === "profile" ? <ProfileStudio /> : view === "shelf" ? <ResumeShelf /> : <ResumeDocStudio id={documents[0].id} />}
+          {view === "profile" ? <ProfileStudio /> : view === "master" ? <MasterResume /> : view === "shelf" ? <ResumeShelf /> : <ResumeDocStudio id={documents[0].id} />}
         </div>
       </main>
     </div>

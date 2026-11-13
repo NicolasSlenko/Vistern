@@ -120,12 +120,12 @@ const sections: Section[] = [
         target: ['[data-tour="studio-header"]'],
         title: "Master profile",
         body: "One record of everything you’ve done: education, experience, projects and skills. Fill it in once; every resume draws from it.",
-        points: ["Changes save on their own; the note by the title says when", "The page on the right is your general resume, redrawn as you type", "Save as resume puts a copy of it on your shelf"],
+        points: ["Changes save on their own; the note by the title says when", "Master resume shows all of this as one page, with the AI’s notes on it"],
       },
       {
         target: ['[data-tour="studio-left"]'],
         title: "Sections",
-        body: "Choose a section to edit it. The list stays here in every mode; a count beside a section means there are notes or suggestions waiting on it.",
+        body: "Choose a section to edit it.",
         points: ["Profile, education, experience, projects, skills and more", "Add as many entries as you have: this isn’t limited to one page"],
       },
       {
@@ -133,12 +133,6 @@ const sections: Section[] = [
         title: "Editing",
         body: "The section you chose, as a form. Each role, project and degree is its own card that you can edit, reorder or remove.",
         points: ["If the profile is empty, upload a resume here and we’ll fill it in for you"],
-      },
-      {
-        target: ['[data-tour="studio-modes"]'],
-        title: "Write, Review and Suggestions",
-        body: "Write is where you edit. Review and Suggestions draw the AI’s notes and bullet rewrites on the page itself, underlined on the line they’re about.",
-        points: ["Ask for them from the bar at the top of the page", "Click a marked line to jump to it in the form", "Answer a rewrite with Use this or Keep mine; mark a note done once you’ve dealt with it"],
       },
     ],
   },
@@ -149,9 +143,9 @@ const sections: Section[] = [
     steps: [
       {
         target: ['[data-tour="resumes-header"]'],
-        title: "Resume collection",
+        title: "My Resumes",
         body: "Keep a separate resume for each kind of role you apply to. They’re edited on their own, so a rewrite here never changes your master profile.",
-        points: ["Upload adds a new resume from a PDF"],
+        points: ["Upload adds a new resume from a PDF", "Master Resume, in the sidebar, is your whole profile as one page, where the AI can suggest rewrites for weak bullets"],
       },
       {
         target: ['[data-tour="resumes-shelf"] li:first-child', '[data-tour="resumes-shelf"]'],

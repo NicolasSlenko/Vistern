@@ -18,6 +18,10 @@ import { rewriteKey, type BulletField, type BulletSection } from "@/lib/resume-s
  * Review notes are about whole entries and sections rather than lines, so the
  * entry heads carry `entry.<section>.<index>` and the section headings
  * `section.<ref>` (the name, `section.profile`) for those to sit on.
+ *
+ * Every block that must not be cut by a page turn — the header, a heading, an
+ * entry — carries `data-block`; use-page-breaks.ts measures them and hands
+ * back `breaks`, the space to put above a block so it starts the next sheet.
  */
 
 /** Where a review note about a whole entry, or a whole section, is drawn. */
@@ -26,6 +30,8 @@ export const sectionMark = (section: string) => `section.${section}`
 
 /** Letter paper, in the units the marks are measured in. 1 unit ≈ 1pt at 100%. */
 export const PAGE = { width: 612, height: 792 }
+/** The margin inside every sheet. */
+export const PAGE_PADDING = { x: 46, y: 40 }
 
 const nonEmpty = (values: (string | undefined | null)[]) => values.map((value) => value?.trim()).filter(Boolean) as string[]
 
@@ -38,11 +44,18 @@ function dateRange(start?: string, end?: string): string {
   return to || ""
 }
 
-/** A section's rule and heading, in the small-caps a resume uses. */
-function Heading({ children, section }: { children: React.ReactNode; section: string }) {
+type Breaks = Record<string, number>
+const pushed = (breaks: Breaks | undefined, id: string) => (breaks?.[id] ? { paddingTop: breaks[id] } : undefined)
+
+/** A section's rule and heading, in the small-caps a resume uses. Kept with the entry below it. */
+function Heading({ children, section, breaks }: { children: React.ReactNode; section: string; breaks?: Breaks }) {
+  const id = `heading.${section}`
   return (
     <h2
       data-mark={sectionMark(section)}
+      data-block={id}
+      data-keep-next=""
+      style={pushed(breaks, id)}
       className="mb-[3px] mt-[11px] border-b border-black pb-[1px] text-[11.5px] font-bold uppercase tracking-[0.06em] text-black first:mt-0"
     >
       <span data-mark-text>{children}</span>
@@ -103,7 +116,7 @@ function Bullets({
   )
 }
 
-export function ResumePaper({ resume }: { resume: Resume }) {
+export function ResumePaper({ resume, breaks, pages = 1 }: { resume: Resume; breaks?: Breaks; pages?: number }) {
   const { basics } = resume
   const city = nonEmpty([basics.location?.city, basics.location?.state]).join(", ")
   // The contact line: whatever the student actually gave, separated by pipes.
@@ -124,9 +137,9 @@ export function ResumePaper({ resume }: { resume: Resume }) {
     <article
       data-resume-paper
       className="relative bg-white font-[Georgia,'Times_New_Roman',serif] text-black"
-      style={{ width: PAGE.width, minHeight: PAGE.height, padding: "40px 46px" }}
+      style={{ width: PAGE.width, minHeight: PAGE.height * pages, padding: `${PAGE_PADDING.y}px ${PAGE_PADDING.x}px` }}
     >
-      <header className="mb-[6px] text-center">
+      <header data-block="header" className="mb-[6px] text-center">
         <h1 data-mark={sectionMark("profile")} className="text-[23px] font-normal uppercase tracking-[0.07em] text-black">
           <span data-mark-text>{basics.name || "Your name"}</span>
         </h1>
@@ -144,9 +157,9 @@ export function ResumePaper({ resume }: { resume: Resume }) {
 
       {resume.education.length > 0 && (
         <section>
-          <Heading section="education">Education</Heading>
+          <Heading section="education" breaks={breaks}>Education</Heading>
           {resume.education.map((entry, index) => (
-            <div key={index} className="mb-[4px]">
+            <div key={index} data-block={`education.${index}`} style={pushed(breaks, `education.${index}`)} className="mb-[4px]">
               <EntryHead
                 mark={entryMark("education", index)}
                 left={entry.school}
@@ -174,9 +187,9 @@ export function ResumePaper({ resume }: { resume: Resume }) {
 
       {resume.experience.length > 0 && (
         <section>
-          <Heading section="experience">Experience</Heading>
+          <Heading section="experience" breaks={breaks}>Experience</Heading>
           {resume.experience.map((entry, entryIndex) => (
-            <div key={entryIndex} className="mb-[5px]">
+            <div key={entryIndex} data-block={`experience.${entryIndex}`} style={pushed(breaks, `experience.${entryIndex}`)} className="mb-[5px]">
               <EntryHead
                 mark={entryMark("experience", entryIndex)}
                 left={entry.position}
@@ -193,9 +206,9 @@ export function ResumePaper({ resume }: { resume: Resume }) {
 
       {resume.projects.length > 0 && (
         <section>
-          <Heading section="projects">Projects</Heading>
+          <Heading section="projects" breaks={breaks}>Projects</Heading>
           {resume.projects.map((entry, entryIndex) => (
-            <div key={entryIndex} className="mb-[5px]">
+            <div key={entryIndex} data-block={`projects.${entryIndex}`} style={pushed(breaks, `projects.${entryIndex}`)} className="mb-[5px]">
               <div data-mark={entryMark("projects", entryIndex)} className="flex items-baseline justify-between gap-3">
                 <span className="text-[11px] text-black">
                   <strong data-mark-text className="font-bold">{entry.name}</strong>
@@ -214,8 +227,8 @@ export function ResumePaper({ resume }: { resume: Resume }) {
 
       {shownSkills.length > 0 && (
         <section>
-          <Heading section="skills">Technical skills</Heading>
-          <dl className="text-[10.5px] leading-[1.42]">
+          <Heading section="skills" breaks={breaks}>Technical skills</Heading>
+          <dl data-block="skills" style={pushed(breaks, "skills")} className="text-[10.5px] leading-[1.42]">
             {shownSkills.map(([label, values]) => (
               <div key={label} className="flex gap-[4px]">
                 <dt className="shrink-0 font-bold">{label}:</dt>
@@ -228,9 +241,9 @@ export function ResumePaper({ resume }: { resume: Resume }) {
 
       {resume.extracurriculars.length > 0 && (
         <section>
-          <Heading section="extracurriculars">Leadership</Heading>
+          <Heading section="extracurriculars" breaks={breaks}>Leadership</Heading>
           {resume.extracurriculars.map((entry, index) => (
-            <div key={index} className="mb-[4px]">
+            <div key={index} data-block={`extracurriculars.${index}`} style={pushed(breaks, `extracurriculars.${index}`)} className="mb-[4px]">
               <EntryHead
                 mark={entryMark("extracurriculars", index)}
                 left={entry.organization}

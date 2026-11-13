@@ -36,9 +36,10 @@ export function StudioShell<Id extends string>({
   note?: React.ReactNode
   /** Buttons at the right of the top bar. */
   actions?: React.ReactNode
-  modes: ModeOption<Id>[]
-  mode: Id
-  onMode: (mode: Id) => void
+  /** The switch in the middle of the bar. Left out, the studio has one mode and no tabs. */
+  modes?: ModeOption<Id>[]
+  mode?: Id
+  onMode?: (mode: Id) => void
   /** What the chosen panel shows, down the left column. */
   left: React.ReactNode
   /** The form, in the middle. */
@@ -83,7 +84,7 @@ export function StudioShell<Id extends string>({
                       {folded ? <PanelLeftOpen className="h-[17px] w-[17px]" /> : <PanelLeftClose className="h-[17px] w-[17px]" />}
                     </button>
                   )}
-                  <ModeTabs modes={modes} mode={mode} onChoose={onMode} />
+                  {modes && mode && onMode && <ModeTabs modes={modes} mode={mode} onChoose={onMode} />}
                 </div>
                 <div className="flex min-w-0 items-center justify-end gap-2.5">{actions}</div>
               </div>
@@ -99,17 +100,19 @@ export function StudioShell<Id extends string>({
                   folded ? "@6xl/studio:w-0 @6xl/studio:border-r-0" : "@6xl/studio:w-[276px]"
                 } ${showing === "preview" ? "hidden @6xl/studio:flex" : ""}`}
               >
-                <div data-tour="studio-modes" className="bg-sheet px-3 pt-3 sm:px-4 @6xl/studio:hidden">
-                  <ModeTabs modes={modes} mode={mode} onChoose={onMode} stretch />
-                </div>
+                {modes && mode && onMode && (
+                  <div data-tour="studio-modes" className="bg-sheet px-3 pt-3 sm:px-4 @6xl/studio:hidden">
+                    <ModeTabs modes={modes} mode={mode} onChoose={onMode} stretch />
+                  </div>
+                )}
                 <div
-                  role="tabpanel"
+                  role={mode ? "tabpanel" : undefined}
                   id={MODE_PANEL_ID}
-                  aria-labelledby={modeTabId(mode)}
+                  aria-labelledby={mode ? modeTabId(mode) : undefined}
                   className="px-3 pb-3 pt-3 sm:px-4 @6xl/studio:min-h-0 @6xl/studio:flex-1 @6xl/studio:overflow-y-auto @6xl/studio:px-4 @6xl/studio:pb-8 @6xl/studio:pt-6 @6xl/studio:[mask-image:linear-gradient(to_bottom,#000_calc(100%-24px),transparent)]"
                 >
                   {/* Switching fades the other one in (`starting:` is CSS @starting-style). */}
-                  <div key={mode} className="transition-opacity duration-200 ease-out motion-reduce:transition-none starting:opacity-0">
+                  <div key={mode ?? "only"} className="transition-opacity duration-200 ease-out motion-reduce:transition-none starting:opacity-0">
                     {left}
                   </div>
                 </div>

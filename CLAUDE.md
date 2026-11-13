@@ -131,7 +131,8 @@ Vocabulary: `bg-paper bg-sheet bg-fill` · `text-ink text-ink-2 text-ink-3` · `
 
 **The master profile and resume documents are deliberately separate.**
 
-- `/profile` → `student_profiles` + `profile_items`. One record of what the student has actually done. Three columns: the page on the right is the *general resume* — the whole profile rendered untrimmed by `ResumePaper`, redrawn as the form changes. "Save as resume" `POST`s it to `/api/resume-documents` (`source_type: "generated"`), which applies the resume standard (below) and saves a one-page snapshot; the profile keeps everything. The Suggestions tab uses `useBulletReview(profile, { target: "profile" })`: rewrites are cached under `feedback_type = 'bullets-profile'` on the current document, apart from any resume's.
+- `/profile` → `student_profiles` + `profile_items`. One record of what the student has actually done. Two columns, form only — no mode tabs, no page.
+- `/resumes/master` (`master-resume.tsx`, sidebar: My Resumes → Master Resume) → the same profile as one page: the whole thing rendered untrimmed by `ResumePaper`, with bullet Suggestions drawn on it as marks (`useBulletReview(profile, { target: "profile" })`, cached under `feedback_type = 'bullets-profile'`). Taking a rewrite edits the profile; "Edit profile" goes to the form. Two features are commented out in `master-resume.tsx`, each block labelled: `Review` (whole-entry notes from `xyz-batch`, plus the Suggestions/Review tab switch) and `Save as resume`, whose route `POST /api/resume-documents` (`source_type: "generated"`, resume standard applied, one-page snapshot), is still live.
 - `/resumes` → `resume_documents`. Many: one per kind of role. `/resumes/[id]` is three columns — the uploaded file on the right, its wording in the middle, the AI's rewrites on the left. Editing a resume never writes back to the profile.
 
 ### Line-level AI suggestions
