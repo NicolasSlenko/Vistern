@@ -76,6 +76,9 @@ export const extractWithChatGPT = async (content: string, provider: AiProvider) 
 
     return { ...parsed, details: normalizeParsedResume(parsed.details as Resume) }
   } catch (e) {
+    // Setup and limit errors carry a message meant for the student; let the
+    // route pass it on. Anything else is an extraction failure.
+    if (e instanceof Error && (e.name === "AiNotConfiguredError" || e.name === "AiLimitReachedError")) throw e
     console.error("Resume extraction failed:", e)
     return { details: null, missing: [] }
   }

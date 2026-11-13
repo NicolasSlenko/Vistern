@@ -241,7 +241,6 @@ export async function POST(): Promise<NR> {
     return NextResponse.json({ success: true, data: result, aiProvider: provider })
   } catch (error) {
     console.error("match-live error:", error)
-    const message = error instanceof Error ? error.message : "Failed to fetch live jobs"
-    return NextResponse.json({ success: false, error: message }, { status: 500 })
+    return NextResponse.json({ success: false, error: "Couldn’t load live jobs. Try again in a moment." }, { status: 500 })
   }
 }

@@ -112,8 +112,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       { 
         success: false,
-        error: "Failed to fetch UF courses",
-        message: error instanceof Error ? error.message : "Unknown error"
+        error: "Failed to fetch UF courses"
       },
       { status: 500 }
     )
@@ -153,8 +152,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { 
         success: false,
-        error: "Failed to fetch UF courses",
-        message: error instanceof Error ? error.message : "Unknown error"
+        error: "Failed to fetch UF courses"
       },
       { status: 500 }
     )

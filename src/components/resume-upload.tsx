@@ -58,6 +58,9 @@ export function ResumeUpload({ onComplete, onBusyChange }: ResumeUploadProps = {
   const [errorMessage, setErrorMessage] = useState("")
   const [parseResult, setParseResult] = useState<ParseResult | null>(null)
   const [isParsing, setIsParsing] = useState(false)
+  // Why the last read failed: an unreadable file needs a different file, while
+  // an AI hiccup is often fixed by trying the same file again.
+  const [parseFailure, setParseFailure] = useState<"unreadable_file" | "other" | null>(null)
   const [showVerification, setShowVerification] = useState(false)
   // Set while the student decides what from this upload goes to their profile.
   const [pending, setPending] = useState<{ upload: Resume; profile: Resume; changes: ProposedChange[] } | null>(null)
@@ -162,6 +165,7 @@ export function ResumeUpload({ onComplete, onBusyChange }: ResumeUploadProps = {
 
     setIsParsing(true)
     setErrorMessage("")
+    setParseFailure(null)
 
     try {
       const response = await fetch("/api/parse", {
@@ -176,13 +180,10 @@ export function ResumeUpload({ onComplete, onBusyChange }: ResumeUploadProps = {
 
       const result = await response.json()
 
-      if (!response.ok) {
+      if (!response.ok || !result.details) {
         console.error("API Error:", result)
-        throw new Error(result.message || result.error || "Failed to parse")
-      }
-
-      if (!result.details) {
-        throw new Error("We couldn’t read the resume. Try another file or continue without one.")
+        setParseFailure(result.code === "unreadable_file" ? "unreadable_file" : "other")
+        throw new Error(result.error || "We couldn’t read this resume. Try again, or fill in your profile yourself.")
       }
 
       setParseResult(result)
@@ -194,6 +195,7 @@ export function ResumeUpload({ onComplete, onBusyChange }: ResumeUploadProps = {
       }
     } catch (error) {
       console.error("Error parsing:", error)
+      setParseFailure((current) => current ?? "other")
       setParseResult({ details: null, missing: ["Failed to parse"] })
       const errorMsg = error instanceof Error ? error.message : "Failed to parse resume"
       setErrorMessage(errorMsg)
@@ -210,6 +212,7 @@ export function ResumeUpload({ onComplete, onBusyChange }: ResumeUploadProps = {
     setShowVerification(false)
     setUploadStatus("idle")
     setErrorMessage("")
+    setParseFailure(null)
   }
 
   /**
@@ -386,13 +389,27 @@ export function ResumeUpload({ onComplete, onBusyChange }: ResumeUploadProps = {
               Read it in and we’ll show you what we found, so you can correct it before it reaches your profile.
             </p>
             <div className="flex flex-wrap gap-3">
-              <button type="button" onClick={parseResume} disabled={isParsing || isProcessing} className={pill("brand")}>
-                {isParsing && <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />}
-                {isParsing ? "Reading resume…" : "Review resume"}
-              </button>
-              <button type="button" onClick={removeFile} disabled={isParsing || isProcessing} className={pill("white")}>
-                Choose another file
-              </button>
+              {parseFailure === "unreadable_file" ? (
+                <button type="button" onClick={removeFile} disabled={isParsing || isProcessing} className={pill("brand")}>
+                  Choose another file
+                </button>
+              ) : (
+                <>
+                  <button type="button" onClick={parseResume} disabled={isParsing || isProcessing} className={pill("brand")}>
+                    {isParsing && <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />}
+                    {isParsing ? "Reading resume…" : parseFailure ? "Try again" : "Review resume"}
+                  </button>
+                  <button type="button" onClick={removeFile} disabled={isParsing || isProcessing} className={pill("white")}>
+                    Choose another file
+                  </button>
+                </>
+              )}
+              {parseFailure && (
+                // Never a dead end: the profile can always be filled in by hand.
+                <button type="button" onClick={() => router.push("/profile")} disabled={isParsing || isProcessing} className={pill("white")}>
+                  Fill in my profile myself
+                </button>
+              )}
             </div>
           </div>
         ) : (
