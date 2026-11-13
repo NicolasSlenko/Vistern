@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { FileText, Loader2, ScrollText, Star, Trash2, Upload, UserRound } from "lucide-react"
+import { FilePlus2, FileText, Loader2, ScrollText, Star, Trash2, Upload, UserRound } from "lucide-react"
 import { toast } from "sonner"
 import { pill } from "./pills"
 
@@ -104,9 +104,13 @@ export function ResumeShelf() {
                 <ScrollText aria-hidden="true" />
                 <span className="max-sm:sr-only">Master resume</span>
               </Link>
-              <Link href="/upload" className={pill("brand", "h-10 px-5 text-[15px] font-medium")}>
+              <Link href="/upload" className={pill("white", "h-10 px-4 text-[15px] font-medium")}>
                 <Upload aria-hidden="true" />
                 <span className="max-sm:sr-only">Upload</span>
+              </Link>
+              <Link href="/resumes/new" className={pill("brand", "h-10 px-5 text-[15px] font-medium")}>
+                <FilePlus2 aria-hidden="true" />
+                <span className="max-sm:sr-only">New resume</span>
               </Link>
             </div>
           </header>
@@ -144,10 +148,16 @@ export function ResumeShelf() {
                     Upload a PDF and we’ll read it in. You’ll get the file to look at, its wording to edit, and the AI’s rewrite for every
                     weak bullet.
                   </p>
-                  <Link href="/upload" className={`${pill("brand")} mt-1`}>
-                    <Upload aria-hidden="true" />
-                    Upload a resume
-                  </Link>
+                  <div className="mt-1 flex flex-wrap gap-2.5">
+                    <Link href="/resumes/new" className={pill("brand")}>
+                      <FilePlus2 aria-hidden="true" />
+                      Build one from your profile
+                    </Link>
+                    <Link href="/upload" className={pill("white")}>
+                      <Upload aria-hidden="true" />
+                      Upload a resume
+                    </Link>
+                  </div>
                 </div>
               ) : (
                 <ul data-tour="resumes-shelf" className="grid grid-cols-2 gap-x-5 gap-y-7 sm:grid-cols-3 lg:grid-cols-4">

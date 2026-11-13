@@ -14,6 +14,7 @@ import { SyncToProfile } from "./sync-to-profile"
 import { ProfileForm, SkillsForm } from "./profile-form"
 import { SectionForm } from "./section-form"
 import { BulletOptionsDialog } from "./bullet-options"
+import { ExportMenu } from "./export-menu"
 import { SectionNav } from "./section-nav"
 import { LIST_SECTIONS, type ListSection, type SectionRef } from "./sections"
 import { SaveNote, StudioShell, StudioTitle } from "./studio-shell"
@@ -172,6 +173,7 @@ export function ResumeDocStudio({ id }: { id: string }) {
             <Star className="h-[17px] w-[17px]" fill={doc?.isStarred ? "currentColor" : "none"} aria-hidden="true" />
           </button>
           <SyncToProfile resume={content} />
+          <ExportMenu resume={content} fileName={doc?.fileName ?? "Resume"} />
           <button
             type="button"
             onClick={review.ask}

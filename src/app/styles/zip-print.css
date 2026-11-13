@@ -1,0 +1,49 @@
+/*
+ * Printing a resume (components/resume-paper/print-resume.tsx).
+ *
+ * The page is laid out in points — 612 wide, 1 unit ≈ 1pt — so on paper it is
+ * drawn at 96/72 and its own padding moves into @page's margin, which every
+ * sheet gets, not just the first. Everything but the print root is hidden.
+ */
+
+.print-root {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: letter;
+    margin: 40pt 46pt;
+  }
+
+  html,
+  body {
+    background: white !important;
+  }
+
+  body > :not(.print-root) {
+    display: none !important;
+  }
+
+  .print-root {
+    display: block;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .print-root [data-resume-paper] {
+    /* 612 less the 46 a side that @page now holds. */
+    width: 520px !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    zoom: 1.3333;
+  }
+
+  /* No entry or heading cut by a page turn, and a heading stays with what follows. */
+  .print-root [data-block] {
+    break-inside: avoid;
+  }
+  .print-root [data-keep-next] {
+    break-after: avoid;
+  }
+}
