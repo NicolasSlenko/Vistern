@@ -16,6 +16,7 @@ import { getResumeObject } from "../src/app/api/parse/resumeSchema"
 const MIGRATIONS = [
   "supabase/migrations/20261106120000_ai_response_cache.sql",
   "supabase/migrations/20261118120000_public_profiles.sql",
+  "supabase/migrations/20261118130000_public_profiles_lockdown.sql",
 ]
 
 // What Supabase provides: the API roles and auth.jwt() from the request's token.
@@ -55,6 +56,8 @@ before(async () => {
   db = await PGlite.create()
   await db.exec(SUPABASE_STUB)
   for (const file of MIGRATIONS) await db.exec(readFileSync(file, "utf8"))
+  // The lockdown must be safe to re-run, as on a database that already has it.
+  await db.exec(readFileSync(MIGRATIONS[MIGRATIONS.length - 1], "utf8"))
 
   // Cards are written by the server only, as saveMySharing does.
   await as("server", `insert into public_profiles (clerk_user_id, listed, card) values ('alice', true, '{"name":"Alice","verified":"ufl.edu"}')`)
