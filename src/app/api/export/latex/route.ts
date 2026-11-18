@@ -1,4 +1,4 @@
-import { generateText, type AiProvider } from "@/lib/ai";
+import { generateText, aiErrorMessage, aiErrorStatus, type AiProvider } from "@/lib/ai";
 import { resolveAiProvider } from "@/lib/ai/resolve";
 import { withAiCache } from "@/lib/ai/cache";
 import type { Resume } from "@/app/api/parse/resumeSchema";
@@ -387,7 +387,7 @@ ${RESUME_STANDARD_PROMPT}
         console.error("Error generating LaTeX:", error);
         return NextResponse.json({
             success: false,
-            error: "Failed to generate LaTeX resume"
-        }, { status: 500 });
+            error: aiErrorMessage(error, "Failed to generate LaTeX resume")
+        }, { status: aiErrorStatus(error) });
     }
 }

@@ -139,7 +139,7 @@ export function ResumePaper({ resume, breaks, pages = 1 }: { resume: Resume; bre
     // should look like the one that gets sent.
     <article
       data-resume-paper
-      className="relative bg-white font-[Georgia,'Times_New_Roman',serif] text-black"
+      className="relative bg-white font-sans text-black"
       style={{ width: PAGE.width, minHeight: PAGE.height * pages, padding: `${PAGE_PADDING.y}px ${PAGE_PADDING.x}px` }}
     >
       <header data-block="header" className="mb-[6px] text-center">

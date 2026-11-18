@@ -1,4 +1,4 @@
-import { generateObject, type AiProvider } from "@/lib/ai";
+import { generateObject, aiErrorMessage, aiErrorStatus, type AiProvider } from "@/lib/ai";
 import { withAiCache } from "@/lib/ai/cache";
 import { resolveAiProvider } from "@/lib/ai/resolve";
 import { z } from "zod";
@@ -155,7 +155,7 @@ Use the survey data to make every suggestion directly relevant to their career g
         console.error("Error generating insights:", error);
         return NextResponse.json({
             success: false,
-            error: "Failed to generate insights"
-        }, { status: 500 });
+            error: aiErrorMessage(error, "Failed to generate insights")
+        }, { status: aiErrorStatus(error) });
     }
 }

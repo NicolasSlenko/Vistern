@@ -1,4 +1,4 @@
-import { aiErrorMessage } from "@/lib/ai"
+import { aiErrorMessage, aiErrorStatus } from "@/lib/ai"
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import type { Resume } from "@/app/api/parse/resumeSchema"
@@ -72,6 +72,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: error.message }, { status: 429 })
     }
     console.error("tailor-resume error:", error)
-    return NextResponse.json({ success: false, error: aiErrorMessage(error, "Failed to tailor resume") }, { status: 500 })
+    return NextResponse.json({ success: false, error: aiErrorMessage(error, "Failed to tailor resume") }, { status: aiErrorStatus(error) })
   }
 }

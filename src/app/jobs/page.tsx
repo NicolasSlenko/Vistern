@@ -85,7 +85,7 @@ export default async function JobsPage() {
             <div className="flex-1 px-4 py-9 sm:px-8 sm:py-12">
               <div className="mx-auto flex max-w-[1080px] flex-col gap-9">
                 <div className="flex flex-col gap-2">
-                  <p className="label-mono text-ink-2">Opportunities</p>
+                  <p className="label-caps text-ink-2">Opportunities</p>
                   <p className="max-w-[58ch] font-serif text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
                     Places to look, and a way to <em className="text-brand">keep track</em>
                   </p>
@@ -97,7 +97,7 @@ export default async function JobsPage() {
 
                 <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
                   <section data-tour="jobs-places" className="flex flex-col gap-4">
-                    <h2 className="label-mono text-ink-2">Places to explore</h2>
+                    <h2 className="label-caps text-ink-2">Places to explore</h2>
                     <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       {sources.map((source) => (
                         <li key={source.href} className="flex">
@@ -115,7 +115,7 @@ export default async function JobsPage() {
                               />
                             </h3>
                             <p className="text-[14px] leading-relaxed text-ink-2">{source.description}</p>
-                            <span className="label-mono mt-auto pt-2 text-brand">Visit website</span>
+                            <span className="label-caps mt-auto pt-2 text-brand">Visit website</span>
                           </a>
                         </li>
                       ))}
@@ -123,7 +123,7 @@ export default async function JobsPage() {
                   </section>
 
                   <aside data-tour="jobs-search" className="flex h-fit flex-col gap-3.5 rounded-[18px] border border-hairline bg-sheet p-5 shadow-card-rest">
-                    <h2 className="label-mono text-ink-2">Your search</h2>
+                    <h2 className="label-caps text-ink-2">Your search</h2>
                     <ul className="flex flex-col">
                       {search.map((item) => (
                         <li key={item.href}>

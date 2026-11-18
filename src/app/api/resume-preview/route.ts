@@ -40,8 +40,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to generate preview URL",
-        message: error instanceof Error ? error.message : "Unknown error",
+        error: "Failed to generate preview URL"
       },
       { status: 500 }
     )

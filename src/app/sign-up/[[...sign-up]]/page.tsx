@@ -2,12 +2,14 @@
 
 import { useState } from "react"
 import { SignUp } from "@clerk/nextjs"
-import { AuthPage, clerkAppearance } from "@/components/auth/auth-page"
+import { AuthPage } from "@/components/auth/auth-page"
+import { useClerkAppearance } from "@/components/auth/use-clerk-appearance"
 import { pill } from "@/components/resume-studio/pills"
 
 export default function SignUpPage() {
   // Said plainly before an account exists, not buried in terms afterwards.
   const [acceptedAiUse, setAcceptedAiUse] = useState(false)
+  const appearance = useClerkAppearance()
 
   if (!acceptedAiUse) {
     return (
@@ -21,7 +23,7 @@ export default function SignUpPage() {
           </div>
 
           <div className="flex flex-col gap-3 rounded-[18px] border border-hairline bg-fill p-5">
-            <h2 className="label-mono text-ink-2">How we use AI</h2>
+            <h2 className="label-caps text-ink-2">How we use AI</h2>
             <p className="text-[14px] leading-relaxed text-ink-2">
               A language model reads your resume to pull out your experience, score each bullet, match your skills against roles, and write
               the suggestions you see in the app. That is all it is used for.
@@ -50,7 +52,7 @@ export default function SignUpPage() {
 
   return (
     <AuthPage title="Vistern">
-      <SignUp appearance={clerkAppearance} path="/sign-up" routing="path" signInUrl="/sign-in" />
+      <SignUp appearance={appearance} path="/sign-up" routing="path" signInUrl="/sign-in" />
     </AuthPage>
   )
 }

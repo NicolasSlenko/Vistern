@@ -185,7 +185,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error saving resume data:", error);
-    return Response.json({ success: false, error: "Failed to save resume data", message: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
+    return Response.json({ success: false, error: "Failed to save resume data" }, { status: 500 });
   }
 }
 
@@ -199,7 +199,7 @@ export async function GET() {
     return Response.json({ success: true, data: current.resume, score: current.score, breakdown });
   } catch (error) {
     console.error("Error loading resume data:", error);
-    return Response.json({ success: false, data: null, error: "Failed to load resume data", message: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
+    return Response.json({ success: false, data: null, error: "Failed to load resume data" }, { status: 500 });
   }
 }
 

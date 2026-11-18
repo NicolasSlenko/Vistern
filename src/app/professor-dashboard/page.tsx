@@ -45,18 +45,18 @@ export default function ProfessorDashboard() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20">
-                <BrainCircuit className="h-3 w-3 mr-1" /> AI Intel Verified
+                <BrainCircuit className="h-3 w-3 mr-1" /> Prototype · sample data
               </Badge>
               <Badge variant="outline" className="border-border">
                 Fall 2026 Cohort
               </Badge>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold font-mono tracking-tight flex items-center gap-3">
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight flex items-center gap-3">
               <GraduationCap className="h-8 w-8 text-primary" />
               Faculty Insights
             </h1>
             <p className="text-muted-foreground mt-2 max-w-2xl">
-              Real-time telemetry on student preparedness based on AI resume parsing compared against live industry demands.
+              A design prototype of faculty insights. Every figure on this page is sample data, not real student records.
             </p>
           </div>
           <div className="flex items-center gap-3 bg-card border rounded-lg p-3">
@@ -140,7 +140,7 @@ export default function ProfessorDashboard() {
                         : "bg-card border-border/50 text-muted-foreground hover:bg-muted/50 hover:border-border"
                     )}
                   >
-                    <div className={cn("font-bold font-mono mb-1", activeCourse === course.id ? "text-primary" : "")}>{course.id}</div>
+                    <div className={cn("font-bold mb-1", activeCourse === course.id ? "text-primary" : "")}>{course.id}</div>
                     <div className="line-clamp-1">{course.name}</div>
                     <div className="text-xs mt-3 bg-background/50 px-2 py-1 rounded inline-flex items-center gap-1.5 opacity-80 border">
                       <Users className="h-3 w-3" /> {course.students} Resumes Analyzed
@@ -208,7 +208,7 @@ export default function ProfessorDashboard() {
                           {gap.criticality === "high" && <Badge variant="destructive" className="h-5 text-[10px] uppercase px-2">Critical Gap</Badge>}
                           {gap.criticality === "medium" && <Badge variant="outline" className="border-amber-500/50 text-amber-500 h-5 text-[10px] uppercase px-2 bg-amber-500/10">Warning</Badge>}
                         </span>
-                        <span className="text-muted-foreground text-xs font-mono">DELTA: {gap.industryDemand - gap.studentProficiency}%</span>
+                        <span className="text-muted-foreground text-xs tabular-nums">DELTA: {gap.industryDemand - gap.studentProficiency}%</span>
                       </div>
                       
                       <div className="grid grid-cols-[130px_1fr] md:grid-cols-[180px_1fr] gap-4 items-center">
@@ -256,7 +256,7 @@ export default function ProfessorDashboard() {
                     <div key={i} className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
                         <span className="font-medium text-base">{target.role}</span>
-                        <span className="text-muted-foreground font-mono">{target.percentage}%</span>
+                        <span className="text-muted-foreground tabular-nums">{target.percentage}%</span>
                       </div>
                       <Progress value={target.percentage} className="h-3 bg-muted" />
                     </div>

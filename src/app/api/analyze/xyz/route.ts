@@ -1,4 +1,4 @@
-import { generateObject, type AiProvider } from "@/lib/ai";
+import { generateObject, aiErrorMessage, type AiProvider } from "@/lib/ai";
 import { withAiCache } from "@/lib/ai/cache";
 import { resolveAiProvider } from "@/lib/ai/resolve";
 import { z } from "zod";
@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
         // Return a default feedback structure instead of 500 to keep UI responsive
         return NextResponse.json({
             success: false,
+            error: aiErrorMessage(error, "Analysis failed. Try again in a moment."),
             data: {
                 score: 0,
                 xyz_analysis: "Service unavailable.",

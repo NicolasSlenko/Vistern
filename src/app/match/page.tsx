@@ -62,7 +62,7 @@ const OVERLEAF_TAB = "vistern-overleaf"
 
 // ─── Shared pieces ───────────────────────────────────────────────────────────
 
-/** A panel on the sheet: a hairline card under a small monospace heading. */
+/** A panel on the sheet: a hairline card under a small caps heading. */
 function Panel({
   title,
   action,
@@ -82,7 +82,7 @@ function Panel({
       className={`flex flex-col gap-3.5 rounded-[18px] border border-hairline bg-sheet p-5 shadow-card-rest ${className}`}
     >
       <div className="flex items-center justify-between gap-3">
-        <h2 className="label-mono text-ink-2">{title}</h2>
+        <h2 className="label-caps text-ink-2">{title}</h2>
         {action}
       </div>
       {children}
@@ -97,7 +97,7 @@ function Notice({ title, children, role }: { title: string; children: React.Reac
       <span className="flex h-11 w-11 items-center justify-center rounded-full bg-fill text-brand">
         <Target className="h-[18px] w-[18px]" aria-hidden="true" />
       </span>
-      <p className="font-serif text-[26px] leading-tight tracking-[-0.025em] text-ink">{title}</p>
+      <p className="font-semibold text-[26px] leading-tight tracking-[-0.025em] text-ink">{title}</p>
       {children}
     </div>
   )
@@ -150,6 +150,12 @@ function SavedJobRow({ job, onBucket, onRemove }: { job: SavedJob; onBucket: (b:
 }
 
 // ─── Main page ───────────────────────────────────────────────────────────────
+
+/** The message a failed API route sent back (e.g. the AI timed out), or `fallback`. */
+async function errorFrom(response: Response, fallback: string) {
+  const body = await response.json().catch(() => null)
+  return typeof body?.error === "string" && body.error ? body.error : fallback
+}
 
 export default function MatchPage() {
   const { resumeData, isLoading: isResumeLoading } = useResume()
@@ -251,7 +257,7 @@ export default function MatchPage() {
       body: JSON.stringify({ jobTitle, jobDescription, jobCompany }),
     })
     const tailorResult = await tailorRes.json()
-    if (!tailorResult.success) throw new Error(tailorResult.error)
+    if (!tailorResult.success) throw new Error(tailorResult.error || "Couldn’t tailor the resume. Try again.")
     toast.info("Generating tailored LaTeX…")
 
     if (action === "overleaf") {
@@ -259,7 +265,7 @@ export default function MatchPage() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resumeData: tailorResult.data.tailoredResume }),
       })
-      if (!latexRes.ok) throw new Error("LaTeX generation failed")
+      if (!latexRes.ok) throw new Error(await errorFrom(latexRes, "LaTeX generation failed"))
       const { latex } = await latexRes.json()
       const encoded = `data:application/x-tex;base64,${btoa(unescape(encodeURIComponent(latex)))}`
       if (overleafInputRef.current) overleafInputRef.current.value = encoded
@@ -270,7 +276,7 @@ export default function MatchPage() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resumeData: tailorResult.data.tailoredResume }),
       })
-      if (!latexRes.ok) throw new Error("LaTeX generation failed")
+      if (!latexRes.ok) throw new Error(await errorFrom(latexRes, "LaTeX generation failed"))
       const blob = await latexRes.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
@@ -396,7 +402,7 @@ export default function MatchPage() {
       {shell(
         <>
           <div className="flex flex-col gap-2">
-            <p className="label-mono text-ink-2">Matches</p>
+            <p className="label-caps text-ink-2">Matches</p>
             <p className="max-w-[58ch] font-serif text-[34px] leading-[1.06] tracking-[-0.03em] text-ink sm:text-[40px]">
               Live roles, read <em className="text-brand">against your resume</em>
             </p>
@@ -444,7 +450,7 @@ export default function MatchPage() {
                         <ChevronLeft aria-hidden="true" />
                       </button>
                       <div className="flex min-w-0 items-center gap-3">
-                        <span className="label-mono shrink-0 text-ink-3">
+                        <span className="label-caps shrink-0 text-ink-3">
                           {currentJobIdx + 1} / {liveJobs.length}
                         </span>
                         <div className="flex min-w-0 flex-wrap justify-center gap-1">
@@ -489,7 +495,7 @@ export default function MatchPage() {
                               <p className="text-[14px] text-ink-2">
                                 {currentJob.company} · {currentJob.location}
                               </p>
-                              <p className="label-mono text-ink-3">
+                              <p className="label-caps text-ink-3">
                                 {[contract, salary ? `${salary}/yr` : null, timeAgo(currentJob.created)].filter(Boolean).join(" · ")}
                               </p>
                             </div>
@@ -665,7 +671,7 @@ export default function MatchPage() {
                             aria-expanded={open}
                             className="flex w-full items-center justify-between gap-2 rounded-[12px] px-1 py-2 text-left transition-colors duration-150 hover:bg-fill"
                           >
-                            <span className="label-mono text-ink-2">{BUCKET_META[bucket].label}</span>
+                            <span className="label-caps text-ink-2">{BUCKET_META[bucket].label}</span>
                             <span className="flex items-center gap-2">
                               <span className="text-[13px] tabular-nums text-ink-3">{jobs.length}</span>
                               <ChevronDown
@@ -710,7 +716,7 @@ export default function MatchPage() {
                     ] as const).map(([label, values, extra]) =>
                       values?.length ? (
                         <div key={label} className="flex flex-col gap-1.5">
-                          <dt className="label-mono text-ink-3">{label}</dt>
+                          <dt className="label-caps text-ink-3">{label}</dt>
                           <dd className="flex flex-wrap gap-1.5">
                             {values.map(value => (
                               <span key={value} className="rounded-full bg-fill px-2.5 py-1 text-[12px] text-ink-2">{value}</span>

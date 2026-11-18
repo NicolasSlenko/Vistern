@@ -490,15 +490,7 @@
   background: var(--student-canvas);
   color: var(--student-ink);
   min-height: 100vh;
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "SF Pro Display",
-    "SF Pro Text",
-    "Segoe UI Variable",
-    "Segoe UI",
-    var(--font-geist-sans),
-    sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
   font-size: 15px;
   line-height: 1.6;
   color-scheme: light;
@@ -1289,7 +1281,7 @@
 .student-app .career-page-heading h1,
 .student-app .student-tool-page h1 { font-size: clamp(32px, 3.2vw, 42px); line-height: 1.08; letter-spacing: -.05em; }
 .student-app .career-page-heading p { max-width: 65ch; font-size: 16px; line-height: 1.6; }
-.student-app .scaffold-eyebrow { color: var(--student-accent); font-family: var(--font-geist-mono), monospace; }
+.student-app .scaffold-eyebrow { color: var(--student-accent); font-family: var(--font-geist-sans), system-ui, sans-serif; font-variant-numeric: tabular-nums; }
 .student-app .home-current,
 .student-app .home-growth,
 .student-app .scaffold-empty,
@@ -1321,7 +1313,7 @@
 .student-app .community-directory article h3 { font-size: 21px; letter-spacing: -.035em; }
 .student-app .community-directory article p { font-size: 14px; line-height: 1.6; }
 .student-app .community-actions { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
-.student-app .community-kind { color: var(--student-accent); font-family: var(--font-geist-mono), monospace; font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+.student-app .community-kind { color: var(--student-accent); font-family: var(--font-geist-sans), system-ui, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
 .student-app .student-profile-panel { border-radius: 13px; }
 .student-app .student-profile-evidence > div { background: var(--secondary); }
 .student-app .student-profile-tags span { background: var(--secondary); color: var(--student-accent); }

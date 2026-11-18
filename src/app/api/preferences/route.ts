@@ -89,7 +89,8 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         error: status === 400 ? "Invalid preferences payload" : "Failed to save preferences",
-        details: error instanceof Error ? error.message : "Unknown error",
+        // Validation details help the form; server failures stay in the logs.
+        ...(status === 400 && error instanceof Error ? { details: error.message } : {}),
       },
       { status },
     )

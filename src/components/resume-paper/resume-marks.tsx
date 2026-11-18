@@ -107,7 +107,7 @@ function NoteBody({ note, first, after }: { note: MarkNote; first: boolean; afte
   const done = run(note.onDone)
   return (
     <div className={first ? "" : "mt-3 border-t border-hairline pt-3"}>
-      <p className={`label-mono ${note.severity === "fix" ? "text-alert" : note.severity === "look" ? "text-caution" : "text-brand"}`}>
+      <p className={`label-caps ${note.severity === "fix" ? "text-alert" : note.severity === "look" ? "text-caution" : "text-brand"}`}>
         {SEVERITY_NAME[note.severity]}
         {note.eyebrow && <span className="text-ink-3"> · {note.eyebrow}</span>}
       </p>

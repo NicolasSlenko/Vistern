@@ -225,7 +225,7 @@ export function MasterResume() {
             <div className="flex flex-1 flex-col rounded-[22px] bg-fill xl:rounded-[24px]">
               {loading ? (
                 <div aria-busy="true" className="flex min-h-[60vh] flex-1 items-center justify-center p-6">
-                  <span className="label-mono text-ink-3">Loading your profile…</span>
+                  <span className="label-caps text-ink-3">Loading your profile…</span>
                 </div>
               ) : (
                 <PaperPane

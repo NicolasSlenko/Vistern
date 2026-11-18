@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    console.log(`Found ${resumeCourses.length} courses in resume:`, resumeCourses)
+    console.log(`Found ${resumeCourses.length} courses in resume`)
 
     // Fetch the public catalog; user data persists separately in Supabase.
     const allUFCourses: Array<{ name: string; code: string }> = []
@@ -141,13 +141,6 @@ export async function GET(request: NextRequest) {
     })
 
     console.log(`Filtered to ${undergraduateCourses.length} undergraduate courses (3000-4000 level, excluding special topics)`)
-
-    // Log all scanned courses
-    console.log("\n========== ALL SCANNED UF COURSES (UNDERGRADUATE) ==========")
-    undergraduateCourses.forEach((course, index) => {
-      console.log(`${index + 1}. ${course.code} - ${course.name}`)
-    })
-    console.log("============================================\n")
 
     // Match resume courses to UF courses
     const matches = matchCoursework(resumeCourses, undergraduateCourses, threshold)
@@ -223,8 +216,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to match coursework",
-        message: error instanceof Error ? error.message : "Unknown error"
+        error: "Failed to match coursework"
       },
       { status: 500 }
     )

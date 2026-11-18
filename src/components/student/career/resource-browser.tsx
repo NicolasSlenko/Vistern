@@ -144,7 +144,7 @@ function GuideDetail({
     <article className="career-guide-detail">
       <Link className="career-back-link" href="/career?view=guides">← All guides</Link>
       <header className="career-resource-hero">
-        <span className="career-eyebrow">CAREER GUIDE / {guide.sections.length} SHORT SECTIONS</span>
+        <span className="career-eyebrow">Career guide / {guide.sections.length} short sections</span>
         <h2>{guide.title}</h2>
         <p>{guide.intro}</p>
         <button className="student-button" onClick={() => onChoose(sourceDraft({ type: "guide", id: guide.id }))}>
@@ -228,7 +228,7 @@ function PathDetail({
       <Link className="career-back-link" href="/career?view=explore">← All paths</Link>
       <header className="career-path-detail-hero">
         <div>
-          <span className="career-eyebrow">PATH {path.number} / UNDERGRAD ROADMAP</span>
+          <span className="career-eyebrow">Path {path.number} / Undergrad roadmap</span>
           <h2>{path.title}</h2>
           <p>{path.short} {path.focus}</p>
           <div className="career-path-role-tags" aria-label="Possible roles">{path.roles.map((role) => <span key={role}>{role}</span>)}</div>

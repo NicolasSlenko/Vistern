@@ -1,4 +1,4 @@
-import { generateObject, aiErrorMessage, type AiProvider } from "@/lib/ai"
+import { generateObject, aiErrorMessage, aiErrorStatus, type AiProvider } from "@/lib/ai"
 import { resolveAiProvider } from "@/lib/ai/resolve"
 import { z } from "zod"
 import { type NextRequest, NextResponse } from "next/server"
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, data, aiProvider: provider, cached })
   } catch (error) {
     console.error("Error rewriting bullets:", error)
-    return NextResponse.json({ success: false, error: aiErrorMessage(error, "Failed to review the bullets") }, { status: 500 })
+    return NextResponse.json({ success: false, error: aiErrorMessage(error, "Failed to review the bullets") }, { status: aiErrorStatus(error) })
   }
 }
 

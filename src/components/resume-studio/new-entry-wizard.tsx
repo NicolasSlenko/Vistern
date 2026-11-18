@@ -139,10 +139,10 @@ export function NewEntryWizard({
     <Dialog open={open} onOpenChange={close}>
       <DialogContent className="zip-scope flex max-h-[90vh] flex-col gap-5 overflow-y-auto rounded-[18px] border-hairline bg-sheet p-6 sm:max-w-xl sm:rounded-[18px]">
         <DialogHeader className="flex flex-col gap-2">
-          <p className="label-mono text-ink-3">
+          <p className="label-caps text-ink-3">
             Step {step + 1} of 4 · {STEP_TITLES[step]}
           </p>
-          <DialogTitle className="flex items-center gap-2 font-serif text-[26px] font-normal leading-tight tracking-[-0.025em] text-ink">
+          <DialogTitle className="flex items-center gap-2 font-semibold text-[26px] leading-tight tracking-[-0.025em] text-ink">
             <Sparkles className="h-5 w-5 shrink-0 text-brand" aria-hidden="true" /> Write {/^[aeiou]/i.test(spec.singular) ? "an" : "a"} {spec.singular} with AI
           </DialogTitle>
           <DialogDescription className="text-[14px] leading-relaxed text-ink-2">
@@ -208,7 +208,7 @@ export function NewEntryWizard({
         {step === 2 && (
           <div className="flex flex-col gap-3">
             {!loading && drafts.length > 0 && (
-              <p className="label-mono text-ink-2">
+              <p className="label-caps text-ink-2">
                 Bullet {at + 1} of {drafts.length}
               </p>
             )}

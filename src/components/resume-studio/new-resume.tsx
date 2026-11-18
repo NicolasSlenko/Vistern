@@ -139,7 +139,7 @@ export function NewResume() {
           <Field label="Aimed at" value={targetRole} onChange={setTargetRole} placeholder="Software engineering intern" hint="Optional. Shown on the shelf." />
           {resume && (
             <div className="flex flex-col gap-2">
-              <span className="label-mono text-ink-2">On the page</span>
+              <span className="label-caps text-ink-2">On the page</span>
               <ul className="flex flex-col gap-1 text-[14px] text-ink-2">
                 {PICK_SECTIONS.filter((section) => profile?.[section]?.length).map((section) => (
                   <li key={section} className="flex justify-between gap-3">
@@ -205,7 +205,7 @@ export function NewResume() {
               <div className="flex flex-col gap-4">
                 {SKILL_GROUPS.filter((group) => profile.skills?.[group.key]?.length).map((group) => (
                   <div key={group.key} className="flex flex-col gap-2">
-                    <span className="label-mono text-ink-3">{group.label}</span>
+                    <span className="label-caps text-ink-3">{group.label}</span>
                     <div className="flex flex-wrap gap-1.5">
                       {profile.skills[group.key].map((skill) => {
                         const on = pick.skills[group.key]?.includes(skill) ?? false

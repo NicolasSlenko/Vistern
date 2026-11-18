@@ -33,7 +33,7 @@ function Readout({ label, value, className = "" }: { label: string; value?: stri
   const text = value === null || value === undefined ? "" : String(value).trim()
   return (
     <div className={`flex min-w-0 flex-col gap-1 ${className}`}>
-      <span className="label-mono text-ink-2">{label}</span>
+      <span className="label-caps text-ink-2">{label}</span>
       <p className="text-[15px] leading-normal wrap-anywhere text-ink">{text === "" ? <Blank /> : text}</p>
     </div>
   )
@@ -44,7 +44,7 @@ function Section({ title, action, children }: { title: string; action?: React.Re
   return (
     <section className="flex flex-col gap-4">
       <div className="flex min-h-8 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-hairline pb-2">
-        <h3 className="label-mono text-ink-2">{title}</h3>
+        <h3 className="label-caps text-ink-2">{title}</h3>
         {action}
       </div>
       {children}
@@ -63,7 +63,7 @@ function Chip({ children }: { children: React.ReactNode }) {
 function ChipGroup({ label, values }: { label: string; values: string[] }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="label-mono text-ink-2">{label}</span>
+      <span className="label-caps text-ink-2">{label}</span>
       <div className="flex flex-wrap gap-1.5">
         {values.map((value, idx) => (
           <Chip key={idx}>{value}</Chip>
@@ -84,7 +84,7 @@ function BulletReadout({ label, values }: { label: string; values?: string[] | n
   const lines = (values ?? []).map((line) => line.trim()).filter(Boolean)
   return (
     <div className="flex min-w-0 flex-col gap-1.5 sm:col-span-2">
-      <span className="label-mono text-ink-2">
+      <span className="label-caps text-ink-2">
         {label}
         {lines.length > 0 && <span className="text-ink-3"> · {lines.length}</span>}
       </span>
@@ -283,7 +283,7 @@ export function ResumeVerification({ parsedData, onConfirm, onCancel, open }: Re
           <div className="paper flex max-h-[88vh] flex-col overflow-hidden">
             <header className="flex shrink-0 items-start gap-4 border-b border-hairline px-6 py-5 sm:px-8">
               <div className="flex min-w-0 flex-col gap-1.5">
-                <span className="label-mono text-ink-2">Check what we read</span>
+                <span className="label-caps text-ink-2">Check what we read</span>
                 <DialogPrimitive.Title asChild>
                   <h2 className="font-serif text-[30px] leading-[1.05] tracking-[-0.03em] text-ink">
                     Does this look <em className="text-brand">right</em>?
@@ -691,7 +691,7 @@ export function ResumeVerification({ parsedData, onConfirm, onCancel, open }: Re
                               <Readout label="Date" value={cert.date} />
                               <Readout label="Credential ID" value={cert.credential_id} />
                               <div className="flex min-w-0 flex-col gap-1 sm:col-span-2">
-                                <span className="label-mono text-ink-2">Certificate</span>
+                                <span className="label-caps text-ink-2">Certificate</span>
                                 {cert.url ? (
                                   <a
                                     href={cert.url}
