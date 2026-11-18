@@ -111,10 +111,10 @@ export function StudioShell<Id extends string>({
                   aria-labelledby={mode ? modeTabId(mode) : undefined}
                   className="px-3 pb-3 pt-3 sm:px-4 @6xl/studio:min-h-0 @6xl/studio:flex-1 @6xl/studio:overflow-y-auto @6xl/studio:px-4 @6xl/studio:pb-8 @6xl/studio:pt-6 @6xl/studio:[mask-image:linear-gradient(to_bottom,#000_calc(100%-24px),transparent)]"
                 >
-                  {/* Switching fades the other one in (`starting:` is CSS @starting-style). */}
-                  <div key={mode ?? "only"} className="transition-opacity duration-200 ease-out motion-reduce:transition-none starting:opacity-0">
-                    {left}
-                  </div>
+                  {/* Not keyed on the mode: the left column is the same section
+                      list in every mode, and remounting it on a switch made it
+                      fade and its highlight slide in from the corner. */}
+                  {left}
                 </div>
               </aside>
 

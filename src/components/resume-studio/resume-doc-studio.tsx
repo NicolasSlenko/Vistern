@@ -19,7 +19,7 @@ import { SectionNav } from "./section-nav"
 import { LIST_SECTIONS, type ListSection, type SectionRef } from "./sections"
 import { SaveNote, StudioShell, StudioTitle } from "./studio-shell"
 import { rewriteMarks } from "./paper-marks"
-import { MarksCount } from "./paper-toolbar"
+import { MarksCount, TOOLBAR_BRAND, TOOLBAR_QUIET } from "./paper-toolbar"
 import { revealInForm } from "./reveal"
 import { useAutosave } from "./use-autosave"
 import { useBulletReview } from "./use-bullet-review"
@@ -122,16 +122,25 @@ export function ResumeDocStudio({ id }: { id: string }) {
     }).catch(() => toast.error("Couldn't change that"))
   }
 
+  // Write shows the clean page; Suggestions draws the rewrites on it.
   const marks = useMemo(
     () =>
-      rewriteMarks(review.live, review.answered, {
-        onAccept: (rewrite) => review.accept(rewrite, edit),
-        onReject: review.reject,
-        onMore: setMoreFor,
-        onGoTo: goTo,
-      }),
-    [review, edit, goTo],
+      mode === "suggestions"
+        ? rewriteMarks(review.live, review.answered, {
+            onAccept: (rewrite) => review.accept(rewrite, edit),
+            onReject: review.reject,
+            onMore: setMoreFor,
+            onGoTo: goTo,
+          })
+        : [],
+    [mode, review, edit, goTo],
   )
+
+  // A fresh reading is shown where it can be seen.
+  const askAi = async () => {
+    await review.ask()
+    setMode("suggestions")
+  }
 
   if (missing) return <NotFound />
 
@@ -176,7 +185,7 @@ export function ResumeDocStudio({ id }: { id: string }) {
           <ExportMenu resume={content} fileName={doc?.fileName ?? "Resume"} />
           <button
             type="button"
-            onClick={review.ask}
+            onClick={askAi}
             disabled={review.asking || !content}
             className={pill("brand", "h-10 px-4 text-[15px] font-medium")}
           >
@@ -207,10 +216,23 @@ export function ResumeDocStudio({ id }: { id: string }) {
         <PaperPane
           resume={content}
           marks={marks}
+          // In both modes, so switching never moves the page under the bar.
           toolbar={
             mode === "suggestions" ? (
-              <MarksCount count={review.open.length} one="suggestion" many="suggestions" empty={review.all.length ? "All answered" : "No suggestions yet — Review bullets"} />
-            ) : undefined
+              <>
+                <MarksCount count={waiting} one="suggestion" many="suggestions" empty={review.all.length ? "All answered" : "No suggestions yet — Review bullets"} />
+                <button type="button" onClick={() => setMode("write")} className={TOOLBAR_QUIET}>
+                  Hide
+                </button>
+              </>
+            ) : waiting ? (
+              <button type="button" onClick={() => setMode("suggestions")} className={TOOLBAR_BRAND}>
+                <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                Show {waiting} {waiting === 1 ? "suggestion" : "suggestions"}
+              </button>
+            ) : (
+              <span className="whitespace-nowrap px-2.5 text-[13px] text-ink-2">{review.all.length ? "All suggestions answered" : "Your page"}</span>
+            )
           }
           original={
             doc?.s3Key ? (
