@@ -22,7 +22,8 @@
     "preview:studio": "node scripts/studio-preview.mjs",
     "test:career": "tsx --test tests/career-*.test.ts",
     "test:jobs": "tsx --test tests/job-filter.test.ts",
-    "test:http": "tsx --test tests/body-limit.test.ts"
+    "test:http": "tsx --test tests/body-limit.test.ts",
+    "test:people": "tsx --test tests/public-card.test.ts tests/people-security.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.2.0",
@@ -64,6 +65,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.3.14",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pdf-parse": "^1.1.5",

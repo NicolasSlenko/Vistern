@@ -45,12 +45,38 @@ export function readSharing(value: unknown): Sharing {
   return { ...parsed.data, fields: [...new Set(parsed.data.fields)] }
 }
 
-const linkSchema = z.string().url().max(300)
+/**
+ * Cards are read back from a table their owner can write to directly (RLS
+ * lets a student write their own row with their own token, skipping our API),
+ * so these checks run on every read, not just on save.
+ *
+ * `z.string().url()` alone accepts `javascript:` and `data:`; these don't.
+ */
+const isWebLink = (value: string) => webLink(value) === value
+const linkSchema = z.string().max(300).refine(isWebLink, "Only http(s) links")
+
+/**
+ * A photo loads in every viewer's browser, so a free choice of host would let
+ * one card log the IP of everyone who scrolls past it. Only Clerk's image CDN.
+ */
+export const PHOTO_HOSTS = ["img.clerk.com", "images.clerk.dev"]
+export const isAccountPhoto = (value: string) => {
+  try {
+    const url = new URL(value)
+    return url.protocol === "https:" && PHOTO_HOSTS.includes(url.hostname)
+  } catch {
+    return false
+  }
+}
+const photoSchema = z.string().max(500).refine(isAccountPhoto, "Only account photos")
+
+/** No `?`, `&` or spaces, so `mailto:` can't carry a subject, body or second address. */
+const emailSchema = z.string().max(200).email().regex(/^[^?&\s,;:]+$/, "Plain address only")
 
 export const publicCardSchema = z.object({
   name: z.string().min(1).max(80),
   headline: z.string().max(140).optional(),
-  photo: linkSchema.optional(),
+  photo: photoSchema.optional(),
   year: z.string().max(40).optional(),
   school: z.object({ school: z.string().max(120), program: z.string().max(160), graduation: z.string().max(40) }).optional(),
   location: z.string().max(120).optional(),
@@ -58,7 +84,7 @@ export const publicCardSchema = z.object({
   experience: z.array(z.object({ position: z.string().max(120), company: z.string().max(120) })).max(4).optional(),
   projects: z.array(z.object({ name: z.string().max(120), technologies: z.array(z.string().max(60)).max(6) })).max(4).optional(),
   links: z.object({ linkedin: linkSchema.optional(), github: linkSchema.optional(), portfolio: linkSchema.optional() }).optional(),
-  email: z.string().email().max(200).optional(),
+  email: emailSchema.optional(),
 })
 export type PublicCard = z.infer<typeof publicCardSchema>
 
@@ -133,7 +159,7 @@ export function cardSource(
     fullName,
     firstName,
     // Clerk gives everyone a generated avatar; only a photo they uploaded counts.
-    photo: account.hasImage === false ? undefined : webLink(account.imageUrl),
+    photo: account.hasImage === false || !account.imageUrl || !isAccountPhoto(account.imageUrl) ? undefined : account.imageUrl,
     year: onboarding?.year && onboarding.year !== "unsure" ? yearLabels[onboarding.year] : undefined,
     school: education?.school
       ? { school: clean(education.school, 120), program, graduation: clean(education.end_date, 40) }
@@ -143,7 +169,7 @@ export function cardSource(
     experience: experience.length ? experience : undefined,
     projects: projects.length ? projects : undefined,
     links: links.linkedin || links.github || links.portfolio ? links : undefined,
-    email: z.string().email().safeParse(email).success ? email : undefined,
+    email: emailSchema.safeParse(email).success ? email : undefined,
   }
 }
 
@@ -159,7 +185,9 @@ export function pickCard(source: CardSource, sharing: Sharing): PublicCard | nul
     const value = source[field.id]
     if (value !== undefined) (card as Record<string, unknown>)[field.id] = value
   }
-  return card
+  // The same check a reader applies, so nothing is stored that won't be shown.
+  const checked = publicCardSchema.safeParse(card)
+  return checked.success ? checked.data : null
 }
 
 /** Whether a card mentions a search, over the words someone would look for. */
