@@ -1,4 +1,4 @@
-import { generateText } from "@/lib/ai";
+import { generateText, aiErrorMessage, aiErrorStatus } from "@/lib/ai";
 import { resolveAiProvider } from "@/lib/ai/resolve";
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
@@ -370,7 +370,7 @@ ${JAKE_TEMPLATE}
         console.error("Error generating LaTeX:", error);
         return NextResponse.json({
             success: false,
-            error: "Failed to generate LaTeX resume"
-        }, { status: 500 });
+            error: aiErrorMessage(error, "Failed to generate LaTeX resume")
+        }, { status: aiErrorStatus(error) });
     }
 }

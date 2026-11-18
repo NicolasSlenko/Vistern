@@ -45,7 +45,7 @@ export default function ProfessorDashboard() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20">
-                <BrainCircuit className="h-3 w-3 mr-1" /> AI Intel Verified
+                <BrainCircuit className="h-3 w-3 mr-1" /> Prototype · sample data
               </Badge>
               <Badge variant="outline" className="border-border">
                 Fall 2026 Cohort
@@ -56,7 +56,7 @@ export default function ProfessorDashboard() {
               Faculty Insights
             </h1>
             <p className="text-muted-foreground mt-2 max-w-2xl">
-              Real-time telemetry on student preparedness based on AI resume parsing compared against live industry demands.
+              A design prototype of faculty insights. Every figure on this page is sample data, not real student records.
             </p>
           </div>
           <div className="flex items-center gap-3 bg-card border rounded-lg p-3">

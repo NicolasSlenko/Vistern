@@ -1,4 +1,4 @@
-import { generateObject, aiErrorMessage } from "@/lib/ai"
+import { generateObject, aiErrorMessage, aiErrorStatus } from "@/lib/ai"
 import { resolveAiProvider } from "@/lib/ai/resolve"
 import { z } from "zod"
 import { type NextRequest, NextResponse } from "next/server"
@@ -198,6 +198,6 @@ SELECTION RULES:
     })
   } catch (error) {
     console.error("tailor-resume error:", error)
-    return NextResponse.json({ success: false, error: aiErrorMessage(error, "Failed to tailor resume") }, { status: 500 })
+    return NextResponse.json({ success: false, error: aiErrorMessage(error, "Failed to tailor resume") }, { status: aiErrorStatus(error) })
   }
 }

@@ -1,15 +1,15 @@
-import { generateObject, type AiProvider } from "@/lib/ai";
+import { generateObject, isStudentFacingAiError, type AiProvider } from "@/lib/ai";
 import ResumeSchema, { type Resume } from "./resumeSchema";
 import { normalizeParsedResume } from "@/lib/parse/normalize";
 import { z } from "zod";
 
-const ResultSchema = z.object({
+export const ResultSchema = z.object({
   details: ResumeSchema.omit({ gamification: true }),
   missing: z.array(z.string())
 })
 
 
-const SYSTEM_PROMPT = `
+export const SYSTEM_PROMPT = `
 You are a resume parser that extracts structured JSON from raw resume text.
 
 CRITICAL RULES:
@@ -76,6 +76,9 @@ export const extractWithChatGPT = async (content: string, provider: AiProvider) 
 
     return { ...parsed, details: normalizeParsedResume(parsed.details as Resume) }
   } catch (e) {
+    // Setup, limit and timeout errors carry a message meant for the student;
+    // let the route pass it on. Anything else is an extraction failure.
+    if (isStudentFacingAiError(e)) throw e
     console.error("Resume extraction failed:", e)
     return { details: null, missing: [] }
   }

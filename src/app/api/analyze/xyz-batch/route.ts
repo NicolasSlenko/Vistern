@@ -1,4 +1,4 @@
-import { generateObject } from "@/lib/ai";
+import { generateObject, aiErrorMessage, aiErrorStatus } from "@/lib/ai";
 import { resolveAiProvider } from "@/lib/ai/resolve";
 import { z } from "zod";
 import { type NextRequest, NextResponse } from "next/server";
@@ -236,8 +236,8 @@ ${experienceItems.length > 0 ? "=== EXPERIENCE ===\n" + experienceItems.join("\n
         console.error("Error in batch XYZ analysis:", error);
         return NextResponse.json({
             success: false,
-            error: "Failed to generate batch analysis"
-        }, { status: 500 });
+            error: aiErrorMessage(error, "Failed to generate batch analysis")
+        }, { status: aiErrorStatus(error) });
     }
 }
 

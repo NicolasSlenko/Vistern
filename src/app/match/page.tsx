@@ -151,6 +151,12 @@ function SavedJobRow({ job, onBucket, onRemove }: { job: SavedJob; onBucket: (b:
 
 // ─── Main page ───────────────────────────────────────────────────────────────
 
+/** The message a failed API route sent back (e.g. the AI timed out), or `fallback`. */
+async function errorFrom(response: Response, fallback: string) {
+  const body = await response.json().catch(() => null)
+  return typeof body?.error === "string" && body.error ? body.error : fallback
+}
+
 export default function MatchPage() {
   const { resumeData, isLoading: isResumeLoading } = useResume()
 
@@ -251,7 +257,7 @@ export default function MatchPage() {
       body: JSON.stringify({ jobTitle, jobDescription, jobCompany }),
     })
     const tailorResult = await tailorRes.json()
-    if (!tailorResult.success) throw new Error(tailorResult.error)
+    if (!tailorResult.success) throw new Error(tailorResult.error || "Couldn’t tailor the resume. Try again.")
     toast.info("Generating tailored LaTeX…")
 
     if (action === "overleaf") {
@@ -259,7 +265,7 @@ export default function MatchPage() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resumeData: tailorResult.data.tailoredResume }),
       })
-      if (!latexRes.ok) throw new Error("LaTeX generation failed")
+      if (!latexRes.ok) throw new Error(await errorFrom(latexRes, "LaTeX generation failed"))
       const { latex } = await latexRes.json()
       const encoded = `data:application/x-tex;base64,${btoa(unescape(encodeURIComponent(latex)))}`
       if (overleafInputRef.current) overleafInputRef.current.value = encoded
@@ -270,7 +276,7 @@ export default function MatchPage() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resumeData: tailorResult.data.tailoredResume }),
       })
-      if (!latexRes.ok) throw new Error("LaTeX generation failed")
+      if (!latexRes.ok) throw new Error(await errorFrom(latexRes, "LaTeX generation failed"))
       const blob = await latexRes.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")

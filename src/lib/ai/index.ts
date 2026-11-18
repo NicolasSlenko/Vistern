@@ -78,6 +78,40 @@ export class AiNotConfiguredError extends Error {
   }
 }
 
+/** Longest any one AI call may take, retries included, before the student is told to try again. */
+export const AI_TIMEOUT_MS = 30_000
+
+/** An AI call that ran past AI_TIMEOUT_MS. Routes can show its message as is. */
+export class AiTimeoutError extends Error {
+  constructor() {
+    super("The AI took longer than 30 seconds to answer, so we stopped waiting. Try again in a moment.")
+    this.name = "AiTimeoutError"
+  }
+}
+
+/**
+ * Runs one AI call against a deadline. The signal goes to the SDK so the HTTP request
+ * is cancelled, and the race guarantees the cutoff even if a request ignores it.
+ */
+export async function withDeadline<T>(run: (signal: AbortSignal) => Promise<T>, ms = AI_TIMEOUT_MS): Promise<T> {
+  const controller = new AbortController()
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const deadline = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      controller.abort()
+      reject(new AiTimeoutError())
+    }, ms)
+  })
+  try {
+    return await Promise.race([run(controller.signal), deadline])
+  } catch (error) {
+    if (controller.signal.aborted) throw new AiTimeoutError()
+    throw error
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 /** Every provider with its model, and whether its API key is configured. Safe to send to the browser. */
 export function listAiProviders(): AiProviderInfo[] {
   return AI_PROVIDERS.map(id => ({
@@ -136,9 +170,8 @@ function logUsage(label: string, model: string, usage: AiUsage | null) {
 // Open models in JSON mode can occasionally loop on whitespace instead of closing the
 // object. A full resume needs ~2k output tokens, so cap HiPerGator well above that and
 // fail fast rather than letting one request hang for the SDK's 10-minute default.
-// Healthy calls finish in 1–40s, so a minute means the request stalled and is worth one retry.
+// Every call, retries included, also stops at AI_TIMEOUT_MS (see withDeadline).
 const HIPERGATOR_MAX_OUTPUT_TOKENS = 8000
-const HIPERGATOR_TIMEOUT_MS = 60_000
 // Warm enough to break a repetition loop, cool enough to keep extraction faithful.
 const RUNAWAY_RETRY_TEMPERATURE = 0.4
 
@@ -154,7 +187,7 @@ function openAiCompatibleClient(provider: "hipergator" | "openai") {
     return new OpenAI({
       apiKey: API_KEYS.hipergator,
       baseURL: process.env.HIPERGATOR_BASE_URL || process.env.LITELLM_BASE_URL || "https://api.ai.it.ufl.edu/v1",
-      timeout: HIPERGATOR_TIMEOUT_MS,
+      timeout: AI_TIMEOUT_MS,
       maxRetries: 1,
     })
   }
@@ -188,14 +221,14 @@ interface GenerateObjectOptions<T extends z.ZodTypeAny> extends GenerateOptions 
   name: string
 }
 
-async function claudeMessage(options: GenerateOptions, format?: { [key: string]: unknown }) {
+async function claudeMessage(options: GenerateOptions, signal: AbortSignal, format?: { [key: string]: unknown }) {
   const response = await claudeClient().messages.create({
     model: MODELS.claude,
     max_tokens: CLAUDE_MAX_TOKENS,
     system: options.system,
     messages: [{ role: "user", content: options.prompt }],
     ...(format ? { output_config: { format: { type: "json_schema" as const, schema: format } } } : {}),
-  })
+  }, { signal })
 
   if (response.stop_reason === "refusal") {
     throw new Error("Claude declined the request")
@@ -225,13 +258,20 @@ function chatMessages(options: GenerateOptions) {
 export async function generateObject<T extends z.ZodTypeAny>(
   options: GenerateObjectOptions<T>
 ): Promise<{ data: z.infer<T> | null; usage: AiUsage | null }> {
+  return withDeadline(signal => generateObjectWithin(options, signal))
+}
+
+async function generateObjectWithin<T extends z.ZodTypeAny>(
+  options: GenerateObjectOptions<T>,
+  signal: AbortSignal,
+): Promise<{ data: z.infer<T> | null; usage: AiUsage | null }> {
   const { provider } = options
   const model = MODELS[provider]
   // The OpenAI helper turns the Zod schema into the strict JSON schema both APIs accept.
   const responseFormat = zodResponseFormat(options.schema, options.name)
 
   if (provider === "claude") {
-    const { text, usage } = await claudeMessage(options, responseFormat.json_schema.schema)
+    const { text, usage } = await claudeMessage(options, signal, responseFormat.json_schema.schema)
     logUsage(options.name, model, usage)
     const parsed = options.schema.safeParse(JSON.parse(text))
     return { data: parsed.success ? parsed.data : null, usage }
@@ -244,7 +284,7 @@ export async function generateObject<T extends z.ZodTypeAny>(
       response_format: responseFormat,
       ...(acceptsTemperature(provider) ? { temperature } : {}),
       ...outputCap(provider),
-    })
+    }, { signal })
 
   let completion
   try {
@@ -267,11 +307,15 @@ export async function generateObject<T extends z.ZodTypeAny>(
 
 /** Generates free-form text (e.g. LaTeX). */
 export async function generateText(options: GenerateOptions): Promise<string> {
+  return withDeadline(signal => generateTextWithin(options, signal))
+}
+
+async function generateTextWithin(options: GenerateOptions, signal: AbortSignal): Promise<string> {
   const { provider } = options
   const model = MODELS[provider]
 
   if (provider === "claude") {
-    const { text, usage } = await claudeMessage(options)
+    const { text, usage } = await claudeMessage(options, signal)
     logUsage("text", model, usage)
     return text
   }
@@ -281,7 +325,7 @@ export async function generateText(options: GenerateOptions): Promise<string> {
     messages: chatMessages(options),
     ...(acceptsTemperature(provider) ? { temperature: options.temperature } : {}),
     ...outputCap(provider),
-  })
+  }, { signal })
   if (completion.usage) {
     logUsage("text", model, {
       inputTokens: completion.usage.prompt_tokens,
@@ -296,16 +340,26 @@ export async function embed(inputs: string[]): Promise<number[][]> {
   if (EMBEDDING_PROVIDER === "openai" && !process.env.OPENAI_API_KEY) {
     throw new Error("Embeddings need OPENAI_API_KEY (or HIPERGATOR_EMBEDDING_MODEL)")
   }
-  const response = await openAiCompatibleClient(EMBEDDING_PROVIDER).embeddings.create({
-    model: EMBEDDING_MODEL,
-    input: inputs,
-  })
+  const response = await withDeadline(signal =>
+    openAiCompatibleClient(EMBEDDING_PROVIDER).embeddings.create({ model: EMBEDDING_MODEL, input: inputs }, { signal }),
+  )
   logUsage("embed", EMBEDDING_MODEL, { inputTokens: response.usage.prompt_tokens, outputTokens: 0 })
   return response.data.map(item => item.embedding)
 }
 
-/** What to tell the student when an AI call fails: the setup or limit message if that's why, else `fallback`. */
+const STUDENT_FACING_AI_ERRORS = new Set(["AiNotConfiguredError", "AiLimitReachedError", "AiTimeoutError"])
+
+/** Whether this AI error carries a message written for the student (setup, limit or timeout). */
+export function isStudentFacingAiError(error: unknown): error is Error {
+  return error instanceof Error && STUDENT_FACING_AI_ERRORS.has(error.name)
+}
+
+/** What to tell the student when an AI call fails: the setup, limit or timeout message if that's why, else `fallback`. */
 export function aiErrorMessage(error: unknown, fallback: string) {
-  if (error instanceof Error && (error.name === "AiNotConfiguredError" || error.name === "AiLimitReachedError")) return error.message
-  return fallback
+  return isStudentFacingAiError(error) ? error.message : fallback
+}
+
+/** 504 when the AI ran out of time, so clients can tell a slow answer from a broken one; else 500. */
+export function aiErrorStatus(error: unknown) {
+  return error instanceof Error && error.name === "AiTimeoutError" ? 504 : 500
 }
