@@ -28,20 +28,22 @@ export function SharingPanel() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [open, setOpen] = useState(false)
+  const [failed, setFailed] = useState(false)
 
   useEffect(() => {
     let live = true
     fetch("/api/community/sharing")
       .then((response) => response.json())
       .then((result) => {
-        if (!live || !result.success) return
+        if (!live) return
+        if (!result.success) throw new Error(result.error)
         setSource(result.data.source)
         setSaved(result.data.sharing)
         setSharing(result.data.sharing)
         // Someone who has never set up a card is shown how, open.
         if (!result.data.card) setOpen(true)
       })
-      .catch(() => {})
+      .catch(() => live && setFailed(true))
       .finally(() => live && setLoading(false))
     return () => {
       live = false
@@ -92,6 +94,8 @@ export function SharingPanel() {
           <p className="flex items-center gap-1.5 text-[14px] text-ink-2">
             {loading ? (
               "Loading…"
+            ) : failed ? (
+              <span className="text-alert">Couldn’t load your card. Refresh to try again.</span>
             ) : saved.listed ? (
               <>
                 <Eye className="h-4 w-4 text-brand" aria-hidden="true" /> Listed: signed-in students can see what you share
@@ -103,7 +107,7 @@ export function SharingPanel() {
             )}
           </p>
         </div>
-        <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className={pill("white", "h-9 px-4 text-[14px] font-medium")}>
+        <button type="button" disabled={loading || failed} onClick={() => setOpen(!open)} aria-expanded={open} className={pill("white", "h-9 px-4 text-[14px] font-medium")}>
           {open ? "Close" : "Choose what to share"}
         </button>
       </div>
