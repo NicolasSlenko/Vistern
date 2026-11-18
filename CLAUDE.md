@@ -157,6 +157,12 @@ One list (`RESUME_STANDARD`) of what a generated resume must be: Jake Gutierrez'
 
 `withAiCache(userId, feature, input, run)` keys on a SHA-256 of the feature and the full prompt (`cache-key.ts`), stored per user in Supabase `ai_cache` (30-day TTL). `run` must contain `resolveAiProvider` and any daily-limit check, so a hit spends no tokens, no paid request and no limit. The provider is not in the key. Bump `AI_CACHE_VERSION` when a prompt or schema change should invalidate old answers. Used by bullets, bullet-options, xyz, xyz-batch, insights, selection and the LaTeX export.
 
+## Community → People (`/community/people`)
+
+Opt-in directory. Supabase `public_profiles` holds per student: `sharing` (their choices) and `card` (a copy of only the chosen fields). RLS: owner does anything with their row; any signed-in user may `select` rows where `listed`. Other students read only `card` — never a private table.
+
+`src/lib/community/public-card.ts` is the rule: `cardSource` (everything shareable, from profile + onboarding + Clerk photo) → `pickCard(source, sharing)` → `PublicCard`. Default shares nothing and is unlisted. Phone, GPA and bullets are never offered; links must be http(s). `people-store.ts` saves, lists, and `refreshMyCard` rebuilds the card after `POST/DELETE /api/profile` and on page load. Choices: `GET/PUT /api/community/sharing`. Tests: `tests/public-card.test.ts`.
+
 ## Preview harnesses
 
 Neither needs Clerk, Supabase, S3 or OpenAI — esbuild swaps those modules for adapters.

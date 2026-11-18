@@ -6,6 +6,7 @@ import { hasImportedLegacyDataset, markLegacyDatasetImported } from "@/lib/supab
 import { normalizeProfileData, profileItemsFromResume, resumeFromProfileItems } from "@/lib/profile/profile-data";
 import type { Json } from "@/lib/supabase/database.types";
 import { getResumeObject } from "@/app/api/parse/resumeSchema";
+import { refreshMyCard } from "@/lib/community/people-store";
 
 async function readLegacyMasterProfile(userId: string) {
   const saved = await getJsonFromS3<unknown>(`uploads/${userId}/master-profile.json`);
@@ -121,6 +122,8 @@ export async function POST(request: NextRequest) {
     if (archiveError) throw archiveError;
 
     await markLegacyDatasetImported(supabase, userId, "profile", items.length);
+    // A People card follows the profile it was built from.
+    await refreshMyCard(userId);
     return NextResponse.json({ success: true, data });
   } catch (error) {
     console.error("Error saving master profile:", error);
@@ -173,6 +176,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     await markLegacyDatasetImported(supabase, userId, "profile", 0);
+    await refreshMyCard(userId);
     return NextResponse.json({ success: true, data: getResumeObject() });
   } catch (error) {
     console.error("Error clearing master profile:", error);

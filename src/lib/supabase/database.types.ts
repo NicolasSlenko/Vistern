@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      public_profiles: {
+        Row: {
+          card: Json
+          clerk_user_id: string
+          created_at: string
+          id: string
+          listed: boolean
+          sharing: Json
+          updated_at: string
+        }
+        Insert: {
+          card?: Json
+          clerk_user_id: string
+          created_at?: string
+          id?: string
+          listed?: boolean
+          sharing?: Json
+          updated_at?: string
+        }
+        Update: {
+          card?: Json
+          clerk_user_id?: string
+          created_at?: string
+          id?: string
+          listed?: boolean
+          sharing?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_cache: {
         Row: {
           cache_key: string

@@ -8,6 +8,8 @@ export const ACCOUNT_DATA_TABLES = [
   "resume_documents",
   "profile_items",
   "career_workspaces",
+  "public_profiles",
+  "ai_cache",
   "course_progress",
   "daily_usage",
   "legacy_import_state",

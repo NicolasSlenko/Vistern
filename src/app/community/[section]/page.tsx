@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowRight, CalendarDays, MessageCircle, UsersRound } from "lucide-react"
+import { ArrowRight, CalendarDays, MessageCircle } from "lucide-react"
 import { StudentShell } from "@/components/student/student-shell"
 import { pill } from "@/components/resume-studio/pills"
 
@@ -16,17 +16,7 @@ const sections = {
       { href: "/career?view=guides", label: "Read career guides" },
     ],
   },
-  people: {
-    title: "People",
-    intro: "Find peers, mentors, and teaching assistants who know the work you want to try.",
-    icon: UsersRound,
-    emptyTitle: "The people directory is taking shape",
-    emptyCopy: "Profiles and introductions will appear here when students can choose to share them. Explore campus groups in the meantime.",
-    links: [
-      { href: "/community", label: "Find a campus group" },
-      { href: "/onboarding?edit=1", label: "Review my background" },
-    ],
-  },
+  // people has its own page: app/community/people.
   sessions: {
     title: "Sessions",
     intro: "Make room for workshops, study groups, and career events in your plan.",
