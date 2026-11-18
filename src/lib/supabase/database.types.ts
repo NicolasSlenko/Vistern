@@ -659,6 +659,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      list_people: {
+        Args: { p_limit?: number }
+        Returns: {
+          card: Json
+          id: string
+          updated_at: string
+        }[]
+      }
       consume_daily_usage: {
         Args: { p_daily_limit: number; p_feature: string }
         Returns: {

@@ -1,6 +1,7 @@
 import "server-only"
 import { currentUser } from "@clerk/nextjs/server"
 import { createClerkSupabaseServerClient } from "@/lib/supabase/server"
+import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import type { Json } from "@/lib/supabase/database.types"
 import { resumeFromProfileItems } from "@/lib/profile/profile-data"
 import type { Resume } from "@/app/api/parse/resumeSchema"
@@ -51,6 +52,11 @@ export async function loadCardSource(userId: string): Promise<CardSource> {
     lastName: account?.lastName,
     imageUrl: account?.imageUrl,
     hasImage: account?.hasImage,
+    // Primary first; only addresses Clerk has verified the student controls.
+    verifiedEmails: (account?.emailAddresses ?? [])
+      .filter((address) => address.verification?.status === "verified")
+      .sort((a, b) => Number(b.id === account?.primaryEmailAddressId) - Number(a.id === account?.primaryEmailAddressId))
+      .map((address) => address.emailAddress),
   })
 }
 
@@ -69,11 +75,15 @@ export async function readMySharing(userId: string): Promise<{ sharing: Sharing;
 /**
  * Store the student's choices and the card they produce. Without a name the
  * card can't be listed, whatever the switch says.
+ *
+ * Written with the secret key: students can't write this table, so a card is
+ * only ever what this function built from their own data. `userId` must come
+ * from Clerk's `auth()`.
  */
 export async function saveMySharing(userId: string, sharing: Sharing, source?: CardSource) {
   const card = pickCard(source ?? (await loadCardSource(userId)), sharing)
   const listed = sharing.listed && card !== null
-  const supabase = await createClerkSupabaseServerClient()
+  const supabase = createSupabaseAdminClient()
   const { error } = await supabase.from("public_profiles").upsert(
     {
       clerk_user_id: userId,
@@ -109,18 +119,20 @@ export async function refreshMyCard(userId: string) {
   }
 }
 
-/** The listed cards, newest first. RLS returns only listed rows, plus the reader's own. */
+/**
+ * The listed cards, newest first, through list_people(): it returns an opaque
+ * id and the card, never whose Clerk account it is. The reader's own row is
+ * read under the owner policy, to mark their card as theirs.
+ */
 export async function listDirectory(userId: string, limit = 300): Promise<DirectoryEntry[]> {
   const supabase = await createClerkSupabaseServerClient()
-  const { data, error } = await supabase
-    .from("public_profiles")
-    .select("id, clerk_user_id, card, updated_at")
-    .eq("listed", true)
-    .order("updated_at", { ascending: false })
-    .limit(limit)
+  const [{ data, error }, { data: own }] = await Promise.all([
+    supabase.rpc("list_people", { p_limit: limit }),
+    supabase.from("public_profiles").select("id").eq("clerk_user_id", userId).maybeSingle(),
+  ])
   if (error) throw error
   return (data ?? []).flatMap((row) => {
     const card = publicCardSchema.safeParse(row.card)
-    return card.success ? [{ id: row.id, card: card.data, updatedAt: row.updated_at, mine: row.clerk_user_id === userId }] : []
+    return card.success ? [{ id: row.id, card: card.data, updatedAt: row.updated_at, mine: row.id === own?.id }] : []
   })
 }

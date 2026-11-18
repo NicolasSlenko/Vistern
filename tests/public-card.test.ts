@@ -45,14 +45,15 @@ test("only switched-on fields reach the card", () => {
 })
 
 test("phone, GPA and bullets are never on a card, even with everything on", () => {
-  const source = cardSource(resume(), onboarding, { imageUrl: "https://img.clerk.com/a.png", hasImage: true })
+  const source = cardSource(resume(), onboarding, { imageUrl: "https://img.clerk.com/a.png", hasImage: true, verifiedEmails: ["ada@cise.ufl.edu"] })
   const card = pickCard(source, { listed: true, nameStyle: "full", headline: "", fields: ["photo", "year", "school", "location", "skills", "experience", "projects", "links", "email"] })
   const text = JSON.stringify(card)
   assert.ok(!text.includes("352-555"))
   assert.ok(!text.includes("3.9"))
   assert.ok(!text.includes("secret bullet"))
   assert.equal(card?.year, "Junior")
-  assert.equal(card?.email, "ada@ufl.edu")
+  assert.equal(card?.email, "ada@cise.ufl.edu")
+  assert.equal(card?.verified, "ufl.edu")
   assert.ok(publicCardSchema.safeParse(card).success)
 })
 
@@ -79,4 +80,19 @@ test("search matches every word against the card", () => {
 
 test("invalid sharing falls back to sharing nothing", () => {
   assert.deepEqual(readSharing({ listed: true, nameStyle: "full", headline: "", fields: ["phone"] }), DEFAULT_SHARING)
+})
+
+test("email and the school badge come only from addresses Clerk verified", () => {
+  // The profile says ada@ufl.edu, but nothing verified it.
+  const unverified = cardSource(resume(), onboarding)
+  assert.equal(unverified.email, undefined)
+  assert.equal(unverified.verified, undefined)
+  const personal = cardSource(resume(), onboarding, { verifiedEmails: ["ada@gmail.com"] })
+  assert.equal(personal.email, "ada@gmail.com")
+  assert.equal(personal.verified, undefined)
+})
+
+test("the account's name wins over the profile's", () => {
+  const source = cardSource(resume(), onboarding, { firstName: "Ada", lastName: "King" })
+  assert.equal(source.fullName, "Ada King")
 })

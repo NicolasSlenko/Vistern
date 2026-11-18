@@ -18,24 +18,28 @@ const MIGRATIONS = [
   "supabase/migrations/20261118120000_public_profiles.sql",
 ]
 
-// What Supabase provides: the two API roles and auth.jwt() from the request's token.
+// What Supabase provides: the API roles and auth.jwt() from the request's token.
 const SUPABASE_STUB = `
   create role anon nologin;
   create role authenticated nologin;
+  create role service_role nologin bypassrls;
   create schema auth;
   create function auth.jwt() returns jsonb language sql stable as
     $$ select nullif(current_setting('request.jwt.claims', true), '')::jsonb $$;
-  grant usage on schema auth to anon, authenticated;
-  grant usage on schema public to anon, authenticated;
+  grant usage on schema auth to anon, authenticated, service_role;
+  grant usage on schema public to anon, authenticated, service_role;
 `
 
 let db: PGlite
+type Who = "alice" | "bob" | "anon" | "tokenless" | "server"
 
-/** Run SQL as a signed-in student (or as `anon` with no token). */
-async function as<T = Record<string, unknown>>(who: "alice" | "bob" | "anon", sql: string, params: unknown[] = []) {
+/** Run SQL as a signed-in student, a caller with no token, or the server's secret key. */
+async function as<T = Record<string, unknown>>(who: Who, sql: string, params: unknown[] = []) {
   await db.exec("reset role")
-  await db.query("select set_config('request.jwt.claims', $1, false)", [who === "anon" ? "" : JSON.stringify({ sub: who, role: "authenticated" })])
-  await db.exec(`set role ${who === "anon" ? "anon" : "authenticated"}`)
+  const claims = who === "alice" || who === "bob" ? JSON.stringify({ sub: who, role: "authenticated" }) : ""
+  await db.query("select set_config('request.jwt.claims', $1, false)", [claims])
+  const role = { alice: "authenticated", bob: "authenticated", tokenless: "authenticated", anon: "anon", server: "service_role" }[who]
+  await db.exec(`set role ${role}`)
   try {
     return await db.query<T>(sql, params)
   } finally {
@@ -52,8 +56,9 @@ before(async () => {
   await db.exec(SUPABASE_STUB)
   for (const file of MIGRATIONS) await db.exec(readFileSync(file, "utf8"))
 
-  await as("alice", `insert into public_profiles (clerk_user_id, listed, card) values ('alice', true, '{"name":"Alice"}')`)
-  await as("bob", `insert into public_profiles (clerk_user_id, listed, card, sharing) values ('bob', false, '{"name":"Bob","email":"bob@ufl.edu"}', '{"headline":"secret"}')`)
+  // Cards are written by the server only, as saveMySharing does.
+  await as("server", `insert into public_profiles (clerk_user_id, listed, card) values ('alice', true, '{"name":"Alice","verified":"ufl.edu"}')`)
+  await as("server", `insert into public_profiles (clerk_user_id, listed, card, sharing) values ('bob', false, '{"name":"Bob","email":"bob@ufl.edu"}', '{"headline":"secret"}')`)
   await as("alice", `insert into ai_cache (clerk_user_id, cache_key, feature, result, expires_at) values ('alice', repeat('a', 64), 'bullets', '{"rewrites":["alice private"]}', now() + interval '1 day')`)
 })
 
@@ -61,63 +66,79 @@ after(async () => {
   await db?.close()
 })
 
-describe("public_profiles RLS", () => {
-  test("a stranger without a token reads nothing", async () => {
-    await rejects(as("anon", "select * from public_profiles"), /permission denied/)
+describe("public_profiles: nobody but the server writes", () => {
+  test("a student can't create a card, not even their own", async () => {
+    await rejects(as("alice", `insert into public_profiles (clerk_user_id, card) values ('alice', '{"name":"Alice"}')`), /permission denied/)
+    await rejects(as("alice", `insert into public_profiles (clerk_user_id, card) values ('carol', '{"name":"Carol"}')`), /permission denied/)
   })
 
-  test("a hidden card is invisible to everyone but its owner", async () => {
-    const seenByAlice = await as("alice", "select clerk_user_id from public_profiles where clerk_user_id = 'bob'")
-    assert.equal(seenByAlice.rows.length, 0)
-    const seenByBob = await as("bob", "select clerk_user_id from public_profiles where clerk_user_id = 'bob'")
-    assert.equal(seenByBob.rows.length, 1)
-  })
-
-  test("a listed card is readable by other signed-in students", async () => {
-    const rows = await as("bob", "select card from public_profiles where listed")
-    assert.deepEqual(rows.rows, [{ card: { name: "Alice" } }])
-  })
-
-  test("filters can't widen what's readable (no listed=false leak)", async () => {
-    const rows = await as("alice", "select clerk_user_id from public_profiles where listed = false or true")
-    assert.deepEqual(rows.rows.map((row) => row.clerk_user_id), ["alice"])
-  })
-
-  test("you can't create a card in someone else's name", async () => {
+  test("a student can't forge their own card (name, badge, listing)", async () => {
+    await rejects(as("alice", `update public_profiles set card = '{"name":"The Dean","verified":"ufl.edu"}' where clerk_user_id = 'alice'`), /permission denied/)
+    await rejects(as("bob", "update public_profiles set listed = true where clerk_user_id = 'bob'"), /permission denied/)
     await rejects(
-      as("alice", `insert into public_profiles (clerk_user_id, listed, card) values ('mallory-victim', true, '{"name":"Fake"}')`),
-      /row-level security/,
+      as("bob", `insert into public_profiles (clerk_user_id, card) values ('bob', '{"name":"x"}') on conflict (clerk_user_id) do update set card = excluded.card`),
+      /permission denied/,
     )
   })
 
-  test("you can't edit, list, hijack or delete another student's card", async () => {
-    const update = await as("alice", "update public_profiles set listed = true where clerk_user_id = 'bob'")
-    assert.equal(update.affectedRows, 0)
-    const listedUpdate = await as("bob", `update public_profiles set card = '{"name":"pwned"}' where clerk_user_id = 'alice'`)
-    assert.equal(listedUpdate.affectedRows, 0)
+  test("a student can't touch another student's card", async () => {
+    await rejects(as("bob", `update public_profiles set card = '{"name":"pwned"}' where clerk_user_id = 'alice'`), /permission denied/)
     const remove = await as("bob", "delete from public_profiles where clerk_user_id = 'alice'")
     assert.equal(remove.affectedRows, 0)
-    const upsert = as("bob", `insert into public_profiles (clerk_user_id, card) values ('alice', '{"name":"pwned"}') on conflict (clerk_user_id) do update set card = excluded.card`)
-    await rejects(upsert, /row-level security/)
-    const alice = await as("alice", "select card from public_profiles where clerk_user_id = 'alice'")
-    assert.deepEqual(alice.rows, [{ card: { name: "Alice" } }])
+    const alice = await as("server", "select card from public_profiles where clerk_user_id = 'alice'")
+    assert.deepEqual(alice.rows, [{ card: { name: "Alice", verified: "ufl.edu" } }])
   })
 
-  test("you can't hand your row to someone else", async () => {
-    await rejects(as("alice", "update public_profiles set clerk_user_id = 'bob' where clerk_user_id = 'alice'"), /row-level security|duplicate key/)
-    await rejects(as("alice", "update public_profiles set clerk_user_id = 'carol' where clerk_user_id = 'alice'"), /row-level security/)
+  test("a student can delete their own card (unlist, account deletion)", async () => {
+    const mine = await as("bob", "delete from public_profiles where clerk_user_id = 'bob'")
+    assert.equal(mine.affectedRows, 1)
+    await as("server", `insert into public_profiles (clerk_user_id, listed, card, sharing) values ('bob', false, '{"name":"Bob","email":"bob@ufl.edu"}', '{"headline":"secret"}')`)
+  })
+
+  test("the table refuses non-object card or sharing values, even from the server", async () => {
+    await rejects(as("server", `update public_profiles set card = '"<script>"' where clerk_user_id = 'alice'`), /check constraint/)
+    await rejects(as("server", `update public_profiles set sharing = '[]' where clerk_user_id = 'alice'`), /check constraint/)
+  })
+})
+
+describe("public_profiles: what other students can read", () => {
+  test("nobody reads the table for anyone else's row, listed or not", async () => {
+    for (const target of ["alice", "bob"]) {
+      const rows = await as(target === "alice" ? "bob" : "alice", "select * from public_profiles where clerk_user_id = $1", [target])
+      assert.equal(rows.rows.length, 0, `read ${target}'s row`)
+    }
+    const all = await as("bob", "select clerk_user_id from public_profiles")
+    assert.deepEqual(all.rows, [{ clerk_user_id: "bob" }])
+  })
+
+  test("the directory returns listed cards with no Clerk id and no sharing choices", async () => {
+    const rows = await as<Record<string, unknown>>("bob", "select * from list_people(300)")
+    assert.equal(rows.rows.length, 1)
+    assert.deepEqual(Object.keys(rows.rows[0]).sort(), ["card", "id", "updated_at"])
+    assert.deepEqual(rows.rows[0].card, { name: "Alice", verified: "ufl.edu" })
+  })
+
+  test("the directory never shows a hidden card", async () => {
+    const rows = await as("alice", "select card from list_people(300)")
+    assert.ok(!JSON.stringify(rows.rows).includes("Bob"))
+  })
+
+  test("the directory is closed to callers without a token", async () => {
+    await rejects(as("anon", "select * from list_people(300)"), /permission denied/)
+    await rejects(as("anon", "select * from public_profiles"), /permission denied/)
+    const tokenless = await as("tokenless", "select * from list_people(300)")
+    assert.equal(tokenless.rows.length, 0)
+  })
+
+  test("a huge limit is clamped", async () => {
+    const rows = await as("bob", "select * from list_people(2147483647)")
+    assert.ok(rows.rows.length <= 500)
   })
 
   test("unlisting hides a card at once", async () => {
-    await as("alice", "update public_profiles set listed = false where clerk_user_id = 'alice'")
-    const rows = await as("bob", "select 1 from public_profiles where clerk_user_id = 'alice'")
-    assert.equal(rows.rows.length, 0)
-    await as("alice", "update public_profiles set listed = true where clerk_user_id = 'alice'")
-  })
-
-  test("non-object card or sharing values are refused by the table", async () => {
-    await rejects(as("alice", `update public_profiles set card = '"<script>"' where clerk_user_id = 'alice'`), /check constraint/)
-    await rejects(as("alice", `update public_profiles set sharing = '[]' where clerk_user_id = 'alice'`), /check constraint/)
+    await as("server", "update public_profiles set listed = false where clerk_user_id = 'alice'")
+    assert.equal((await as("bob", "select * from list_people(300)")).rows.length, 0)
+    await as("server", "update public_profiles set listed = true where clerk_user_id = 'alice'")
   })
 })
 

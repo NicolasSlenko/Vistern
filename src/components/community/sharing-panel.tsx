@@ -146,7 +146,7 @@ export function SharingPanel() {
               </div>
               {!source.fullName && (
                 <p className="text-[13px] text-caution">
-                  Add your name on your <Link href="/profile" className="underline underline-offset-4">profile</Link> to be listed.
+                  Add your name to your account or your <Link href="/profile" className="underline underline-offset-4">profile</Link> to be listed.
                 </p>
               )}
             </fieldset>
@@ -185,7 +185,12 @@ export function SharingPanel() {
                   )
                 })}
               </ul>
-              <p className="text-[12px] text-ink-3">Your phone number, GPA and resume bullets are never shared.</p>
+              <p className="text-[12px] text-ink-3">
+                Your phone number, GPA and resume bullets are never shared.{" "}
+                {source.verified
+                  ? `Your card shows a ${source.verified} badge, from the school email you verified.`
+                  : "Verify a .edu email in your account to get a school badge."}
+              </p>
             </fieldset>
 
             <div className="flex flex-wrap items-center gap-2.5">

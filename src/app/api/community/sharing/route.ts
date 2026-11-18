@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { sharingSchema } from "@/lib/community/public-card"
 import { loadCardSource, readMySharing, saveMySharing } from "@/lib/community/people-store"
+import { AdminClientMissingError } from "@/lib/supabase/admin"
 
 /**
  * The signed-in student's People card: what they share, and everything they
@@ -36,6 +37,10 @@ export async function PUT(request: NextRequest) {
     }
     return NextResponse.json({ success: true, data: saved })
   } catch (error) {
+    if (error instanceof AdminClientMissingError) {
+      console.error(error.message)
+      return NextResponse.json({ success: false, error: "People isn't set up on this server yet" }, { status: 503 })
+    }
     console.error("Error saving People card:", error)
     return NextResponse.json({ success: false, error: "Couldn't save your card" }, { status: 500 })
   }

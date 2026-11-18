@@ -1,4 +1,4 @@
-import { Github, Globe, Linkedin, Mail } from "lucide-react"
+import { BadgeCheck, Github, Globe, Linkedin, Mail } from "lucide-react"
 import type { PublicCard } from "@/lib/community/public-card"
 
 /**
@@ -37,6 +37,12 @@ export function PersonCard({ card, mine = false, preview = false }: { card: Publ
             <span className="truncate">{card.name}</span>
             {mine && !preview && <span className="label-caps rounded-full bg-brand/10 px-2 py-0.5 text-brand">You</span>}
           </h3>
+          {card.verified && (
+            <p className="flex items-center gap-1 text-[12px] font-medium text-brand" title={`Verified ${card.verified} email address`}>
+              <BadgeCheck className="h-3.5 w-3.5" aria-hidden="true" />
+              Verified {card.verified}
+            </p>
+          )}
           {card.headline && <p className="text-[14px] leading-snug text-ink-2">{card.headline}</p>}
         </div>
       </header>

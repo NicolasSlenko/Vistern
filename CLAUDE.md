@@ -159,9 +159,9 @@ One list (`RESUME_STANDARD`) of what a generated resume must be: Jake Gutierrez'
 
 ## Community → People (`/community/people`)
 
-Opt-in directory. Supabase `public_profiles` holds per student: `sharing` (their choices) and `card` (a copy of only the chosen fields). RLS: owner does anything with their row; any signed-in user may `select` rows where `listed`. Other students read only `card` — never a private table.
+Opt-in directory. Supabase `public_profiles` holds per student: `sharing` (their choices) and `card` (a copy of only the chosen fields). **Only the server writes it**, with `SUPABASE_SECRET_KEY` via `createSupabaseAdminClient()` (`src/lib/supabase/admin.ts`, server-only; always scope to `auth()`'s user id). Students may only read and delete their own row. Others read through `list_people()` (security definer), which returns `id, card, updated_at` for listed rows — never the Clerk id or `sharing`.
 
-`src/lib/community/public-card.ts` is the rule: `cardSource` (everything shareable, from profile + onboarding + Clerk photo) → `pickCard(source, sharing)` → `PublicCard`. Default shares nothing and is unlisted. Phone, GPA and bullets are never offered; links must be http(s). `people-store.ts` saves, lists, and `refreshMyCard` rebuilds the card after `POST/DELETE /api/profile` and on page load. Choices: `GET/PUT /api/community/sharing`. Tests: `tests/public-card.test.ts`.
+`src/lib/community/public-card.ts` is the rule: `cardSource` (profile + onboarding + Clerk account) → `pickCard(source, sharing)` → `PublicCard`, re-validated on every read. Default shares nothing and is unlisted. Phone, GPA and bullets are never offered; links must be http(s); photos only from Clerk's CDN; email and the `verified` school badge (e.g. `ufl.edu`) come only from Clerk-verified addresses; the account name wins over the profile's. `refreshMyCard` rebuilds the card after `POST/DELETE /api/profile` and on page load. Choices: `GET/PUT /api/community/sharing`. Tests: `npm run test:people` — `tests/people-security.test.ts` runs the real migrations in PGlite and attacks them.
 
 ## Preview harnesses
 

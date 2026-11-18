@@ -20,7 +20,7 @@ export const SHARE_FIELDS = [
   { id: "experience", label: "Roles", hint: "Title and company only" },
   { id: "projects", label: "Projects", hint: "Name and tools only" },
   { id: "links", label: "LinkedIn, GitHub and website" },
-  { id: "email", label: "Email", hint: "So people can reach you" },
+  { id: "email", label: "Email", hint: "Your verified sign-in address" },
 ] as const
 
 export type ShareField = (typeof SHARE_FIELDS)[number]["id"]
@@ -85,6 +85,12 @@ export const publicCardSchema = z.object({
   projects: z.array(z.object({ name: z.string().max(120), technologies: z.array(z.string().max(60)).max(6) })).max(4).optional(),
   links: z.object({ linkedin: linkSchema.optional(), github: linkSchema.optional(), portfolio: linkSchema.optional() }).optional(),
   email: emailSchema.optional(),
+  /**
+   * The school domain of an address Clerk has verified the student owns, as
+   * "ufl.edu". Set only by the server from Clerk, never from the profile and
+   * never a switch: it's how a reader tells a real UF student from a name.
+   */
+  verified: z.string().max(80).regex(/^[a-z0-9-]+(\.[a-z0-9-]+)*\.edu$/).optional(),
 })
 export type PublicCard = z.infer<typeof publicCardSchema>
 
@@ -93,6 +99,23 @@ export type CardSource = {
   fullName: string
   firstName: string
 } & Omit<PublicCard, "name" | "headline">
+
+/** What the student's Clerk account vouches for. */
+export interface AccountFacts {
+  firstName?: string | null
+  lastName?: string | null
+  imageUrl?: string | null
+  hasImage?: boolean
+  /** Addresses Clerk has verified, primary first. */
+  verifiedEmails?: string[]
+}
+
+/** "cise.ufl.edu" → "ufl.edu": the school, not the department. */
+export function schoolDomain(email: string): string | undefined {
+  const domain = email.toLowerCase().split("@")[1]
+  if (!domain || !/^[a-z0-9.-]+\.edu$/.test(domain)) return undefined
+  return domain.split(".").slice(-2).join(".")
+}
 
 const clean = (value: unknown, max: number) => (typeof value === "string" ? value.replace(/\s+/g, " ").trim().slice(0, max) : "")
 
@@ -122,11 +145,12 @@ function firstWord(name: string) {
 export function cardSource(
   resume: Resume | null,
   onboarding: StudentProfile | null,
-  account: { firstName?: string | null; lastName?: string | null; imageUrl?: string | null; hasImage?: boolean } = {},
+  account: AccountFacts = {},
 ): CardSource {
   const basics = resume?.basics
+  // The account's name first: it's the one tied to the verified address.
   const accountName = clean([account.firstName, account.lastName].filter(Boolean).join(" "), 80)
-  const fullName = clean(basics?.name, 80) || accountName
+  const fullName = accountName || clean(basics?.name, 80)
   const firstName = firstWord(fullName) || clean(account.firstName, 40)
 
   const education = resume?.education?.[0]
@@ -153,7 +177,11 @@ export function cardSource(
     github: webLink(basics?.github),
     portfolio: webLink(basics?.portfolio),
   }
-  const email = clean(basics?.email, 200)
+  // Only an address Clerk verified, so "Email" reaches the student and not
+  // whoever they typed into their profile.
+  const verifiedEmails = (account.verifiedEmails ?? []).map((address) => clean(address, 200)).filter((address) => emailSchema.safeParse(address).success)
+  const email = verifiedEmails[0]
+  const verified = verifiedEmails.map(schoolDomain).find(Boolean)
 
   return {
     fullName,
@@ -169,7 +197,8 @@ export function cardSource(
     experience: experience.length ? experience : undefined,
     projects: projects.length ? projects : undefined,
     links: links.linkedin || links.github || links.portfolio ? links : undefined,
-    email: emailSchema.safeParse(email).success ? email : undefined,
+    email,
+    verified,
   }
 }
 
@@ -180,6 +209,7 @@ export function pickCard(source: CardSource, sharing: Sharing): PublicCard | nul
   const on = new Set(sharing.fields)
   const card: PublicCard = { name }
   if (sharing.headline) card.headline = sharing.headline
+  if (source.verified) card.verified = source.verified
   for (const field of SHARE_FIELDS) {
     if (!on.has(field.id)) continue
     const value = source[field.id]
