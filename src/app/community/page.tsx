@@ -15,8 +15,8 @@ export default async function CommunityPage() {
             <header data-tour="community-header" className="flex min-h-[72px] flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-hairline px-4 py-[13px] sm:px-6">
               <h1 className="text-[17px] font-medium tracking-[-0.02em] text-ink sm:text-[18px]">Campus directory</h1>
               <div className="flex items-center gap-2.5">
-                <Link href="/community/feed" className={pill("white", "h-10 px-4 text-[15px] font-medium")}>
-                  Community feed
+                <Link href="/community/people" className={pill("white", "h-10 px-4 text-[15px] font-medium")}>
+                  People
                 </Link>
               </div>
             </header>

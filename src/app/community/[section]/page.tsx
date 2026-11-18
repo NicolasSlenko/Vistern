@@ -41,13 +41,18 @@ const sections = {
   },
 } as const
 
+const PARKED = new Set<string>(["feed", "sessions", "messages"])
+
 export default async function CommunitySectionPage({
   params,
 }: {
   params: Promise<{ section: string }>
 }) {
   const { section } = await params
-  if (!(section in sections)) notFound()
+  // Feed, Sessions and Messages are parked until they're built: their links
+  // are out of the sidebar, and their pages 404 rather than show a placeholder.
+  // Remove a section from PARKED to bring it back.
+  if (!(section in sections) || PARKED.has(section)) notFound()
   const data = sections[section as keyof typeof sections]
   const Icon = data.icon
 

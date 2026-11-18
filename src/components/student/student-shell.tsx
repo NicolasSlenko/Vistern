@@ -60,10 +60,11 @@ const careerPages = [
 ]
 const communityPages = [
   { href: "/community", label: "Campus directory" },
-  { href: "/community/feed", label: "Community feed" },
+  // Parked until they're built: { href: "/community/feed", label: "Community feed" },
   { href: "/community/people", label: "People" },
-  { href: "/community/sessions", label: "Sessions" },
-  { href: "/community/messages", label: "Messages" },
+  // Parked until they're built:
+  // { href: "/community/sessions", label: "Sessions" },
+  // { href: "/community/messages", label: "Messages" },
 ]
 const jobsPages = [
   { href: "/jobs", label: "Browse jobs" },

@@ -233,7 +233,8 @@ const sections: Section[] = [
         target: sidebarSection("/community"),
         title: "More in Community",
         body: "The rest of Community is in the sidebar, or under Menu on a phone.",
-        points: ["Feed: posts from other students", "People: find others to build or study with", "Sessions: study groups and events", "Messages: your conversations"],
+        // Feed, Sessions and Messages are parked; add their points back when they return.
+        points: ["People: find others to build or study with"],
       },
       {
         title: "That’s the tour",
