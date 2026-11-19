@@ -26,6 +26,10 @@ const LIMITS: Record<LimitKey, number> = {
   paidAi: Number(process.env.PAID_AI_DAILY_LIMIT) || 20,
 };
 
+// Off on this branch so demos aren't cut short: every daily limit (live matches,
+// tailoring, paid AI requests, uploads) lets requests through. Set true to restore.
+export const DAILY_LIMITS_ENABLED = false;
+
 function isOwner(userId: string): boolean {
   const ownerId = process.env.OWNER_CLERK_USER_ID;
   return !!ownerId && userId === ownerId;
@@ -66,7 +70,7 @@ export async function checkAndIncrementLimit(
   userId: string,
   key: LimitKey,
 ): Promise<{ allowed: boolean; remaining: number }> {
-  if (isOwner(userId)) return { allowed: true, remaining: 999 };
+  if (!DAILY_LIMITS_ENABLED || isOwner(userId)) return { allowed: true, remaining: 999 };
 
   const supabase = await ensureLegacyUsageImported(userId);
   const { data, error } = await supabase.rpc("consume_daily_usage", {

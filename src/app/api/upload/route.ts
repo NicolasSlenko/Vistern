@@ -4,6 +4,7 @@ import { deleteFromS3, uploadToS3 } from "@/lib/aws/s3";
 import { createClerkSupabaseServerClient } from "@/lib/supabase/server";
 import { getOrCreateProfileId, importLegacyResumeSubmissions } from "@/lib/supabase/resume-documents";
 import { matchesResumeFileFormat, resumeContentType } from "@/lib/resume-file-validation";
+import { DAILY_LIMITS_ENABLED } from "@/lib/usageLimits";
 
 const DAILY_UPLOAD_LIMIT = 3;
 const MAX_STORED_SUBMISSIONS = 10;
@@ -34,18 +35,20 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClerkSupabaseServerClient();
     await importLegacyResumeSubmissions(supabase, userId);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const { data: todaysUploads, error: countError } = await supabase.from("resume_documents")
-      .select("id")
-      .eq("clerk_user_id", userId)
-      .gte("created_at", today.toISOString());
-    if (countError) throw countError;
+    if (DAILY_LIMITS_ENABLED) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const { data: todaysUploads, error: countError } = await supabase.from("resume_documents")
+        .select("id")
+        .eq("clerk_user_id", userId)
+        .gte("created_at", today.toISOString());
+      if (countError) throw countError;
 
-    const user = await currentUser();
-    const exempt = user?.primaryEmailAddress?.emailAddress === "nickslenko@gmail.com";
-    if ((todaysUploads?.length ?? 0) >= DAILY_UPLOAD_LIMIT && !exempt) {
-      return NextResponse.json({ error: `Daily upload limit reached (${DAILY_UPLOAD_LIMIT}/day). Please try again tomorrow.` }, { status: 429 });
+      const user = await currentUser();
+      const exempt = user?.primaryEmailAddress?.emailAddress === "nickslenko@gmail.com";
+      if ((todaysUploads?.length ?? 0) >= DAILY_UPLOAD_LIMIT && !exempt) {
+        return NextResponse.json({ error: `Daily upload limit reached (${DAILY_UPLOAD_LIMIT}/day). Please try again tomorrow.` }, { status: 429 });
+      }
     }
 
     const now = Date.now();
