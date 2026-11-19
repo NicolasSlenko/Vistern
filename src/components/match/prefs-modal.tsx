@@ -86,8 +86,9 @@ export function PrefsModal({
     set(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val])
 
   const handleSave = async () => {
-    if (!roleTypes.length || !location.length) {
-      toast.error("Please select at least one role type and location.")
+    // /api/preferences requires a job type too; a new account has none to carry over.
+    if (!jobType.length || !roleTypes.length || !location.length) {
+      toast.error("Pick at least one job type, role type and location.")
       return
     }
     setSaving(true)
