@@ -5,7 +5,6 @@ import { type NextResponse as NR, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { getCurrentResumeData, getUserPreferences } from "@/lib/supabase/user-data"
 import { searchSimilarDocuments } from "@/lib/vectorSearch"
-import { checkAndIncrementLimit } from "@/lib/usageLimits"
 import type { Resume } from "@/app/api/parse/resumeSchema"
 import { allowedLevels, keepListing } from "@/lib/jobs/listing-filter"
 import { readLiveJobsCache, writeLiveJobsCache } from "@/lib/jobs/live-cache"
@@ -145,15 +144,7 @@ export async function POST(): Promise<NR> {
       )
     }
 
-    // Counted only once there is something to search with, so a request that
-    // can't run doesn't use up one of the day's searches.
-    const { allowed } = await checkAndIncrementLimit(userId, "analyzeMatch")
-    if (!allowed) {
-      return NextResponse.json(
-        { success: false, error: "Daily analyze match limit reached (10/day). Try again tomorrow." },
-        { status: 429 }
-      )
-    }
+    // No daily search limit on this branch, so the demo can search as often as it needs.
 
     const isRemote = (prefs.workEnvironment || []).some(e => (e || "").toLowerCase().includes("remote")) ||
       (prefs.location || []).includes("Remote (Anywhere)")
