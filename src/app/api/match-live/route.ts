@@ -130,14 +130,6 @@ export async function POST(): Promise<NR> {
     const { userId } = await auth()
     if (!userId) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
 
-    const { allowed } = await checkAndIncrementLimit(userId, "analyzeMatch")
-    if (!allowed) {
-      return NextResponse.json(
-        { success: false, error: "Daily analyze match limit reached (10/day). Try again tomorrow." },
-        { status: 429 }
-      )
-    }
-
     const [resume, prefs] = await Promise.all([
       getCurrentResumeData(userId),
       getUserPreferences(userId),
@@ -148,8 +140,18 @@ export async function POST(): Promise<NR> {
 
     if (!prefs?.roleTypes?.length) {
       return NextResponse.json(
-        { success: false, error: "No preferences found. Complete the questionnaire first." },
+        { success: false, code: "no_preferences", error: "Choose the roles you're looking for first." },
         { status: 400 }
+      )
+    }
+
+    // Counted only once there is something to search with, so a request that
+    // can't run doesn't use up one of the day's searches.
+    const { allowed } = await checkAndIncrementLimit(userId, "analyzeMatch")
+    if (!allowed) {
+      return NextResponse.json(
+        { success: false, error: "Daily analyze match limit reached (10/day). Try again tomorrow." },
+        { status: 429 }
       )
     }
 

@@ -173,6 +173,9 @@ export default function MatchPage() {
 
   const [prefs, setPrefs] = useState<Partial<QuestionnaireData>>({})
   const [showPrefs, setShowPrefs] = useState(false)
+  // Why there are no roles to show: the search needs preferences first, or it ran and failed.
+  const [needsPrefs, setNeedsPrefs] = useState(false)
+  const [searchError, setSearchError] = useState<string | null>(null)
 
   const [jobDescription, setJobDescription] = useState("")
   const [compareResult, setCompareResult] = useState<(FitAnalysis & { overallMatch: number }) | null>(null)
@@ -181,6 +184,7 @@ export default function MatchPage() {
   // Runs the search and analysis (about 20s, counts toward the daily limit).
   const fetchLiveJobs = useCallback(async () => {
     setIsLiveLoading(true)
+    setSearchError(null)
     try {
       const res = await fetch("/api/match-live", { method: "POST" })
       const result = await res.json()
@@ -188,11 +192,13 @@ export default function MatchPage() {
         setLiveJobs(result.data.jobs)
         setCurrentJobIdx(0)
         toast.success(`Found ${result.data.jobs.length} matches with full analysis`)
+      } else if (result.code === "no_preferences") {
+        setNeedsPrefs(true)
       } else {
-        toast.error(result.error || "No jobs found")
+        setSearchError(result.error || "No roles matched this time.")
       }
     } catch {
-      toast.error("Failed to fetch jobs")
+      setSearchError("The search couldn’t reach the job boards. Try again in a moment.")
     } finally {
       setIsLiveLoading(false)
     }
@@ -219,9 +225,17 @@ export default function MatchPage() {
 
   useEffect(() => {
     if (!resumeData) return
-    loadLiveJobs()
     fetch("/api/job-board").then(r => r.json()).then(r => { if (r.success) setSavedJobs(r.data) }).catch(() => {})
-    fetch("/api/preferences").then(r => r.json()).then(r => { if (r.success && r.data) setPrefs(r.data) }).catch(() => {})
+    // A new account has no preferences until it picks roles, so ask for them
+    // instead of starting a search that has nothing to go on.
+    fetch("/api/preferences")
+      .then(r => r.json())
+      .then(r => {
+        if (r.success && r.data) setPrefs(r.data)
+        if (r.success && r.data?.roleTypes?.length) loadLiveJobs()
+        else setNeedsPrefs(true)
+      })
+      .catch(() => loadLiveJobs())
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resumeData])
 
@@ -394,7 +408,7 @@ export default function MatchPage() {
   return (
     <>
       <PrefsModal open={showPrefs} onClose={() => setShowPrefs(false)} currentPrefs={prefs}
-        onSaved={(newPrefs) => { setPrefs(newPrefs); fetchLiveJobs() }} />
+        onSaved={(newPrefs) => { setPrefs(newPrefs); setNeedsPrefs(false); fetchLiveJobs() }} />
       <form ref={overleafFormRef} action="https://www.overleaf.com/docs" method="POST" target={OVERLEAF_TAB} className="hidden">
         <input ref={overleafInputRef} type="hidden" name="snip_uri" defaultValue="" />
       </form>
@@ -560,16 +574,38 @@ export default function MatchPage() {
                       )}
                     </AnimatePresence>
                   </div>
+                ) : needsPrefs ? (
+                  <Notice title="What are you looking for?">
+                    <p className="max-w-[48ch] text-[15px] leading-relaxed text-ink-2">
+                      Pick the kind of role, where, and whether it’s an internship or full-time, and we’ll search live listings against
+                      your resume.
+                    </p>
+                    <button type="button" onClick={() => setShowPrefs(true)} className={`${pill("brand")} mt-1`}>
+                      Choose roles
+                      <ArrowRight aria-hidden="true" />
+                    </button>
+                  </Notice>
+                ) : searchError ? (
+                  <Notice title="No roles this time">
+                    <p className="max-w-[48ch] text-[15px] leading-relaxed text-ink-2">{searchError}</p>
+                    <div className="mt-1 flex flex-wrap gap-2">
+                      <button type="button" onClick={fetchLiveJobs} className={pill("brand")}>
+                        Try again
+                      </button>
+                      <button type="button" onClick={() => setShowPrefs(true)} className={pill("white")}>
+                        Adjust preferences
+                      </button>
+                    </div>
+                  </Notice>
                 ) : (
                   <Notice title="No roles loaded yet">
                     <p className="max-w-[48ch] text-[15px] leading-relaxed text-ink-2">
-                      Set what you’re looking for — the kind of role, where, and at what level — and the search will have something to
-                      go on.
+                      Search live listings against your resume.
                     </p>
-                    <Link href="/questionnaire" className={`${pill("white")} mt-1`}>
-                      Set preferences
+                    <button type="button" onClick={fetchLiveJobs} className={`${pill("brand")} mt-1`}>
+                      Find roles
                       <ArrowRight aria-hidden="true" />
-                    </Link>
+                    </button>
                   </Notice>
                 )}
               </Panel>
